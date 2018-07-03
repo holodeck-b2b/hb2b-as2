@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<service name="as2">
+    <description>Holodeck B2B AS2 Message Service Handler</description>
+
+    <operation name="Receive">
+        <messageReceiver class="org.holodeckb2b.as2.handlers.in.AS2MessageReceiver"/>
+    </operation>
+
+    <parameter name="supportSingleOperation" locked="xsd:true">true</parameter>
+
+    <module ref="holodeckb2b-as2"/>
+</service>
