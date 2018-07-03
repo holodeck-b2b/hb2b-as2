@@ -1,5 +1,5 @@
 # Holodeck B2B AS2
-An extension for Holodeck B2B to support message exchanges using the AS2 protocol.
+An extension for Holodeck B2B to enable message exchanges using the AS2 protocol.
 
 __________________
 For more information on using Holodeck B2B visit the website at http://holodeck-b2b.org  
