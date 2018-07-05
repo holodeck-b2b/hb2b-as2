@@ -191,7 +191,7 @@ public class OutOptInAS2Operation extends OutInAxisOperation {
         			contentType = new ContentType(httpHeaders.get(HTTPConstants.CONTENT_TYPE.toLowerCase()));
         	} catch (ParseException invalidContentType) {
         		log.warn("Could not parse the Content-Type header of the response");	
-        	}
+        	} catch (NullPointerException notAvailable) {}
         	
         	if (contentType != null) {        	
         		InputStream is = (InputStream) responseMessageContext.getProperty(MessageContext.TRANSPORT_IN);
