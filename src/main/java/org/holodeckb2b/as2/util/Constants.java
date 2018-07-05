@@ -70,7 +70,8 @@ public final class Constants {
      */
     public static final String MC_MIME_ENVELOPE = "hb2b:as2:mime-env";
     /**
-     * Name of the message context property that holds the <i>primary</i> MIME part.
+     * Name of the message context property that holds the <i>primary</i> MIME part. This is also the MIME part that
+     * will be used to calculate the MIC for inclusion in the MDN
      */
     public static final String MC_MAIN_MIME_PART = "hb2b:as2:primary-mimepart";
     /**

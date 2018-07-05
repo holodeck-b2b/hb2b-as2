@@ -109,7 +109,7 @@ public class DecryptMessage extends AbstractUserMessageHandler {
             final MimeBodyPart decryptedData = decrypt(mimeEnvelope, receiverKeyPair);
             log.debug("Successfully decrypted the message, replacing encrypted data with decrypted version");
             mc.setProperty(Constants.MC_WAS_ENCRYPTED, Boolean.TRUE);
-            mc.setProperty(Constants.MC_MIME_ENVELOPE, decryptedData);
+            mc.setProperty(Constants.MC_MIME_ENVELOPE, decryptedData);            
             mc.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE,
                                                                      new ContentType(decryptedData.getContentType()));
         } catch (SecurityProcessingException decryptionFailure) {

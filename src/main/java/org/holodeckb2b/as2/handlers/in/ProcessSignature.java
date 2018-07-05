@@ -95,8 +95,11 @@ public class ProcessSignature extends BaseHandler {
         final IMessageUnitEntity msgUnit = MessageContextUtils.getPrimaryMessageUnit(mc);
         final ContentType contentType = (ContentType)
                                                 mc.getProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE);
-        if (msgUnit == null || !"multipart/signed".equalsIgnoreCase(contentType.getMediaType().toString()))
+        if (msgUnit == null || !"multipart/signed".equalsIgnoreCase(contentType.getMediaType().toString())) {
+        	// If the message is not signed, the main part is the current MIME envelope 
+        	mc.setProperty(Constants.MC_MAIN_MIME_PART, mc.getProperty(Constants.MC_MIME_ENVELOPE));
             return InvocationResponse.CONTINUE;
+        }
 
         ISignatureProcessingResult result = null;
         log.debug("Received message is signed, verify signature");
@@ -110,7 +113,8 @@ public class ProcessSignature extends BaseHandler {
             // We don't need the signature info anymore, so we can replace the Mime Envelope in the message context
             // with only the signed data.
             final MimeBodyPart signedPart = (MimeBodyPart) mimeEnvelope.getBodyPart(0);
-            mc.setProperty(Constants.MC_MIME_ENVELOPE, signedPart);
+            mc.setProperty(Constants.MC_MIME_ENVELOPE, signedPart);      
+            mc.setProperty(Constants.MC_MAIN_MIME_PART, signedPart);                  
             mc.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE,
                                                                     new ContentType(signedPart.getContentType()));
         } else {

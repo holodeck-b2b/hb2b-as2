@@ -55,8 +55,7 @@ public class CreateReceipt extends AbstractUserMessageHandler {
     @Override
     protected InvocationResponse doProcessing(MessageContext mc, IUserMessageEntity userMessage) throws Exception {
         IReceiptConfiguration rcptConfig = null;
-        MDNRequestOptions mdnRequest = null;
-
+        
         log.debug("Check P-Mode if Receipt should be created for message [msgId=" + userMessage.getMessageId() + "]");
         final IPMode pmode = HolodeckB2BCoreInterface.getPModeSet().get(userMessage.getPModeId());
         if (pmode == null)
@@ -66,13 +65,8 @@ public class CreateReceipt extends AbstractUserMessageHandler {
             // AS2 is always a one-way MEP
             rcptConfig = pmode.getLeg(ILeg.Label.REQUEST).getReceiptConfiguration();
 
-        // If P-Mode doesn't configure receipt, check if sender requested a MDN
-        if (rcptConfig == null) {
-            log.debug("No Receipt configuration in P-Mode, checking message if sender requested one");
-            mdnRequest = (MDNRequestOptions) mc.getProperty(Constants.MC_AS2_MDN_REQUEST);
-            log.debug((mdnRequest == null ? "No " : "") + "MDN requested by sender of message");
-        } else
-            log.debug("Receipt is configured in P-Mode");
+        // A Receipt can be specified in the P-Mode but can also be requested by the sender
+        final MDNRequestOptions mdnRequest = (MDNRequestOptions) mc.getProperty(Constants.MC_AS2_MDN_REQUEST);
 
         if (rcptConfig != null || mdnRequest != null) {
             log.debug("Receipt requested for this message exchange, create new Receipt signal");

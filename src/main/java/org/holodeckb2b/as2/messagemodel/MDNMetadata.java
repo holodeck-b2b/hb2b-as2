@@ -193,7 +193,7 @@ public class MDNMetadata {
         final OMElement mdnParameters = xml.getFirstChildWithName(Q_REPLY_PARAM);
         if (mdnParameters != null) {
             this.replyParameters = new MDNRequestOptions();
-            OMElement signature = mdnParameters.getFirstChildWithName(Q_SIGNATURE);
+            final OMElement signature = mdnParameters.getFirstChildWithName(Q_SIGNATURE);
             if (signature == null)
                 this.replyParameters.setSignatureRequest(MDNRequestOptions.SignatureRequest.unsigned);
             else {
@@ -206,20 +206,18 @@ public class MDNMetadata {
                     this.replyParameters.setPreferredHashingAlgorithms(hashingAlgorithms);
                 }
             }
-            this.replyParameters.setReplyTo(mdnParameters.getFirstChildWithName(Q_REPLY_TO).getText());
+            this.replyParameters.setReplyTo(getElementValue(mdnParameters, Q_REPLY_TO));
         }
         // Parse the general message info
         final OMElement generalInfo = xml.getFirstChildWithName(Q_GENERAL_MSG_INFO);
         final OMElement partyInfo = generalInfo.getFirstChildWithName(Q_PARTY_INFO);
-        this.senderId = partyInfo.getFirstChildWithName(Q_SENDER_ID).getText();
-        this.receiverId = partyInfo.getFirstChildWithName(Q_RECEIVER_ID).getText();
+        this.senderId = getElementValue(partyInfo, Q_SENDER_ID);
+        this.receiverId = getElementValue(partyInfo, Q_RECEIVER_ID);
         final OMElement messageInfo = generalInfo.getFirstChildWithName(Q_MESSAGE_INFO);
         if (messageInfo != null) {
-            this.messageIdInMessage = Boolean.parseBoolean(messageInfo.getFirstChildWithName(Q_MESSAGEID_IN_MSG)
-                                                                                                           .getText());
-            this.timestampInMessage = Boolean.parseBoolean(messageInfo.getFirstChildWithName(Q_TIMESTAMP_IN_MSG)
-                                                                                                           .getText());
-            this.originalMessageId = messageInfo.getFirstChildWithName(Q_ORIG_MESSAGE_ID).getText();
+            this.messageIdInMessage = Boolean.parseBoolean(getElementValue(messageInfo, Q_MESSAGEID_IN_MSG));
+            this.timestampInMessage = Boolean.parseBoolean(getElementValue(messageInfo, Q_TIMESTAMP_IN_MSG));
+            this.originalMessageId = getElementValue(messageInfo, Q_ORIG_MESSAGE_ID);
         }
         // Read the MDN specific fields
         final OMElement fields = xml.getFirstChildWithName(Q_FIELDS);
