@@ -5,8 +5,13 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ## Unreleased
 ### Added
 * Initial release. 
-### Changed 
-### Deprecated 
-### Removed 
-### Fixed 
-### Security 
+
+### Changed
+
+### Deprecated
+
+### Removed
+
+### Fixed
+
+### Security
