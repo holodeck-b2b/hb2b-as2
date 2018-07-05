@@ -101,8 +101,7 @@ public class ProcessGeneratedErrors extends BaseHandler {
         	if (msgInError instanceof IUserMessage) {        		
         		if (errHandlingCfg == null) 
         			log.debug("No error handling configuration in P-Mode, checking message if sender requested MDN");
-        		//sendError = (errHandlingCfg != null && errHandlingCfg.getPattern() != null) || mdnRequest != null; 
-        		sendError = errHandlingCfg.getPattern() != null || mdnRequest != null; 
+        		sendError = (errHandlingCfg != null && errHandlingCfg.getPattern() != null) || mdnRequest != null; 
                 if (sendError) {
                     log.debug("Error must be reported for this message exchange, include MDN data");
                     // Add a first error in the signal containing the MDN meta-data related to the Error Signal                    
