@@ -81,7 +81,8 @@ import org.holodeckb2b.pmode.PModeUtils;
  * will be used and if that is not specified/supported the algorithm from the certificate will be used. Note that
  * the specified algorithm must be compatible with the public key included in the certificate.
  * <li><code>HashFunction</code> : is now used to indicate how the used hash function should be identified in the S/MIME
- * package and </li>
+ * package and MDN request. Should be set to "RFC5751" to use the RFC5751 algorithm names, otherwise the RFC3851 names 
+ * are used as this RFC is ref'd in AS2 spec</li>
  * </ul>
  *
  * @author Sander Fieten (sander at chasquis-consulting.com)
