@@ -103,8 +103,8 @@ public class PModeFinder {
                     && !Utils.isNullOrEmpty(p.getLeg(ILeg.Label.REQUEST).getProtocol().getAddress()))
             	// Received message is a user message, so P-Mode shouldn't be configured for sending
                 continue;
-            else if (p.getLeg(ILeg.Label.REQUEST).getProtocol() == null
-            		|| Utils.isNullOrEmpty(p.getLeg(ILeg.Label.REQUEST).getProtocol().getAddress()))
+            else if (as2Message instanceof ISignalMessage && (p.getLeg(ILeg.Label.REQUEST).getProtocol() == null
+            		|| Utils.isNullOrEmpty(p.getLeg(ILeg.Label.REQUEST).getProtocol().getAddress())))
             	// Received message is a signal, so P-Mode shouldn't be configured for receiving  
             	continue;            	
 
