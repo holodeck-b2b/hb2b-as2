@@ -146,7 +146,7 @@ public class CryptoAlgorithmHelper {
      * @return          <code>true</code> if the algorithm is supported, <code>false</code> otherwise.
      */
     public static boolean isSupported(final String algorithm) {
-        return JCA_ASN1_MAP.containsKey(algorithm.toUpperCase());
+        return JCA_ASN1_MAP.containsKey(ensureJCAName(algorithm));
     }
 
     /**
