@@ -135,7 +135,7 @@ public class CreateSignature extends BaseHandler {
                                                                     .filter(a -> CryptoAlgorithmHelper.isSupported(a))
                                                                     .findFirst();
                     // If a supported digest algorithm is specified, combine with encryption algorithm of the public key
-                    signatureAlg = supportedAlg.isPresent() ? CryptoAlgorithmHelper.ensureJCAName(supportedAlg.get())
+                    signatureAlg = supportedAlg.isPresent() ? CryptoAlgorithmHelper.getRFC3851Name(supportedAlg.get())                    															   
                                                               + "WITH" + signingCert.getPublicKey().getAlgorithm()
                                                             : null;
                 }
@@ -182,7 +182,7 @@ public class CreateSignature extends BaseHandler {
 
                 log.debug("Completed message signing succesfully");
             } catch (CertificateEncodingException | ParseException | MessagingException
-                    | SMIMEException | OperatorCreationException signingFailure) {
+                    | SMIMEException | IllegalArgumentException | OperatorCreationException signingFailure) {
                 log.error("An error occurred while siging the message. Error details: "
                          + Utils.getExceptionTrace(signingFailure));
                 return InvocationResponse.ABORT;
