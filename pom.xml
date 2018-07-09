@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.holodeckb2b</groupId>
     <artifactId>hb2b-as2</artifactId>
-    <version>1.0.0-SNAPSHOT-2</version>
+    <version>1.0.0-SNAPSHOT-3</version>
     <packaging>jar</packaging>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -62,12 +62,6 @@
             <artifactId>axis2-transport-http</artifactId>
             <version>${axis2-version}</version>
             <scope>provided</scope>
-        </dependency>
-        
-        <dependency>
-            <groupId>com.sun.mail</groupId>
-            <artifactId>mailapi</artifactId>
-            <version>1.6.1</version>
         </dependency>
         <dependency>
 	        <groupId>org.bouncycastle</groupId>
