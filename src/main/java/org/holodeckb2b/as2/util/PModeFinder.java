@@ -135,11 +135,11 @@ public class PModeFinder {
                 multiple = true;
         }
 
-        if (hPMode == null && as2Message instanceof ISignalMessage) 
-        	hPMode = findUsingReference((ISignalMessage) as2Message, msgCtx);
-        
-        // Only return a single P-Mode
-        return !multiple ? hPMode : null;
+        if ((hPMode == null || multiple) && as2Message instanceof ISignalMessage) 
+        	return findUsingReference((ISignalMessage) as2Message, msgCtx);
+        else 
+        	// Only return a single P-Mode
+        	return !multiple ? hPMode : null;
     }
 
     /**
@@ -153,8 +153,8 @@ public class PModeFinder {
      */
     protected static IPMode findUsingReference(final ISignalMessage signal, final MessageContext msgCtx) {
         IPMode pmode = null;
-        // If this is a response to a sent message unit the signal must be a reference to that message unit
-        if (msgCtx.isServerSide()) {
+        // If the Signal is contained in a response it must be a reference to the sent message unit
+        if (!msgCtx.isServerSide()) {
             final Collection<IMessageUnitEntity>  reqMUs = MessageContextUtils.getSentMessageUnits(msgCtx);
             if (reqMUs.size() == 1)
                 // Request contained one message unit, assuming error applies to it, use its P-Mode
