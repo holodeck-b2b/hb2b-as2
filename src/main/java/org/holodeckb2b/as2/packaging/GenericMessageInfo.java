@@ -23,6 +23,7 @@ import java.util.Map;
 
 import javax.mail.internet.MailDateFormat;
 
+import org.holodeckb2b.as2.util.MimeDateParser;
 import org.holodeckb2b.common.messagemodel.util.MessageUnitUtils;
 import org.holodeckb2b.common.util.Utils;
 import org.holodeckb2b.interfaces.general.IProperty;
@@ -121,7 +122,7 @@ public class GenericMessageInfo {
         messageId = httpHeaders.get(MESSAGE_ID_HEADER);
         refToMessageId = httpHeaders.get(REF_TO_MESSAGE_ID_HEADER);
         try {
-            timestamp = new MailDateFormat().parse(httpHeaders.get(TIMESTAMP_HEADER));
+        	timestamp = new MimeDateParser(httpHeaders.get(TIMESTAMP_HEADER)).parse();
         } catch (NullPointerException | ParseException notaDate) {
             timestamp = null;
         }
