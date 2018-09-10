@@ -22,6 +22,7 @@ import org.apache.axis2.context.MessageContext;
 import org.holodeckb2b.as2.messagemodel.MDNMetadataFactory;
 import org.holodeckb2b.as2.messagemodel.MDNRequestOptions;
 import org.holodeckb2b.as2.util.Constants;
+import org.holodeckb2b.as4.receptionawareness.ReceiptCreatedEvent;
 import org.holodeckb2b.common.messagemodel.Receipt;
 import org.holodeckb2b.common.util.Utils;
 import org.holodeckb2b.ebms3.constants.MessageContextProperties;
@@ -93,6 +94,8 @@ public class CreateReceipt extends AbstractUserMessageHandler {
                 mc.setProperty(MessageContextProperties.RESPONSE_RECEIPT, receipt);
                 mc.setProperty(MessageContextProperties.RESPONSE_REQUIRED, true);
             }
+            // Trigger event to signal that the event was created (note there's no duplicate elimination)
+            HolodeckB2BCore.getEventProcessor().raiseEvent(new ReceiptCreatedEvent(userMessage, receipt, false), mc);            
         }
 
         return InvocationResponse.CONTINUE;

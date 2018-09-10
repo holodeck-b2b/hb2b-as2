@@ -37,6 +37,7 @@ import org.holodeckb2b.common.util.Utils;
 import org.holodeckb2b.ebms3.axis2.MessageContextUtils;
 import org.holodeckb2b.ebms3.errors.FailedDecryption;
 import org.holodeckb2b.ebms3.util.AbstractUserMessageHandler;
+import org.holodeckb2b.events.security.DecryptionFailedEvent;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
 import org.holodeckb2b.interfaces.persistency.entities.IUserMessageEntity;
 import org.holodeckb2b.interfaces.pmode.IEncryptionConfiguration;
@@ -101,6 +102,11 @@ public class DecryptMessage extends AbstractUserMessageHandler {
                                                                             userMessage.getMessageId()));
             log.debug("Set processing state of message to failed");
             HolodeckB2BCore.getStorageManager().setProcessingState(userMessage, ProcessingState.FAILURE);
+            // Raise event to inform external components about failure
+            HolodeckB2BCoreInterface.getEventProcessor().raiseEvent(
+            								new DecryptionFailedEvent(userMessage,
+            											new SecurityProcessingException("Private key not available!"))
+            								, mc);
             return InvocationResponse.CONTINUE;
         }
         try {
@@ -119,6 +125,10 @@ public class DecryptMessage extends AbstractUserMessageHandler {
                                                                             userMessage.getMessageId()));
             log.debug("Set processing state of message to failed");
             HolodeckB2BCore.getStorageManager().setProcessingState(userMessage, ProcessingState.FAILURE);
+            // Raise event to inform external components about failure
+            HolodeckB2BCoreInterface.getEventProcessor().raiseEvent(
+            												new DecryptionFailedEvent(userMessage, decryptionFailure)
+            											  , mc);            
         }
 
         return InvocationResponse.CONTINUE;

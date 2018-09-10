@@ -21,6 +21,7 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.text.ParseException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -41,16 +42,27 @@ import org.holodeckb2b.as2.messagemodel.MDNRequestOptions;
 import org.holodeckb2b.as2.packaging.MDNInfo;
 import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.as2.util.CryptoAlgorithmHelper;
+import org.holodeckb2b.as2.util.DigestHelper;
+import org.holodeckb2b.as2.util.SignedContentMetadata;
 import org.holodeckb2b.common.handler.BaseHandler;
 import org.holodeckb2b.common.util.Utils;
 import org.holodeckb2b.ebms3.axis2.MessageContextUtils;
+import org.holodeckb2b.events.security.SignatureCreatedEvent;
+import org.holodeckb2b.events.security.SigningFailedEvent;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
 import org.holodeckb2b.interfaces.messagemodel.IMessageUnit;
+import org.holodeckb2b.interfaces.messagemodel.IPayload;
+import org.holodeckb2b.interfaces.messagemodel.IUserMessage;
+import org.holodeckb2b.interfaces.persistency.entities.IMessageUnitEntity;
 import org.holodeckb2b.interfaces.pmode.IPMode;
 import org.holodeckb2b.interfaces.pmode.ISecurityConfiguration;
 import org.holodeckb2b.interfaces.pmode.ISigningConfiguration;
 import org.holodeckb2b.interfaces.pmode.ITradingPartnerConfiguration;
+import org.holodeckb2b.interfaces.processingmodel.ProcessingState;
+import org.holodeckb2b.interfaces.security.ISignedPartMetadata;
+import org.holodeckb2b.interfaces.security.SecurityProcessingException;
 import org.holodeckb2b.interfaces.security.X509ReferenceType;
+import org.holodeckb2b.module.HolodeckB2BCore;
 import org.holodeckb2b.pmode.PModeUtils;
 
 /**
@@ -105,7 +117,8 @@ public class CreateSignature extends BaseHandler {
         	return InvocationResponse.CONTINUE;
         
     	// Get signature configuration from P-Mode of the primary message unit
-        ISigningConfiguration signingCfg = getSignatureConfiguration(mc);
+        final IMessageUnitEntity primaryMsgUnit = MessageContextUtils.getPrimaryMessageUnit(mc);
+        final ISigningConfiguration signingCfg = getSignatureConfiguration(primaryMsgUnit);
 
         if (signingCfg != null) {
             log.debug("The message must be signed, getting signature configuration");
@@ -115,6 +128,11 @@ public class CreateSignature extends BaseHandler {
                                                                                    signingCfg.getCertificatePassword());
             if (signKeyPair == null) {
                 log.error("The configured key pair for signing is not available!");
+            	// Change the processing state of the message to failure and raise event to inform others                
+            	HolodeckB2BCore.getStorageManager().setProcessingState(primaryMsgUnit, ProcessingState.FAILURE);                
+                HolodeckB2BCoreInterface.getEventProcessor().raiseEvent(new SigningFailedEvent(primaryMsgUnit,
+										new SecurityProcessingException("Private key for signing not available"))
+                								, mc);                
                 return InvocationResponse.ABORT;
             }
             final X509Certificate signingCert = (X509Certificate) signKeyPair.getCertificate();
@@ -159,9 +177,9 @@ public class CreateSignature extends BaseHandler {
                 // digest algorithm is included in the name of the signature algorithm we only use the Signature Algoithm
                 // setting from the P-Mode ignoring a setting for the hash algorithm
                 smimeGenerator.addSignerInfoGenerator(new JcaSimpleSignerInfoGeneratorBuilder()
-                                                                    .setProvider(BouncyCastleProvider.PROVIDER_NAME)
-                                                                    .build(signatureAlg,
-                                                                           signKeyPair.getPrivateKey(), signingCert));
+												                    .setProvider(BouncyCastleProvider.PROVIDER_NAME)
+												                    .build(signatureAlg,
+												                           signKeyPair.getPrivateKey(), signingCert));
 
                 // We use the BST Key Reference Method as indicator to include the certificate with the signature
                 if (signingCfg.getKeyReferenceMethod() == X509ReferenceType.BSTReference) {
@@ -181,10 +199,27 @@ public class CreateSignature extends BaseHandler {
                 mc.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE, contentType);
 
                 log.debug("Completed message signing succesfully");
+                // Raise event to inform external components about the successful signing of the user message
+                if (primaryMsgUnit instanceof IUserMessage) {
+                	final IUserMessage userMessage = (IUserMessage) primaryMsgUnit;
+                	final HashMap<IPayload, ISignedPartMetadata> signedInfo = new HashMap<>();
+                	final String digestAlg = CryptoAlgorithmHelper.getDefaultDigestAlgorithm(signatureAlg);
+                	signedInfo.put(userMessage.getPayloads().iterator().next(),
+                					new SignedContentMetadata(digestAlg, DigestHelper.calculateDigest(digestAlg,
+                																					msgToSign, true))
+                					);
+                	HolodeckB2BCoreInterface.getEventProcessor().raiseEvent(
+                											new SignatureCreatedEvent(userMessage, signedInfo), mc);
+                }
             } catch (CertificateEncodingException | ParseException | MessagingException
                     | SMIMEException | IllegalArgumentException | OperatorCreationException signingFailure) {
                 log.error("An error occurred while siging the message. Error details: "
                          + Utils.getExceptionTrace(signingFailure));
+            	// Change the processing state of the message to failure and raise event to inform others                
+            	HolodeckB2BCore.getStorageManager().setProcessingState(primaryMsgUnit, ProcessingState.FAILURE);                
+                HolodeckB2BCoreInterface.getEventProcessor().raiseEvent(new SigningFailedEvent(primaryMsgUnit,
+										new SecurityProcessingException("Signing of message failed", signingFailure))
+                								, mc);                
                 return InvocationResponse.ABORT;
             }
         }
@@ -193,16 +228,15 @@ public class CreateSignature extends BaseHandler {
     }
 
     /**
-     * Gets the configuration for signing the message from the P-Mode of the primary message unit.
+     * Gets the configuration for signing the message from the P-Mode of the [given] primary message unit.
      *
-     * @param mc    The current message context
-     * @return      The signature configuration if included in the P-Mode,<br>
+     * @param primaryMU    The primary message unit
+     * @return      The signature configuration if included in the P-Mode of the message unit,<br>
      *              <code>null</code> if signing is not configured
      */
-    private ISigningConfiguration getSignatureConfiguration(final MessageContext mc) {
-        final IMessageUnit primaryMsgUnit = MessageContextUtils.getPrimaryMessageUnit(mc);
-        final IPMode pmode = primaryMsgUnit == null ? null :
-                                                HolodeckB2BCoreInterface.getPModeSet().get(primaryMsgUnit.getPModeId());
+    private ISigningConfiguration getSignatureConfiguration(final IMessageUnit primaryMU) {
+        final IPMode pmode = primaryMU == null ? null :
+                                                HolodeckB2BCoreInterface.getPModeSet().get(primaryMU.getPModeId());
         if (pmode == null)
             return null;
         else {

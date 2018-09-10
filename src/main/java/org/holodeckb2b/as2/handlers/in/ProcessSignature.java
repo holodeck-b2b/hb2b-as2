@@ -33,6 +33,7 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -62,11 +63,17 @@ import org.holodeckb2b.common.util.Utils;
 import org.holodeckb2b.ebms3.axis2.MessageContextUtils;
 import org.holodeckb2b.ebms3.constants.MessageContextProperties;
 import org.holodeckb2b.ebms3.errors.FailedAuthentication;
+import org.holodeckb2b.events.security.SignatureVerificationFailedEvent;
+import org.holodeckb2b.events.security.SignatureVerifiedEvent;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
+import org.holodeckb2b.interfaces.messagemodel.IPayload;
+import org.holodeckb2b.interfaces.messagemodel.ISignalMessage;
+import org.holodeckb2b.interfaces.messagemodel.IUserMessage;
 import org.holodeckb2b.interfaces.persistency.entities.IMessageUnitEntity;
 import org.holodeckb2b.interfaces.processingmodel.ProcessingState;
 import org.holodeckb2b.interfaces.security.ICertificateManager;
 import org.holodeckb2b.interfaces.security.ISignatureProcessingResult;
+import org.holodeckb2b.interfaces.security.ISignedPartMetadata;
 import org.holodeckb2b.interfaces.security.SecurityProcessingException;
 import org.holodeckb2b.interfaces.security.X509ReferenceType;
 import org.holodeckb2b.module.HolodeckB2BCore;
@@ -108,6 +115,16 @@ public class ProcessSignature extends BaseHandler {
         result = verify(mimeEnvelope, contentType.getParameter("micalg"));
         if (result.isSuccessful()) {
             log.debug("Message signature successfully verified");
+            // If the processed message is a User Message, the signature result applies to the (single) payload,
+            if (msgUnit instanceof IUserMessage) {
+            	final HashMap<IPayload, ISignedPartMetadata> signedInfo = new HashMap<>(1);
+            	signedInfo.put(((IUserMessage) msgUnit).getPayloads().iterator().next(), result.getHeaderDigest());
+            	result = new SignatureProcessingResult(result.getSigningCertificate(), 
+            										   result.getCertificateReferenceType(),
+            										   result.getSignatureAlgorithm(),
+            										   null, signedInfo
+            										   );		
+            }
             // Store result in message context for creating the Receipt
             mc.setProperty(MessageContextProperties.SIG_VERIFICATION_RESULT, result);
             // We don't need the signature info anymore, so we can replace the Mime Envelope in the message context
@@ -117,12 +134,22 @@ public class ProcessSignature extends BaseHandler {
             mc.setProperty(Constants.MC_MAIN_MIME_PART, signedPart);                  
             mc.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE,
                                                                     new ContentType(signedPart.getContentType()));
+            // Raise event to inform external components about the successful verification
+            final SignatureVerifiedEvent event = msgUnit instanceof IUserMessage ?
+            					  new SignatureVerifiedEvent((IUserMessage) msgUnit, null, result.getPayloadDigests())
+            					: new SignatureVerifiedEvent((ISignalMessage) msgUnit, result.getHeaderDigest());            
+            HolodeckB2BCoreInterface.getEventProcessor().raiseEvent(event, mc);               
         } else {
             log.warn("Signature verification failed!");
             MessageContextUtils.addGeneratedError(mc, new FailedAuthentication("Signature validation failed",
                                                                                msgUnit.getMessageId()));
             log.debug("Set processing state of message to failed");
             HolodeckB2BCore.getStorageManager().setProcessingState(msgUnit, ProcessingState.FAILURE);
+            // Raise event to inform external components about failure
+            HolodeckB2BCoreInterface.getEventProcessor().raiseEvent(
+            												new SignatureVerificationFailedEvent(msgUnit, 
+            																			 	result.getFailureReason())
+            											  , mc);               
         }
 
         return InvocationResponse.CONTINUE;
@@ -275,12 +302,12 @@ public class ProcessSignature extends BaseHandler {
             if (isValid) {
                 // When reporting the result we use the digest algorithm name from the Content-Type header as it
                 // expressed which naming format the sender used
-                final SignedContentMetadata signedInfo = new SignedContentMetadata(mimeMicAlgParameter,
-                                                                                   signatureInfo.getContentDigest());
                 return new SignatureProcessingResult(x509Certificate, keyReference,
                                              CryptoAlgorithmHelper.getSigningAlgName(signatureInfo.getDigestAlgOID(),
                                                                                  signatureInfo.getEncryptionAlgOID()),
-                                             signedInfo, null);
+                                             new SignedContentMetadata(mimeMicAlgParameter,
+                                                     signatureInfo.getContentDigest()), 
+                                             null);
             } else {
                 return new SignatureProcessingResult(new SecurityProcessingException("Digest mismatch"));
             }

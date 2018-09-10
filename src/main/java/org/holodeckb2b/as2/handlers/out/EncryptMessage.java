@@ -17,6 +17,7 @@
 package org.holodeckb2b.as2.handlers.out;
 
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
@@ -27,6 +28,7 @@ import javax.mail.internet.MimeBodyPart;
 
 import org.apache.axiom.mime.ContentType;
 import org.apache.axis2.context.MessageContext;
+import org.bouncycastle.cms.CMSException;
 import org.bouncycastle.cms.jcajce.JceCMSContentEncryptorBuilder;
 import org.bouncycastle.cms.jcajce.JceKeyTransRecipientInfoGenerator;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -36,6 +38,7 @@ import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.as2.util.CryptoAlgorithmHelper;
 import org.holodeckb2b.common.util.Utils;
 import org.holodeckb2b.ebms3.util.AbstractUserMessageHandler;
+import org.holodeckb2b.events.security.EncryptionFailedEvent;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
 import org.holodeckb2b.interfaces.messagemodel.IUserMessage;
 import org.holodeckb2b.interfaces.persistency.entities.IUserMessageEntity;
@@ -43,8 +46,11 @@ import org.holodeckb2b.interfaces.pmode.IEncryptionConfiguration;
 import org.holodeckb2b.interfaces.pmode.IPMode;
 import org.holodeckb2b.interfaces.pmode.ISecurityConfiguration;
 import org.holodeckb2b.interfaces.pmode.ITradingPartnerConfiguration;
+import org.holodeckb2b.interfaces.processingmodel.ProcessingState;
 import org.holodeckb2b.interfaces.security.ICertificateManager.CertificateUsage;
+import org.holodeckb2b.interfaces.security.SecurityProcessingException;
 import org.holodeckb2b.interfaces.security.X509ReferenceType;
+import org.holodeckb2b.module.HolodeckB2BCore;
 
 /**
  * Is the <i>out_flow</i> handler responsible for encryption of the AS2 message. It creates the S/MIME package with the
@@ -88,78 +94,105 @@ public class EncryptMessage extends AbstractUserMessageHandler {
 
     @Override
     protected InvocationResponse doProcessing(MessageContext mc, IUserMessageEntity userMessage) throws Exception {
-    	// First check that there is content that can be compressed
-    	final MimeBodyPart  msgToEncrypt = (MimeBodyPart) mc.getProperty(Constants.MC_MIME_ENVELOPE);
-        if (msgToEncrypt == null)
-        	return InvocationResponse.CONTINUE;
 
         // Get encryption configuration from P-Mode of the User Message
         IEncryptionConfiguration encryptionCfg = getEncryptionConfiguration(userMessage);
 
-        if (encryptionCfg != null) {
-            log.debug("The message must be encrypted, getting signature configuration");
-            // Get the certificate to be used for encryption
-            final X509Certificate encryptionCert = HolodeckB2BCoreInterface.getCertificateManager()
-                                                                      .getCertificate(CertificateUsage.Encryption,
-                                                                                      encryptionCfg.getKeystoreAlias());
+        if (encryptionCfg == null) {
+            log.debug("The message doesn't need to be encrypted");
+            return InvocationResponse.CONTINUE;
+        }
+        
+        try {
+        	encryptMessage(mc, encryptionCfg);
+        } catch (SecurityProcessingException encryptionFailed) {
+        	// Change the processing state of the message to failure and raise event to inform others
+        	HolodeckB2BCore.getStorageManager().setProcessingState(userMessage, ProcessingState.FAILURE);
+        	HolodeckB2BCore.getEventProcessor().raiseEvent(new EncryptionFailedEvent(userMessage, encryptionFailed),
+        													mc);
+        	// It makes no sense to continue processing, so abort here
+        	return InvocationResponse.ABORT;
+        }
+        
+        return InvocationResponse.CONTINUE;        	
+    }
+    
+    /**
+     * Performs the actual S/MIME encryption of the message.
+     * 
+     * @param mc				The message context
+     * @param encryptionCfg		The configuration for applying the encryption
+     * @throws SecurityProcessingException When the message cannot be successfully encrypted, for example because the
+     * 									   private key is not available or the requested encryption algorithm is not
+     * 									   supported
+     */
+    private void encryptMessage(final MessageContext mc, final IEncryptionConfiguration encryptionCfg) 
+    																			throws SecurityProcessingException {
 
-            if (encryptionCert == null) {
-                log.error("The configured certificate for encryption is not available!");
-                return InvocationResponse.ABORT;
-            }
-            final String encryptAlg = !Utils.isNullOrEmpty(encryptionCfg.getAlgorithm()) ? encryptionCfg.getAlgorithm()
-                                                                                         : DEFAULT_ALGORITHM;
-            if (!CryptoAlgorithmHelper.isSupported(encryptAlg)) {
-                log.error("The configured encryption algorithm [" + encryptAlg + "] is not supported!");
-                return InvocationResponse.ABORT;
-            }
+    	// First check that there is content that can be compressed
+    	final MimeBodyPart  msgToEncrypt = (MimeBodyPart) mc.getProperty(Constants.MC_MIME_ENVELOPE);
+        if (msgToEncrypt == null)
+        	return;
+        
+    	// Get the certificate to be used for encryption
+        final X509Certificate encryptionCert = HolodeckB2BCoreInterface.getCertificateManager()
+                                                                  .getCertificate(CertificateUsage.Encryption,
+                                                                                  encryptionCfg.getKeystoreAlias());
 
-            log.debug("Message will be encrypted using " + encryptAlg
-                      + " and certificate [Issuer/Serial=" + encryptionCert.getIssuerX500Principal().getName() + "/"
-                      + encryptionCert.getSerialNumber().toString() + "]");
-
-            try {
-                // Create the S/MIME generator
-                log.debug("Prepare S/MIME generator");
-                final SMIMEEnvelopedGenerator smimeGenerator = new SMIMEEnvelopedGenerator();
-
-                // Check if "SubjectKeyIdentifier" Key Reference Method is specified and create the key transport info
-                // generator accordingly
-                JceKeyTransRecipientInfoGenerator keyInfoGenerator;
-                if (encryptionCfg.getKeyTransport() != null &&
-                    encryptionCfg.getKeyTransport().getKeyReferenceMethod() == X509ReferenceType.KeyIdentifier) {
-                    log.debug("Using SubjectKeyIdentifier as key reference");
-                    final PublicKey key = encryptionCert.getPublicKey();
-                    final byte[] ski = MessageDigest.getInstance("SHA1").digest(key.getEncoded());
-                    keyInfoGenerator = new JceKeyTransRecipientInfoGenerator(ski, key);
-                } else {
-                    log.debug("Using Issuer And Serial as key reference");
-                    keyInfoGenerator = new JceKeyTransRecipientInfoGenerator(encryptionCert);
-                }
-                smimeGenerator.addRecipientInfoGenerator(keyInfoGenerator.setProvider(new BouncyCastleProvider()));
-
-                log.debug("Encrypting the message");
-                final MimeBodyPart encryptedMsg = smimeGenerator.generate(msgToEncrypt,
-                                            new JceCMSContentEncryptorBuilder(CryptoAlgorithmHelper.getOID(encryptAlg))
-                                                                             .setProvider(new BouncyCastleProvider())
-                                                                             .build()
-                                                                         );
-                log.debug("Message MIME part successfully encrypted, set as new MIME Envelope");
-                // Create the MIME body part to include in message context
-                mc.setProperty(Constants.MC_MIME_ENVELOPE, encryptedMsg);
-                final ContentType contentType = new ContentType(encryptedMsg.getContentType());
-                mc.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE, contentType);
-
-                log.debug("Completed message encryption succesfully");
-            } catch (CertificateEncodingException | ParseException | MessagingException
-                    | SMIMEException encryptFailure) {
-                log.error("An error occurred while encrypting the message. Error details: "
-                         + Utils.getExceptionTrace(encryptFailure));
-                throw encryptFailure;
-            }
+        if (encryptionCert == null) {
+            log.error("The configured certificate for encryption is not available!");
+            throw new SecurityProcessingException("Certificate for encryption not available");
+        }
+        final String encryptAlg = !Utils.isNullOrEmpty(encryptionCfg.getAlgorithm()) ? encryptionCfg.getAlgorithm()
+                                                                                     : DEFAULT_ALGORITHM;
+        if (!CryptoAlgorithmHelper.isSupported(encryptAlg)) {
+            log.error("The configured encryption algorithm [" + encryptAlg + "] is not supported!");
+            throw new SecurityProcessingException(encryptAlg + " is not supported");
         }
 
-        return InvocationResponse.CONTINUE;
+        log.debug("Message will be encrypted using " + encryptAlg
+                  + " and certificate [Issuer/Serial=" + encryptionCert.getIssuerX500Principal().getName() + "/"
+                  + encryptionCert.getSerialNumber().toString() + "]");
+
+        try {
+            // Create the S/MIME generator
+            log.debug("Prepare S/MIME generator");
+            final SMIMEEnvelopedGenerator smimeGenerator = new SMIMEEnvelopedGenerator();
+
+            // Check if "SubjectKeyIdentifier" Key Reference Method is specified and create the key transport info
+            // generator accordingly
+            JceKeyTransRecipientInfoGenerator keyInfoGenerator;
+            if (encryptionCfg.getKeyTransport() != null &&
+                encryptionCfg.getKeyTransport().getKeyReferenceMethod() == X509ReferenceType.KeyIdentifier) {
+                log.debug("Using SubjectKeyIdentifier as key reference");
+                final PublicKey key = encryptionCert.getPublicKey();
+                final byte[] ski = MessageDigest.getInstance("SHA1").digest(key.getEncoded());
+                keyInfoGenerator = new JceKeyTransRecipientInfoGenerator(ski, key);
+            } else {
+                log.debug("Using Issuer And Serial as key reference");
+                keyInfoGenerator = new JceKeyTransRecipientInfoGenerator(encryptionCert);
+            }
+            smimeGenerator.addRecipientInfoGenerator(keyInfoGenerator.setProvider(new BouncyCastleProvider()));
+
+            log.debug("Encrypting the message");
+            final MimeBodyPart encryptedMsg = smimeGenerator.generate(msgToEncrypt,
+                                        new JceCMSContentEncryptorBuilder(CryptoAlgorithmHelper.getOID(encryptAlg))
+                                                                         .setProvider(new BouncyCastleProvider())
+                                                                         .build()
+                                                                     );
+            log.debug("Message MIME part successfully encrypted, set as new MIME Envelope");
+            // Create the MIME body part to include in message context
+            mc.setProperty(Constants.MC_MIME_ENVELOPE, encryptedMsg);
+            final ContentType contentType = new ContentType(encryptedMsg.getContentType());
+            mc.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE, contentType);
+
+            log.debug("Completed message encryption succesfully");
+        } catch (CertificateEncodingException | ParseException | MessagingException
+                | SMIMEException | NoSuchAlgorithmException | CMSException encryptFailure) {
+            log.error("An error occurred while encrypting the message. Error details: "
+                     + Utils.getExceptionTrace(encryptFailure));
+            throw new SecurityProcessingException("Encryption failed", encryptFailure);
+        }
     }
 
     /**

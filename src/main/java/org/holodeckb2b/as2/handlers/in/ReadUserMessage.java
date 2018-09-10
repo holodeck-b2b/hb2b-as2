@@ -24,6 +24,7 @@ import org.holodeckb2b.as2.packaging.GenericMessageInfo;
 import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.common.handler.BaseHandler;
 import org.holodeckb2b.common.messagemodel.PartyId;
+import org.holodeckb2b.common.messagemodel.Payload;
 import org.holodeckb2b.common.messagemodel.Property;
 import org.holodeckb2b.common.messagemodel.TradingPartner;
 import org.holodeckb2b.common.messagemodel.UserMessage;
@@ -32,6 +33,7 @@ import org.holodeckb2b.common.util.Utils;
 import org.holodeckb2b.ebms3.axis2.MessageContextUtils;
 import org.holodeckb2b.ebms3.constants.MessageContextProperties;
 import org.holodeckb2b.ebms3.errors.InvalidHeader;
+import org.holodeckb2b.interfaces.messagemodel.IPayload;
 import org.holodeckb2b.module.HolodeckB2BCore;
 
 /**
@@ -95,6 +97,12 @@ public class ReadUserMessage extends BaseHandler {
         final TradingPartner receiver = new TradingPartner();
         receiver.addPartyId(new PartyId(toId, null));
         as2UserMessage.setReceiver(receiver);
+        // Although we cannot read the payload yet as it is still contained in the MIME package, we already create
+        // a place holder instance
+        final Payload payloadInfo = new Payload();
+        payloadInfo.setContainment(IPayload.Containment.BODY);
+        as2UserMessage.addPayload(payloadInfo);
+        // If the message contains a Subject header, we set it as a Message Property
         final String subject = generalInfo.getSubject();
         if (!Utils.isNullOrEmpty(subject))
             as2UserMessage.addMessageProperty(new Property("Subject", subject));

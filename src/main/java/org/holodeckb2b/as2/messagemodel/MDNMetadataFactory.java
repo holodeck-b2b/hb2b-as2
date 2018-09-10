@@ -16,28 +16,17 @@
  */
 package org.holodeckb2b.as2.messagemodel;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.security.DigestOutputStream;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.util.Enumeration;
 import java.util.Optional;
 
-import javax.mail.MessagingException;
 import javax.mail.internet.MimeBodyPart;
-import javax.mail.internet.MimeUtility;
 
 import org.apache.axis2.context.MessageContext;
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.io.output.NullOutputStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.holodeckb2b.as2.packaging.GenericMessageInfo;
 import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.as2.util.CryptoAlgorithmHelper;
+import org.holodeckb2b.as2.util.DigestHelper;
 import org.holodeckb2b.common.util.Utils;
 import org.holodeckb2b.ebms3.constants.MessageContextProperties;
 import org.holodeckb2b.interfaces.pmode.IPMode;
@@ -45,6 +34,7 @@ import org.holodeckb2b.interfaces.pmode.ISecurityConfiguration;
 import org.holodeckb2b.interfaces.pmode.ISigningConfiguration;
 import org.holodeckb2b.interfaces.pmode.ITradingPartnerConfiguration;
 import org.holodeckb2b.interfaces.security.ISignatureProcessingResult;
+import org.holodeckb2b.interfaces.security.SecurityProcessingException;
 
 /**
  * Is a <i>factory<i> class for {@link MDNMetadata} object that will create a new object based on the settings in the 
@@ -94,7 +84,7 @@ public class MDNMetadataFactory {
 													 mc.getProperty(MessageContextProperties.SIG_VERIFICATION_RESULT);
 			if (signatureResult != null) {
 				log.debug("Using digest algorithm from original message's signature");
-				digestAlgorithm = signatureResult.getHeaderDigest().getDigestAlgorithm();
+				digestAlgorithm = signatureResult.getPayloadDigests().values().iterator().next().getDigestAlgorithm();
 			} else {
 				if (mdnRequest != null && !Utils.isNullOrEmpty(mdnRequest.getPreferredHashingAlgorithms())) {
 					log.debug("Using digest algorithm from MDN reqest");
@@ -113,8 +103,17 @@ public class MDNMetadataFactory {
 			if (digestAlgorithm != null) {
 				log.debug("Calculate digest of original message using " + digestAlgorithm);
 				// Headers must be included in MIC when original message was signed or encrypted
-				base64Digest = calculateDigest(digestAlgorithm, (MimeBodyPart) mc.getProperty(Constants.MC_MAIN_MIME_PART),
-						signatureResult != null || mc.getProperty(Constants.MC_WAS_ENCRYPTED) != null);
+				try {
+					base64Digest = DigestHelper.calculateDigestAsString(digestAlgorithm, 
+															(MimeBodyPart) mc.getProperty(Constants.MC_MAIN_MIME_PART),
+															signatureResult != null 
+																|| mc.getProperty(Constants.MC_WAS_ENCRYPTED) != null);
+				} catch (SecurityProcessingException digestError) {
+					log.error("Could not calculate the digest for the original message! Error details: {}", 
+								digestError.getMessage());
+					base64Digest = null;
+					digestAlgorithm = null;
+				}
 			}
 		}
 
@@ -128,61 +127,4 @@ public class MDNMetadataFactory {
 							   base64Digest, 
 							   digestAlgorithm);
 	}
-	
-    /**	
-     * Calculates the digest for the given MIME part.}
-     * 
-     * @param digestAlgorithm	The digest algorithm to use for the calculation
-     * @param mainPart			The mime part
-     * @param includeHeaders	Indicator whether to include the headers in the digest
-     * @return					The Base64 encoded digest
-     */
-    private static String calculateDigest(final String digestAlgorithm, final MimeBodyPart mainPart,
-                                   final boolean includeHeaders) {
-        try {
-            log.debug("Getting digester from crypto provider");
-            final MessageDigest digester = MessageDigest.getInstance(
-                                                                 CryptoAlgorithmHelper.ensureJCAName(digestAlgorithm),
-                                                                 BouncyCastleProvider.PROVIDER_NAME);
-            if (includeHeaders) {
-                log.debug("Headers must be included in digest");
-                final byte[] CRLF = new byte[] { 13, 10 };
-                final Enumeration<?> headers = mainPart.getAllHeaderLines();
-                while (headers.hasMoreElements()) {
-                    digester.update(convertToBytes((String) headers.nextElement()));
-                    digester.update(CRLF);
-                }
-                // The CRLF separator between header and content
-                digester.update(CRLF);
-            }
-
-            log.debug("Digest the MIME part content");
-            try (final DigestOutputStream digestOS = new DigestOutputStream (new NullOutputStream (), digester);
-                 final OutputStream encodedOS = MimeUtility.encode(digestOS, mainPart.getEncoding())) {
-                mainPart.getDataHandler().writeTo(encodedOS);
-            }
-
-            log.debug("Completed digest calculation, returning Base64 encoded value");
-            return Base64.encodeBase64String(digester.digest());
-        } catch (NoSuchAlgorithmException | MessagingException | IOException | NoSuchProviderException ex) {
-            log.error("An error occurred while calculating the digest of the received message. Details: " +
-                      ex.getMessage());
-            return null;
-		}
-    }
-
-    /**
-     * Helper method to convert a String to a byte array
-     *
-     * @param s The String to convert
-     * @return  The byte array representation of the string
-     */
-    private static byte[] convertToBytes(final String s) {
-        final char[] chars = s.toCharArray();
-        final int N = chars.length;
-        final byte[] ret = new byte[N];
-        for (int i = 0; i < N; i++)
-          ret[i] = (byte) chars[i];
-        return ret;
-    }
 }
