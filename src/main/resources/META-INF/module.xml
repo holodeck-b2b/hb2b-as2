@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
 <module name="holodeckb2b-as2" class="org.holodeckb2b.as2.AS2Module">
-	<Description>This module contains the configuration of the Axis2 handlers for processing AS4 messages</Description>
+	<Description>This module contains the configuration of the Axis2 handlers for processing AS2 messages</Description>
 	<parameter name="HandledMessagingProtocol" locked="true">AS2</parameter>
 
     <InFlow>
