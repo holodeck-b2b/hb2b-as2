@@ -1,5 +1,5 @@
 # Holodeck B2B AS2
-This project contains an extension for Holodeck B2B that adds support for the AS2 message exchange protocol to the Holodeck B2B Core. The primary reason for developing this extension is to enable an easy migration from AS2 to AS4 using just one gateway. Using this extension switching from AS2 to AS4 is just a matter of updating the P-Mode of the message exchange to be migrated. Note that this is not a standalone implementation of AS2.
+This project contains an extension for Holodeck B2B that adds support for the AS2 message exchange protocol to the Holodeck B2B Core. It is meant to enable an easy migration from AS2 to AS4 using just one gateway. Using this extension, switching from AS2 to AS4 is simply a matter of updating the P-Mode of the message exchange to be migrated. 
 
 ## Features
 * P-Mode based configuration
@@ -9,7 +9,7 @@ This project contains an extension for Holodeck B2B that adds support for the AS
 * Synchronous and asynchronous MDNs
 
 __________________
-For more information on using Holodeck B2B visit the website at http://holodeck-b2b.org  
+For more information on using Holodeck B2B visit http://holodeck-b2b.org  
 Lead developer: Sander Fieten  
 Code hosted at https://github.com/holodeck-b2b/hb2b-as2  
 Issue tracker https://github.com/holodeck-b2b/hb2b-as2/issues  
