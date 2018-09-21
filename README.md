@@ -22,8 +22,8 @@ This extension requires that you have already deployed a Holodeck B2B version 4.
 To add this extension to a Holodeck B2B instance follow these six steps. Please note that you cannot install the extension in a running Holodeck B2B instance.
 1. Build the extension or download the latest release package. You should now have the `holodeck-as2-«version».jar` and `holodeck-as2-msh.aar` files available.
 2. Copy the jar file to the `lib` directory of the Holodeck B2B instance and copy the aar file to the `repository/services` directory.
-3. In `conf/axis2.xml` change the implementation class for both the _http_ and _https_ `transportReceiver` to _org.holodeckb2b.as2.axis2.http.AS2EnabledListener_
-4. In `conf/holodeckb2b.xml` change the value for the _PModeValidator_ parameter to _org.holodeckb2b.as2.PModeValidator_. Note that this parameter is not used by defauult and you therefore may need to uncomment this element.
+3. In `conf/axis2.xml` change the implementation class for the _http_ `transportReceiver` to _org.holodeckb2b.as2.axis2.http.AS2EnabledListener_
+4. In `conf/holodeckb2b.xml` change the value for the _PModeValidator_ parameter to _org.holodeckb2b.as2.PModeValidator_. Note that this parameter is not used by default and you therefore may need to uncomment this element.
 5. In the `conf/workers.xml` file change the implementation class for the _senderWorker_ to _org.holodeckb2b.as2.AS2EnabledSenderWorker_.
 6. Change the logging configuration to keep logging the same as default by adding the following child element to `Loggers` in `conf/log4j2.xml`:
 `<Logger name="org.holodeckb2b.as2.AS2EnabledSenderWorker" level="WARN"/>`
@@ -76,7 +76,7 @@ Please document the steps to reproduce your problem in as much detail as you can
 Version numbering follows the [Semantic versioning](http://semver.org/) approach.
 
 ## License
-The Holodeck B2B AS2 extension is licensed under the General Public License V3 (GPLv3) which is included in the LICENCE file in the root of the project.
+The Holodeck B2B AS2 extension is licensed under the General Public License V3 (GPLv3) which is included in the LICENSE file in the root of the project.
 This means you are not allowed to integrate Holodeck B2B AS2 in a closed source product. You can however use Holodeck B2B AS2 together with your closed source product as long as you only use the interfaces (API's) in the [Core project|https://github.com/holodeck-b2b/Holodeck-B2B] to communicate with Holodeck B2B. For this purpose, the interfaces module is licensed under the Lesser General Public License V3 (LGPLv3).
 
 ## Support
