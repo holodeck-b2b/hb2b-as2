@@ -77,7 +77,7 @@ public class ReadErrorMessage extends BaseHandler {
             // The error in the disposition modifier is also included in this first error
             if (mdn.getModifierSeverity() != null)
                 error.setSeverity(mdn.getModifierSeverity() == MDNInfo.ModifierSeverity.warning
-                                                         ? IEbmsError.Severity.WARNING : IEbmsError.Severity.FAILURE);
+                                                         ? IEbmsError.Severity.warning : IEbmsError.Severity.failure);
             error.setMessage(mdn.getModifierText());
             // Convert the MDN data to XML representation and store as ErrorDetails
             error.setErrorDetail(new MDNMetadata(mdn).toString());
@@ -88,7 +88,7 @@ public class ReadErrorMessage extends BaseHandler {
                 final EbmsError err = new EbmsError();
                 error.setErrorCode("AS2:0001");
                 err.setOrigin("AS2");
-                err.setSeverity(IEbmsError.Severity.FAILURE);
+                err.setSeverity(IEbmsError.Severity.failure);
                 err.setMessage(f);
                 errorMsg.addError(err);
             }
@@ -96,7 +96,7 @@ public class ReadErrorMessage extends BaseHandler {
                 final EbmsError err = new EbmsError();
                 error.setErrorCode("AS2:0001");
                 err.setOrigin("AS2");
-                err.setSeverity(IEbmsError.Severity.FAILURE);
+                err.setSeverity(IEbmsError.Severity.failure);
                 err.setMessage(e);
                 errorMsg.addError(err);
             }
@@ -104,7 +104,7 @@ public class ReadErrorMessage extends BaseHandler {
                 final EbmsError err = new EbmsError();
                 error.setErrorCode("AS2:0001");
                 err.setOrigin("AS2");
-                err.setSeverity(IEbmsError.Severity.WARNING);
+                err.setSeverity(IEbmsError.Severity.warning);
                 err.setMessage(w);
                 errorMsg.addError(err);
             }

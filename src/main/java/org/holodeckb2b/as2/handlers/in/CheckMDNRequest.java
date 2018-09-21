@@ -102,15 +102,12 @@ public class CheckMDNRequest extends AbstractUserMessageHandler {
             final Map<String, MDNOption> parameterMap = new HashMap<>(parameters.length);
             for (String p : parameters) {
                 final int nameEnd = p.indexOf('=');
-                final String name = p.substring(0, nameEnd).toLowerCase().trim();
+                final String name = p.substring(0, nameEnd).toLowerCase();
                 MDNOption o = new MDNOption();
                 final int importanceEnd = p.indexOf(',', nameEnd);
                 o.required = "required".equalsIgnoreCase(p.substring(nameEnd+1, importanceEnd));
                 // Now split the remaining value part into separate values
-                final String[] values = p.substring(importanceEnd + 1).split(",");
-                o.value = new String[values.length];
-                for (int i = 0; i < values.length; i++)
-                	o.value[i] = values[i].trim();                
+                o.value = p.substring(importanceEnd + 1).split(",");
                 // Add parameter to the map
                 parameterMap.put(name, o);
             }

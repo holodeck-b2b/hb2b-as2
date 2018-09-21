@@ -262,7 +262,7 @@ public class MDNInfo extends GenericMessageInfo {
         this.dispositionType = "MDNRequest".equals(err.getCategory()) ? DispositionType.failed : DispositionType.processed;
         // HB2B / AS4 Errors only have warning and failure severity, but since error is used in disposition failure is
         // converted to error
-        this.dispositionSeverity = IEbmsError.Severity.WARNING == err.getSeverity() ? ModifierSeverity.warning
+        this.dispositionSeverity = IEbmsError.Severity.warning == err.getSeverity() ? ModifierSeverity.warning
                                                                                     : ModifierSeverity.error;
         this.dispositionModifierText = err.getMessage();
         try {
@@ -283,7 +283,7 @@ public class MDNInfo extends GenericMessageInfo {
         // Now add all other errors
         while (errors.hasNext()) {
             err = errors.next();
-            if (IEbmsError.Severity.FAILURE == err.getSeverity())
+            if (IEbmsError.Severity.failure == err.getSeverity())
                 this.errors.add(err.getMessage());
             else
                 this.warnings.add(err.getMessage());

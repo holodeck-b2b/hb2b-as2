@@ -29,6 +29,7 @@ import org.holodeckb2b.common.util.Utils;
 import org.holodeckb2b.common.workerpool.AbstractWorkerTask;
 import org.holodeckb2b.ebms3.axis2.Axis2Sender;
 import org.holodeckb2b.ebms3.axis2.ebMS3SendService;
+import org.holodeckb2b.interfaces.messagemodel.Direction;
 import org.holodeckb2b.interfaces.messagemodel.IMessageUnit;
 import org.holodeckb2b.interfaces.persistency.PersistenceException;
 import org.holodeckb2b.interfaces.persistency.entities.IMessageUnitEntity;
@@ -59,7 +60,7 @@ public class AS2EnabledSenderWorker extends AbstractWorkerTask {
             log.debug("Getting list of message units to send");
             List<IMessageUnitEntity> msgUnitsToSend = HolodeckB2BCore.getQueryManager()
                                                                .getMessageUnitsInState(IMessageUnit.class,
-                                                                IMessageUnit.Direction.OUT,
+                                                                Direction.OUT,
                                                                 new ProcessingState[] {ProcessingState.READY_TO_PUSH});
 
             if (!Utils.isNullOrEmpty(msgUnitsToSend)) {
