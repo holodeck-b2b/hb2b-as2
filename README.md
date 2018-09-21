@@ -42,10 +42,10 @@ As AS2 is always a push the sender and receiver of the AS2 message are configure
 
 Signing and encryption of the messages is configured the same way as for AS4 message exchanges but with the following changes:
 * **Signing/KeyReferenceMethod** : can be used to indicate whether the certificate used for signing must be included with the signature. If this is required use value _BSTReference_.
-* **Signing/Algorithm** : the value for this parameter should be taken from the list of supported [signing algorithms](supported_crypto_algorithms.md).
+* **Signing/Algorithm** : the value for this parameter should be taken from the list of supported [cryptographic algorithms](supported_crypto_algorithms.md).
 * **Signing/HashFunction** : the hash function is derived from the signing algorithm and cannot be specified separately. This parameter is now used to indicate which digest naming format should be used in the messages. By default the names as specified in RFC3851 are used as this RFC is referenced by the AS2 specification. Set this parameter to _RFC5751_ to use the naming format from that RFC.
 * **Encryption/KeyTransport** : The only setting in this group applicable to AS2 message exchanges is the **KeyReferenceMethod** which can have value _IssuerSerial_ or _KeyIdentifier_ to specify how the key used for encryption should be identified. The default value is _IssuerSerial_.
-* **Encryption/Algorithm** : like the signing algorithm the value for this parameter should be taken from the list of supported [signing algorithms](supported_crypto_algorithms.md).
+* **Encryption/Algorithm** : like the signing algorithm the value for this parameter should be taken from the list of supported [cryptographic algorithms](supported_crypto_algorithms.md).
 
 #### Settings for sending
 When configuring a P-Mode for sending of AS2 messages the following parameters are used in a different way than for AS4:
