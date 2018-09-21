@@ -40,8 +40,12 @@
         <handler name="ReadUserMessage" class="org.holodeckb2b.as2.handlers.in.ReadUserMessage">
             <order phase="protocolInPhase" after="ReadMDNMetadata" />
         </handler>
-        <handler name="ReadReceipt" class="org.holodeckb2b.as2.handlers.in.ReadReceipt">
+        <!-- Handler to get the parameters related to the User Message for responding --> 
+        <handler name="GetMDNRequest" class="org.holodeckb2b.as2.handlers.in.CheckMDNRequest">
             <order phase="protocolInPhase" after="ReadUserMessage"/>
+        </handler>        
+        <handler name="ReadReceipt" class="org.holodeckb2b.as2.handlers.in.ReadReceipt">
+            <order phase="protocolInPhase" after="GetMDNRequest"/>
         </handler>
         <handler name="ReadError" class="org.holodeckb2b.as2.handlers.in.ReadErrorMessage">
             <order phase="protocolInPhase" after="ReadReceipt"/>
@@ -85,12 +89,9 @@
         <handler name="DeliverUserMessage" class="org.holodeckb2b.ebms3.handlers.inflow.DeliverUserMessage">
             <order phase="protocolInPhase" after="CustomValidation"/>
         </handler>
-        <!-- Handlers to get the parameters for and creating the Receipt -->
-        <handler name="GetMDNRequest" class="org.holodeckb2b.as2.handlers.in.CheckMDNRequest">
-            <order phase="protocolInPhase" after="DeliverUserMessage"/>
-        </handler>
+        <!-- Handler for creating the Receipt -->
         <handler name="CreateReceipt" class="org.holodeckb2b.as2.handlers.in.CreateReceipt">
-            <order phase="protocolInPhase" after="GetMDNRequest"/>
+            <order phase="protocolInPhase" after="DeliverUserMessage"/>
         </handler>
         <!--
             Process the receipts and errors, same as for ebMS3/AS4
