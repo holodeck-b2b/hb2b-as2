@@ -36,9 +36,9 @@ Another important difference is the configuration of when to send a response mes
 The sections below explain the AS2 specific P-Mode settings.
 
 #### Common settings for both sending and receiving
-To indicate that a P-Mode configures an AS2 message exchange the MEP Binding parameter must be set _http://holodeck-b2b.org/pmode/mepBinding/as2_.
+To indicate that a P-Mode configures an AS2 message exchange the MEP Binding parameter must be set to _http://holodeck-b2b.org/pmode/mepBinding/as2_.
 
-As AS2 is always a push the sender and receiver of the AS2 message are configured in using the _Initiator_ respectively _Responder_ P-Mode parameters. There should be only one identifier without type attribute per trading partner.
+As AS2 is always a push the sender and receiver of the AS2 message are configured in the _Initiator_ respectively _Responder_ P-Mode parameters. There should be only one identifier without type attribute per trading partner.
 
 Signing and encryption of the messages is configured the same way as for AS4 message exchanges but with the following changes:
 * **Signing/KeyReferenceMethod** : can be used to indicate whether the certificate used for signing must be included with the signature. If this is required use value _BSTReference_.
@@ -47,14 +47,14 @@ Signing and encryption of the messages is configured the same way as for AS4 mes
 * **Encryption/KeyTransport** : The only setting in this group applicable to AS2 message exchanges is the **KeyReferenceMethod** which can have value _IssuerSerial_ or _KeyIdentifier_ to specify how the key used for encryption should be identified. The default value is _IssuerSerial_.
 * **Encryption/Algorithm** : like the signing algorithm the value for this parameter should be taken from the list of supported [cryptographic algorithms](supported_crypto_algorithms.md).
 
-#### Settings for sending
+#### Settings for sending messages
 When configuring a P-Mode for sending of AS2 messages the following parameters are used in a different way than for AS4:
 * **Receipt** : To request a asynchronous MDN from the receiver of the sent message add the _To_ setting to the Receipt configuration and specify the URL where the receiver should send the MDN to (probably the URL where Holodeck B2B receives the AS2 messages).
 * **Service** and **Action** : Although AS2 doesn't support the Service and Action meta-data they must be available when the message is submitted to Holodeck B2B. It is therefore recommended to set these parameters in the P-Mode.
 * **UseAS4Compression** : This parameter is also used to enable AS2 message compression.
 
-#### Settings receiving
-There are no AS2 specific settings for receiving messages. Just note that when the P-Mode is used, this overrides the response parameters as included in the MDN request from the sender included with the received message. This means that when a Receipt or Error response is specified in the P-Mode there will always be an MDN (for errors this of course depends on whether an MDN can be created). If the P-Mode specifies that Receipts or Errors must be reported asynchronously this will also override the MDN request. If you specify synchronous responses the MDN request can override this to asynchronous.
+#### Settings for receiving messages
+There are no AS2 specific settings for receiving messages. Do note that when the P-Mode is used, this overrides the response parameters as included in the MDN request from the sender included with the received message. This means that when a Receipt or Error response is specified in the P-Mode there will always be an MDN (for errors this of course depends on whether an MDN can be created). If the P-Mode specifies that Receipts or Errors must be reported asynchronously this will also override the MDN request. If you specify synchronous responses the MDN request can override this to asynchronous.
 
 When an MDN is received this is always transformed into a Receipt or Error Signal. The information included in the MDN is included as XML in the Receipt and Error messages. When using the default Holodeck B2B delivery methods this means that the MDN info is only available for Error Signals as the Receipt content is not included in the delivery.
 
