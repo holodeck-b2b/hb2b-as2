@@ -43,6 +43,7 @@ import javax.mail.internet.MimeMultipart;
 
 import org.apache.axiom.mime.ContentType;
 import org.apache.axis2.context.MessageContext;
+import org.apache.commons.logging.Log;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cms.CMSException;
@@ -63,8 +64,8 @@ import org.holodeckb2b.common.util.Utils;
 import org.holodeckb2b.ebms3.axis2.MessageContextUtils;
 import org.holodeckb2b.ebms3.constants.MessageContextProperties;
 import org.holodeckb2b.ebms3.errors.FailedAuthentication;
-import org.holodeckb2b.events.security.SignatureVerificationFailedEvent;
-import org.holodeckb2b.events.security.SignatureVerifiedEvent;
+import org.holodeckb2b.events.security.SignatureVerificationFailure;
+import org.holodeckb2b.events.security.SignatureVerified;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
 import org.holodeckb2b.interfaces.messagemodel.IPayload;
 import org.holodeckb2b.interfaces.messagemodel.ISignalMessage;
@@ -135,9 +136,9 @@ public class ProcessSignature extends BaseHandler {
             mc.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE,
                                                                     new ContentType(signedPart.getContentType()));
             // Raise event to inform external components about the successful verification
-            final SignatureVerifiedEvent event = msgUnit instanceof IUserMessage ?
-            					  new SignatureVerifiedEvent((IUserMessage) msgUnit, null, result.getPayloadDigests())
-            					: new SignatureVerifiedEvent((ISignalMessage) msgUnit, result.getHeaderDigest());            
+            final SignatureVerified event = msgUnit instanceof IUserMessage ?
+            					  new SignatureVerified((IUserMessage) msgUnit, null, result.getPayloadDigests())
+            					: new SignatureVerified((ISignalMessage) msgUnit, result.getHeaderDigest());            
             HolodeckB2BCoreInterface.getEventProcessor().raiseEvent(event, mc);               
         } else {
             log.warn("Signature verification failed!");
@@ -147,7 +148,7 @@ public class ProcessSignature extends BaseHandler {
             HolodeckB2BCore.getStorageManager().setProcessingState(msgUnit, ProcessingState.FAILURE);
             // Raise event to inform external components about failure
             HolodeckB2BCoreInterface.getEventProcessor().raiseEvent(
-            												new SignatureVerificationFailedEvent(msgUnit, 
+            												new SignatureVerificationFailure(msgUnit, 
             																			 	result.getFailureReason())
             											  , mc);               
         }

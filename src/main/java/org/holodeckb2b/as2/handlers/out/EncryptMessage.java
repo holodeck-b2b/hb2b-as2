@@ -38,7 +38,7 @@ import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.as2.util.CryptoAlgorithmHelper;
 import org.holodeckb2b.common.util.Utils;
 import org.holodeckb2b.ebms3.util.AbstractUserMessageHandler;
-import org.holodeckb2b.events.security.EncryptionFailedEvent;
+import org.holodeckb2b.events.security.EncryptionFailure;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
 import org.holodeckb2b.interfaces.messagemodel.IUserMessage;
 import org.holodeckb2b.interfaces.persistency.entities.IUserMessageEntity;
@@ -108,7 +108,7 @@ public class EncryptMessage extends AbstractUserMessageHandler {
         } catch (SecurityProcessingException encryptionFailed) {
         	// Change the processing state of the message to failure and raise event to inform others
         	HolodeckB2BCore.getStorageManager().setProcessingState(userMessage, ProcessingState.FAILURE);
-        	HolodeckB2BCore.getEventProcessor().raiseEvent(new EncryptionFailedEvent(userMessage, encryptionFailed),
+        	HolodeckB2BCore.getEventProcessor().raiseEvent(new EncryptionFailure(userMessage, encryptionFailed),
         													mc);
         	// It makes no sense to continue processing, so abort here
         	return InvocationResponse.ABORT;

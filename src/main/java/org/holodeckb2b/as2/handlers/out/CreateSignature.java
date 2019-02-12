@@ -32,6 +32,7 @@ import javax.mail.internet.MimeMultipart;
 import org.apache.axiom.mime.ContentType;
 import org.apache.axis2.context.MessageContext;
 import org.apache.axis2.transport.http.HTTPConstants;
+import org.apache.commons.logging.Log;
 import org.bouncycastle.cert.jcajce.JcaCertStore;
 import org.bouncycastle.cms.jcajce.JcaSimpleSignerInfoGeneratorBuilder;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -47,8 +48,8 @@ import org.holodeckb2b.as2.util.SignedContentMetadata;
 import org.holodeckb2b.common.handler.BaseHandler;
 import org.holodeckb2b.common.util.Utils;
 import org.holodeckb2b.ebms3.axis2.MessageContextUtils;
-import org.holodeckb2b.events.security.SignatureCreatedEvent;
-import org.holodeckb2b.events.security.SigningFailedEvent;
+import org.holodeckb2b.events.security.SignatureCreated;
+import org.holodeckb2b.events.security.SigningFailure;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
 import org.holodeckb2b.interfaces.messagemodel.IMessageUnit;
 import org.holodeckb2b.interfaces.messagemodel.IPayload;
@@ -130,7 +131,7 @@ public class CreateSignature extends BaseHandler {
                 log.error("The configured key pair for signing is not available!");
             	// Change the processing state of the message to failure and raise event to inform others                
             	HolodeckB2BCore.getStorageManager().setProcessingState(primaryMsgUnit, ProcessingState.FAILURE);                
-                HolodeckB2BCoreInterface.getEventProcessor().raiseEvent(new SigningFailedEvent(primaryMsgUnit,
+                HolodeckB2BCoreInterface.getEventProcessor().raiseEvent(new SigningFailure(primaryMsgUnit,
 										new SecurityProcessingException("Private key for signing not available"))
                 								, mc);                
                 return InvocationResponse.ABORT;
@@ -209,7 +210,7 @@ public class CreateSignature extends BaseHandler {
                 																					msgToSign, true))
                 					);
                 	HolodeckB2BCoreInterface.getEventProcessor().raiseEvent(
-                											new SignatureCreatedEvent(userMessage, signedInfo), mc);
+                													new SignatureCreated(userMessage, signedInfo), mc);
                 }
             } catch (CertificateEncodingException | ParseException | MessagingException
                     | SMIMEException | IllegalArgumentException | OperatorCreationException signingFailure) {
@@ -217,7 +218,7 @@ public class CreateSignature extends BaseHandler {
                          + Utils.getExceptionTrace(signingFailure));
             	// Change the processing state of the message to failure and raise event to inform others                
             	HolodeckB2BCore.getStorageManager().setProcessingState(primaryMsgUnit, ProcessingState.FAILURE);                
-                HolodeckB2BCoreInterface.getEventProcessor().raiseEvent(new SigningFailedEvent(primaryMsgUnit,
+                HolodeckB2BCoreInterface.getEventProcessor().raiseEvent(new SigningFailure(primaryMsgUnit,
 										new SecurityProcessingException("Signing of message failed", signingFailure))
                 								, mc);                
                 return InvocationResponse.ABORT;
