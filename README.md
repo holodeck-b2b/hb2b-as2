@@ -16,7 +16,7 @@ Issue tracker https://github.com/holodeck-b2b/hb2b-as2/issues
 
 ## Installation
 ### Prerequisites  
-This extension requires that you have already deployed Holodeck B2B version 4.0 or later. 
+This extension requires that you have already deployed Holodeck B2B version 4.1.0 or later. 
 You will also need the Bouncy Castle security libraries for processing S/MIME. Download these libraries from Maven Central and copy them to the `lib` directory of the Holodeck B2B instance. The libraries you download *must* have the same version number as the one already installed in the Holodeck B2B instance (check the `bcprov-jdk15on` file). You need to install both the [bcmail](http://repo2.maven.org/maven2/org/bouncycastle/bcmail-jdk15on) and [bcpkix](http://repo2.maven.org/maven2/org/bouncycastle/bcpkix-jdk15on) library.
 
 ### Set up  
