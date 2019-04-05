@@ -3,7 +3,7 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## 1.1.0
-###### Unreleased
+###### 2019-04-05
 
 ### Changed
 * Adapted to Holodeck B2B 4.1.0: using new event names and new processing context object.
