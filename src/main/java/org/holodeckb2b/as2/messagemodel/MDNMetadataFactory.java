@@ -20,15 +20,14 @@ import java.util.Optional;
 
 import javax.mail.internet.MimeBodyPart;
 
-import org.apache.axis2.context.MessageContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.holodeckb2b.as2.packaging.GenericMessageInfo;
 import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.as2.util.CryptoAlgorithmHelper;
 import org.holodeckb2b.as2.util.DigestHelper;
+import org.holodeckb2b.common.handler.MessageProcessingContext;
 import org.holodeckb2b.common.util.Utils;
-import org.holodeckb2b.ebms3.constants.MessageContextProperties;
 import org.holodeckb2b.interfaces.pmode.IPMode;
 import org.holodeckb2b.interfaces.pmode.ISecurityConfiguration;
 import org.holodeckb2b.interfaces.pmode.ISigningConfiguration;
@@ -56,7 +55,7 @@ public class MDNMetadataFactory {
 	 * @return	The meta-data of the MDN for the received message  
 	 */
 	public static MDNMetadata createMDN(final IPMode pmode, final MDNRequestOptions mdnRequest,
-										final MessageContext mc) {
+										final MessageProcessingContext procCtx) {
 		// First check if the MDN should be signed, based on P-Mode configuration or MDN request
 		boolean signedMDN = false;
 		final ITradingPartnerConfiguration responderCfg = pmode != null ? pmode.getResponder() : null;
@@ -81,7 +80,7 @@ public class MDNMetadataFactory {
 		if (signedMDN) {
 			log.debug("MDN should be signed => determine digest algorithm to use for MIC");
 			ISignatureProcessingResult signatureResult = (ISignatureProcessingResult) 
-													 mc.getProperty(MessageContextProperties.SIG_VERIFICATION_RESULT);
+												procCtx.getSecurityProcessingResults(ISignatureProcessingResult.class);
 			if (signatureResult != null) {
 				log.debug("Using digest algorithm from original message's signature");
 				digestAlgorithm = signatureResult.getPayloadDigests().values().iterator().next().getDigestAlgorithm();
@@ -105,9 +104,9 @@ public class MDNMetadataFactory {
 				// Headers must be included in MIC when original message was signed or encrypted
 				try {
 					base64Digest = DigestHelper.calculateDigestAsString(digestAlgorithm, 
-															(MimeBodyPart) mc.getProperty(Constants.MC_MAIN_MIME_PART),
+															(MimeBodyPart) procCtx.getProperty(Constants.MC_MAIN_MIME_PART),
 															signatureResult != null 
-																|| mc.getProperty(Constants.MC_WAS_ENCRYPTED) != null);
+																|| procCtx.getProperty(Constants.MC_WAS_ENCRYPTED) != null);
 				} catch (SecurityProcessingException digestError) {
 					log.error("Could not calculate the digest for the original message! Error details: {}", 
 								digestError.getMessage());
@@ -117,7 +116,7 @@ public class MDNMetadataFactory {
 			}
 		}
 
-		GenericMessageInfo generalMetaData = (GenericMessageInfo) mc.getProperty(Constants.MC_AS2_GENERAL_DATA);
+		GenericMessageInfo generalMetaData = (GenericMessageInfo) procCtx.getProperty(Constants.MC_AS2_GENERAL_DATA);
 		return new MDNMetadata(mdnRequest, 
 							   generalMetaData.getToPartyId(), 
 							   generalMetaData.getFromPartyId(),

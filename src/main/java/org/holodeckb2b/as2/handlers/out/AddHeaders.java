@@ -19,13 +19,13 @@ package org.holodeckb2b.as2.handlers.out;
 
 import java.util.Map;
 
-import org.apache.axis2.context.MessageContext;
 import org.apache.axis2.transport.http.HTTPConstants;
+import org.apache.commons.logging.Log;
 import org.holodeckb2b.as2.packaging.GenericMessageInfo;
 import org.holodeckb2b.as2.util.Constants;
-import org.holodeckb2b.common.handler.BaseHandler;
+import org.holodeckb2b.common.handler.AbstractBaseHandler;
+import org.holodeckb2b.common.handler.MessageProcessingContext;
 import org.holodeckb2b.common.util.Utils;
-import org.holodeckb2b.ebms3.axis2.MessageContextUtils;
 import org.holodeckb2b.interfaces.messagemodel.IMessageUnit;
 import org.holodeckb2b.interfaces.messagemodel.IUserMessage;
 
@@ -38,37 +38,30 @@ import org.holodeckb2b.interfaces.messagemodel.IUserMessage;
  *
  * @author Sander Fieten (sander at holodeck-b2b.org)
  */
-public class AddHeaders extends BaseHandler {
-
-	/**
-	 * Errors can be reported both in the normal as well in the fault flow
-	 */
-    @Override
-    protected byte inFlows() {
-        return OUT_FLOW | OUT_FAULT_FLOW;
-    }
+public class AddHeaders extends AbstractBaseHandler {
 
     @Override
-    protected InvocationResponse doProcessing(MessageContext mc) throws Exception {
+    protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Log log) throws Exception {
 
     	log.debug("Getting already set HTTP headers");
         @SuppressWarnings("unchecked")
-		Map<String, String> httpHeaders = (Map<String, String>) mc.getProperty(HTTPConstants.HTTP_HEADERS);
+		Map<String, String> httpHeaders = (Map<String, String>) procCtx.getParentContext()
+																	   .getProperty(HTTPConstants.HTTP_HEADERS);
 
         // Check whether this message contains a User or Signal Message
-        final IMessageUnit primaryMsg = MessageContextUtils.getPrimaryMessageUnit(mc);
+        final IMessageUnit primaryMsg = procCtx.getPrimaryMessageUnit();
         GenericMessageInfo msgInfo = null;
         if (primaryMsg instanceof IUserMessage)
             msgInfo = new GenericMessageInfo((IUserMessage) primaryMsg);
         else
-            msgInfo = (GenericMessageInfo) mc.getProperty(Constants.MC_AS2_MDN_DATA);
+            msgInfo = (GenericMessageInfo) procCtx.getProperty(Constants.MC_AS2_MDN_DATA);
 
         if (msgInfo != null) {
 	        log.debug("Adding the generic AS2 HTTP headers");
 	        if (!Utils.isNullOrEmpty(httpHeaders))
 	        	httpHeaders.putAll(msgInfo.getAsHTTPHeaders());
 	        else
-	        	mc.setProperty(HTTPConstants.HTTP_HEADERS, msgInfo.getAsHTTPHeaders());
+	        	procCtx.getParentContext().setProperty(HTTPConstants.HTTP_HEADERS, msgInfo.getAsHTTPHeaders());
         } else 
         	log.debug("No AS2 headers to be set");
         

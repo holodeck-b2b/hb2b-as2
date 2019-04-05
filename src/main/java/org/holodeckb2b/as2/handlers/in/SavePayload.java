@@ -27,12 +27,12 @@ import javax.mail.MessagingException;
 import javax.mail.internet.MimeBodyPart;
 
 import org.apache.axiom.mime.ContentType;
-import org.apache.axis2.context.MessageContext;
+import org.apache.commons.logging.Log;
 import org.holodeckb2b.as2.util.Constants;
+import org.holodeckb2b.common.handler.AbstractUserMessageHandler;
+import org.holodeckb2b.common.handler.MessageProcessingContext;
 import org.holodeckb2b.common.messagemodel.Payload;
-import org.holodeckb2b.ebms3.axis2.MessageContextUtils;
 import org.holodeckb2b.ebms3.errors.OtherContentError;
-import org.holodeckb2b.ebms3.util.AbstractUserMessageHandler;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
 import org.holodeckb2b.interfaces.messagemodel.IPayload;
 import org.holodeckb2b.interfaces.persistency.entities.IUserMessageEntity;
@@ -52,23 +52,19 @@ public class SavePayload extends AbstractUserMessageHandler {
     private static final String PAYLOAD_DIR = "plcin";
 
     @Override
-    protected byte inFlows() {
-        return IN_FLOW | RESPONDER;
-    }
-
-    @Override
-    protected InvocationResponse doProcessing(MessageContext mc, IUserMessageEntity userMessage) throws Exception {
+    protected InvocationResponse doProcessing(IUserMessageEntity userMessage, MessageProcessingContext procCtx, Log log) 
+    																								throws Exception {
 
         try {
             // Create a unique filename for temporarily storing the payload
             final File plFile = File.createTempFile("pl-", null, getTempDir());
             log.debug("Saving the payload data from the message to temp file: " + plFile.getAbsolutePath());
-            savePayload((MimeBodyPart) mc.getProperty(Constants.MC_MIME_ENVELOPE), plFile);
+            savePayload((MimeBodyPart) procCtx.getProperty(Constants.MC_MIME_ENVELOPE), plFile);
             log.debug("Saved payload data to file, update message meta-data");
             Payload payloadInfo = new Payload();
             payloadInfo.setContainment(IPayload.Containment.BODY);
             payloadInfo.setContentLocation(plFile.getAbsolutePath());
-            final ContentType contentType = (ContentType) mc.getProperty(
+            final ContentType contentType = (ContentType) procCtx.getProperty(
                                                             org.apache.axis2.Constants.Configuration.CONTENT_TYPE);
             payloadInfo.setMimeType(contentType.getMediaType().toString());
             log.debug("Update message meta-data in database");
@@ -76,8 +72,7 @@ public class SavePayload extends AbstractUserMessageHandler {
                                                                       Collections.singletonList(payloadInfo));
         } catch (IOException saveFailed) {
             log.error("Could not save the payload data to temp file! Error details: " + saveFailed.getMessage());
-            MessageContextUtils.addGeneratedError(mc, new OtherContentError("Internal processing error",
-                                                                            userMessage.getMessageId()));
+            procCtx.addGeneratedError(new OtherContentError("Internal processing error", userMessage.getMessageId()));
             log.debug("Set processing state of message to failed");
             HolodeckB2BCore.getStorageManager().setProcessingState(userMessage, ProcessingState.FAILURE);
         }
@@ -96,17 +91,9 @@ public class SavePayload extends AbstractUserMessageHandler {
     private File getTempDir() throws IOException {
         final String tmpPayloadDirPath = HolodeckB2BCoreInterface.getConfiguration().getTempDirectory() + PAYLOAD_DIR;
         final File tmpPayloadDir = new File(tmpPayloadDirPath);
-        if (!tmpPayloadDir.exists()) {
-            log.debug("Temp directory for payloads does not exist");
-            if(tmpPayloadDir.mkdirs())
-                log.info("Created temp directory for payloads");
-            else {
-                // The payload directory could not be created, so no place to store payloads. Abort processing
-                // message and return error
-                log.fatal("Temp directory for payloads (" + tmpPayloadDirPath + ") could not be created!");
-                throw new IOException("Temp directory for payloads (" + tmpPayloadDirPath + ") could not be created!");
-            }
-        }
+        if (!tmpPayloadDir.exists() && !tmpPayloadDir.mkdirs())
+            throw new IOException("Temp directory for payloads (" + tmpPayloadDirPath + ") could not be created!");
+        
         return tmpPayloadDir;
     }
 
@@ -125,7 +112,6 @@ public class SavePayload extends AbstractUserMessageHandler {
             while ((bytesRead = is.read(buffer, 0, buffer.length)) > -1)
                 os.write(buffer, 0, bytesRead);
         } catch (MessagingException ex) {
-            log.error("Unable to get access to payload data!");
             throw new IOException("Unable to get access to payload data!", ex);
         }
     }

@@ -213,15 +213,11 @@
         <handler name="CatchFaults" class="org.holodeckb2b.ebms3.util.CatchAxisFault">
             <order phase="protocolOutPhase" phaseFirst="true"/>
         </handler>
-        <!-- Handler to prepare a response message, getting info from context of received message -->
-        <handler name="PrepareResponse" class="org.holodeckb2b.as2.handlers.out.PrepareResponseMessage">
-            <order phase="protocolOutPhase" after="CatchFaults"/>
-        </handler>
         <!-- 
         	Handlers to package User and Signal Messages 
        	-->
         <handler name="PackageUserMessage" class="org.holodeckb2b.as2.handlers.out.PackageUserMessage">
-            <order phase="protocolOutPhase" after="PrepareResponse"/>
+            <order phase="protocolOutPhase" after="CatchFaults"/>
         </handler>
         <handler name="PackageReceipt" class="org.holodeckb2b.as2.handlers.out.PackageReceiptSignal">
             <order phase="protocolOutPhase" after="PackageUserMessage"/>
@@ -263,15 +259,11 @@
         <handler name="CatchFaults" class="org.holodeckb2b.ebms3.util.CatchAxisFault">
             <order phase="protocolOutPhase" phaseFirst="true"/>
         </handler>
-        <!-- Handler to prepare a response message, getting info from context of received message -->
-        <handler name="PrepareResponse" class="org.holodeckb2b.as2.handlers.out.PrepareResponseMessage">
-            <order phase="protocolOutPhase" after="CatchFaults"/>
-        </handler>
         <!-- 
         	Handlers to package User and Signal Messages 
        	-->
         <handler name="PackageUserMessage" class="org.holodeckb2b.as2.handlers.out.PackageUserMessage">
-            <order phase="protocolOutPhase" after="PrepareResponse"/>
+            <order phase="protocolOutPhase" after="CatchFaults"/>
         </handler>
         <handler name="PackageReceipt" class="org.holodeckb2b.as2.handlers.out.PackageReceiptSignal">
             <order phase="protocolOutPhase" after="PackageUserMessage"/>

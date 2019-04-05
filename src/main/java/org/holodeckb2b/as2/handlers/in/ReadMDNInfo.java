@@ -19,13 +19,13 @@ package org.holodeckb2b.as2.handlers.in;
 import javax.mail.BodyPart;
 import javax.mail.MessagingException;
 
-import org.apache.axis2.context.MessageContext;
+import org.apache.commons.logging.Log;
 import org.holodeckb2b.as2.packaging.GenericMessageInfo;
 import org.holodeckb2b.as2.packaging.MDNInfo;
 import org.holodeckb2b.as2.packaging.MDNTransformationException;
 import org.holodeckb2b.as2.util.Constants;
-import org.holodeckb2b.common.handler.BaseHandler;
-import org.holodeckb2b.ebms3.axis2.MessageContextUtils;
+import org.holodeckb2b.common.handler.AbstractBaseHandler;
+import org.holodeckb2b.common.handler.MessageProcessingContext;
 import org.holodeckb2b.ebms3.errors.InvalidHeader;
 
 /**
@@ -35,21 +35,12 @@ import org.holodeckb2b.ebms3.errors.InvalidHeader;
  *
  * @author Sander Fieten (sander at chasquis-consulting.com)
  */
-public class ReadMDNInfo extends BaseHandler {
-
-	/**
-	 * To handle also cases where the other implementation returns a negative MDN with HTTP 400/500 this handler
-	 * also runs in the <i>IN_FAULT_FLOW≤/i>
-	 */
-    @Override
-    protected byte inFlows() {
-        return IN_FLOW | IN_FAULT_FLOW;
-    }
+public class ReadMDNInfo extends AbstractBaseHandler {
 
     @Override
-    protected InvocationResponse doProcessing(MessageContext mc) {
+    protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Log log) {
  
-    	final BodyPart mainPart = (BodyPart) mc.getProperty(Constants.MC_MAIN_MIME_PART);
+    	final BodyPart mainPart = (BodyPart) procCtx.getProperty(Constants.MC_MAIN_MIME_PART);
     	try {			
 			if (!mainPart.isMimeType(Constants.REPORT_MIME_TYPE) 
 					&& !mainPart.isMimeType(Constants.MDN_DISPOSITION_MIME_TYPE)) 
@@ -63,17 +54,17 @@ public class ReadMDNInfo extends BaseHandler {
 	    log.debug("Parsing MDN contained in the message");
 	    try {
 	        log.debug("Get the general message info of the MDN from msgCtx");
-	        GenericMessageInfo generalInfo = (GenericMessageInfo) mc.getProperty(Constants.MC_AS2_GENERAL_DATA);
+	        GenericMessageInfo generalInfo = (GenericMessageInfo) procCtx.getProperty(Constants.MC_AS2_GENERAL_DATA);
 	        log.debug("Received MDN with msgId [" + generalInfo.getMessageId() + "] from ["
 	                   + generalInfo.getFromPartyId() + "] addressed to [" + generalInfo.getToPartyId() + "]");
 	        log.debug("Parse the MDN Mime part");
 	        MDNInfo mdnObject = new MDNInfo(generalInfo, mainPart);
 	        log.debug("Read all data from the MDN, storing it in msgCtx for further processing");
-	        mc.setProperty(Constants.MC_AS2_MDN_DATA, mdnObject);
+	        procCtx.setProperty(Constants.MC_AS2_MDN_DATA, mdnObject);
 	    } catch (MDNTransformationException invalidMDN) {
 	        log.error("Could not parse the MDN! Error details: " + invalidMDN.getMessage());
 			// We use the InvalidHeader error to signal this
-			MessageContextUtils.addGeneratedError(mc, new InvalidHeader("Invalid MDN! - " + invalidMDN.getMessage()));
+	        procCtx.addGeneratedError(new InvalidHeader("Invalid MDN! - " + invalidMDN.getMessage()));
 	    }		
         return InvocationResponse.CONTINUE;
     }    

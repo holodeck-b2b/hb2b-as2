@@ -19,6 +19,7 @@ package org.holodeckb2b.as2.handlers.out;
 import org.apache.axis2.AxisFault;
 import org.apache.axis2.context.MessageContext;
 import org.apache.axis2.wsdl.WSDLConstants;
+import org.holodeckb2b.common.handler.MessageProcessingContext;
 
 /**
  * Is the <i>out_flow</i> handler responsible for changing the processing state of the message unit that are and has 
@@ -30,16 +31,17 @@ import org.apache.axis2.wsdl.WSDLConstants;
 public class CheckSentResult extends org.holodeckb2b.ebms3.handlers.outflow.CheckSentResult {
 
 	@Override
-	protected boolean isSuccessful(final MessageContext msgCtx) {
-		if (isInFlow(INITIATOR)) {
-			MessageContext inMessageCtx = null;		
+	protected boolean isSuccessful(final MessageProcessingContext procCtx) {
+		final MessageContext outMsgCtx = procCtx.getParentContext();
+		if (procCtx.isHB2BInitiated()) {
+			MessageContext responseMsgCtx = null;		
 			try {
-				inMessageCtx = msgCtx.getOperationContext().getMessageContext(WSDLConstants.MESSAGE_LABEL_IN_VALUE);
-			} catch (AxisFault noMsgCtx) {
-				log.error("No response message context available!");
+				responseMsgCtx = outMsgCtx.getOperationContext().getMessageContext(WSDLConstants.MESSAGE_LABEL_IN_VALUE);
+			} catch (AxisFault noMsgCtx) {				
 			}
-			return (msgCtx.getFailureReason() == null) && inMessageCtx != null && !inMessageCtx.isProcessingFault(); 
+			return (outMsgCtx.getFailureReason() == null) 
+					&& responseMsgCtx != null && !responseMsgCtx.isProcessingFault(); 
 		} else
-			return msgCtx.getFailureReason() == null;					
+			return outMsgCtx.getFailureReason() == null;					
 	}
 }

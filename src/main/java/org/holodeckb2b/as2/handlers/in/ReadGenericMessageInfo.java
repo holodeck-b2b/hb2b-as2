@@ -19,9 +19,11 @@ package org.holodeckb2b.as2.handlers.in;
 import java.util.Map;
 
 import org.apache.axis2.context.MessageContext;
+import org.apache.commons.logging.Log;
 import org.holodeckb2b.as2.packaging.GenericMessageInfo;
 import org.holodeckb2b.as2.util.Constants;
-import org.holodeckb2b.common.handler.BaseHandler;
+import org.holodeckb2b.common.handler.AbstractBaseHandler;
+import org.holodeckb2b.common.handler.MessageProcessingContext;
 
 /**
  * Is the <i>in_flow</i> handler that reads the HTTP headers of the incoming AS2 message to get the general message
@@ -32,24 +34,16 @@ import org.holodeckb2b.common.handler.BaseHandler;
  * @author Sander Fieten (sander at chasquis-consulting.com)
  * @see GenericMessageInfo
  */
-public class ReadGenericMessageInfo extends BaseHandler {
-
-	/**
-	 * To handle also cases where the other implementation returns a negative MDN with HTTP 400/500 this handler
-	 * also runs in the <i>IN_FAULT_FLOW≤/i>
-	 */
-    @Override
-    protected byte inFlows() {
-        return IN_FLOW | IN_FAULT_FLOW;
-    }
+public class ReadGenericMessageInfo extends AbstractBaseHandler {
 
     @Override
     @SuppressWarnings("unchecked")
-    protected InvocationResponse doProcessing(MessageContext mc) throws Exception {
+    protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Log log) throws Exception {
         log.debug("Get http headers for general AS2 message info");
-		Map<String, String> httpHeaders = (Map<String, String>) mc.getProperty(MessageContext.TRANSPORT_HEADERS);
+		Map<String, String> httpHeaders = (Map<String, String>) procCtx.getParentContext()
+																	   .getProperty(MessageContext.TRANSPORT_HEADERS);
         log.debug("Parse the HTTP header and store data in msgCtx for further processing");
-        mc.setProperty(Constants.MC_AS2_GENERAL_DATA, new GenericMessageInfo(httpHeaders));
+        procCtx.setProperty(Constants.MC_AS2_GENERAL_DATA, new GenericMessageInfo(httpHeaders));
 
         return InvocationResponse.CONTINUE;
     }

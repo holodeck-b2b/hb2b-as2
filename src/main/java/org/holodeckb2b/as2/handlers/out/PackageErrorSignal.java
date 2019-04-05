@@ -21,14 +21,14 @@ import java.util.Collection;
 import javax.mail.internet.MimeBodyPart;
 
 import org.apache.axiom.mime.ContentType;
-import org.apache.axis2.context.MessageContext;
+import org.apache.commons.logging.Log;
 import org.holodeckb2b.as2.handlers.in.ProcessGeneratedErrors;
 import org.holodeckb2b.as2.packaging.MDNInfo;
 import org.holodeckb2b.as2.packaging.MDNTransformationException;
 import org.holodeckb2b.as2.util.Constants;
-import org.holodeckb2b.common.handler.BaseHandler;
+import org.holodeckb2b.common.handler.AbstractBaseHandler;
+import org.holodeckb2b.common.handler.MessageProcessingContext;
 import org.holodeckb2b.common.util.Utils;
-import org.holodeckb2b.ebms3.constants.MessageContextProperties;
 import org.holodeckb2b.interfaces.persistency.entities.IErrorMessageEntity;
 import org.holodeckb2b.interfaces.processingmodel.ProcessingState;
 import org.holodeckb2b.module.HolodeckB2BCore;
@@ -41,32 +41,22 @@ import org.holodeckb2b.module.HolodeckB2BCore;
  * error is also reported by responding with an HTTP error status code.  
  * <p>As the information for the MDN to be created needs to be retrieved from the received message the MDN meta-data
  * is already created by the {@link ProcessGeneratedErrors} <i>in_flow</i> handler.
- * <p>The Error signal to be reported is included in the {@link MessageContextProperties#OUT_ERRORS} message context 
- * property. It contains a collection of Error entity objects for alignment with the other protocols, but since in AS2 
- * there can be only one MDN it must not include more then one signal. If it contains more than one, only the first 
- * Error will be included in the message and the others are ignored.
+ * <p>The Error signal to be reported is included in message processing context which contains a collection of Error 
+ * entity objects for alignment with the other protocols, but since in AS2 there can be only one MDN it must not 
+ * include more then one signal. If it contains more than one, only the first Error will be included in the message and 
+ * the others are ignored.
  * <p>Note that this handler does not add the AS2 related HTTP headers to the message as these as generic to any sent 
  * AS2 message and therefore added in the {@link AddHeaders} handler.
  *
  * @author Sander Fieten (sander at chasquis-consulting.com)
  */
-public class PackageErrorSignal extends BaseHandler {
-
-	/**
-	 * Errors can be reported both in the normal as well in the fault flow
-	 */
-    @Override
-    protected byte inFlows() {
-        return OUT_FLOW | OUT_FAULT_FLOW;
-    }
+public class PackageErrorSignal extends AbstractBaseHandler {
 
     @Override
-    protected InvocationResponse doProcessing(MessageContext mc) throws Exception {
+    protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Log log) throws Exception {
         // Check if the message includes a error. Although there can be just one Signal in AS2, for alignment
-        // with other protocols the msg context property contains collection of Error objects 
-        @SuppressWarnings("unchecked")
-		Collection<IErrorMessageEntity> errors = (Collection<IErrorMessageEntity>) mc.getProperty(
-                                                                                 MessageContextProperties.OUT_ERRORS);
+        // with other protocols the context contains collection of Error objects 
+        Collection<IErrorMessageEntity> errors = procCtx.getSendingErrors();
 
         if (Utils.isNullOrEmpty(errors))
         	// No Errors to package
@@ -86,19 +76,19 @@ public class PackageErrorSignal extends BaseHandler {
         if (mdnObject != null) {
         	log.debug("Error must be packaged as MDN, create the MIME multi-part and add it to message context");
             MimeBodyPart mdnPart = mdnObject.toMimePart();
-            mc.setProperty(Constants.MC_MIME_ENVELOPE, mdnPart);
-            mc.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE,
+            procCtx.setProperty(Constants.MC_MIME_ENVELOPE, mdnPart);
+            procCtx.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE,
                                                  new ContentType(mdnPart.getContentType()).getMediaType().toString());
             // For easy access to MDN options the MDN object is also stored in the msgCtx
-            mc.setProperty(Constants.MC_AS2_MDN_DATA, mdnObject);
-        } else if (isInFlow(RESPONDER)) {
+            procCtx.setProperty(Constants.MC_AS2_MDN_DATA, mdnObject);
+        } else if (!procCtx.isHB2BInitiated()) {
         	log.debug("Error must be reported using HTTP Error Code");
         	// If the Error has a reference to another message unit, use 403 (Bad Request). If there is no reference,
         	// some error occurred internally => 500 (Server error)
         	if (!Utils.isNullOrEmpty(error.getRefToMessageId()))
-        		mc.setProperty(org.apache.axis2.Constants.HTTP_RESPONSE_STATE, "403");
+        		procCtx.getParentContext().setProperty(org.apache.axis2.Constants.HTTP_RESPONSE_STATE, "403");
         	else 
-        		mc.setProperty(org.apache.axis2.Constants.HTTP_RESPONSE_STATE, "500");
+        		procCtx.getParentContext().setProperty(org.apache.axis2.Constants.HTTP_RESPONSE_STATE, "500");
         } else {
         	// Seems we're trying to async an Error without reference to User Message. This is not allowed.
         	log.error("Cannot asynchronously send Error without reference to message unit in error!");

@@ -23,7 +23,7 @@ import javax.mail.MessagingException;
 import javax.mail.internet.MimeBodyPart;
 
 import org.apache.axiom.mime.ContentType;
-import org.apache.axis2.context.MessageContext;
+import org.apache.commons.logging.Log;
 import org.bouncycastle.cms.CMSException;
 import org.bouncycastle.cms.RecipientInformation;
 import org.bouncycastle.cms.jcajce.JceKeyTransEnvelopedRecipient;
@@ -33,10 +33,10 @@ import org.bouncycastle.mail.smime.SMIMEEnveloped;
 import org.bouncycastle.mail.smime.SMIMEException;
 import org.bouncycastle.mail.smime.SMIMEUtil;
 import org.holodeckb2b.as2.util.Constants;
+import org.holodeckb2b.common.handler.AbstractUserMessageHandler;
+import org.holodeckb2b.common.handler.MessageProcessingContext;
 import org.holodeckb2b.common.util.Utils;
-import org.holodeckb2b.ebms3.axis2.MessageContextUtils;
 import org.holodeckb2b.ebms3.errors.FailedDecryption;
-import org.holodeckb2b.ebms3.util.AbstractUserMessageHandler;
 import org.holodeckb2b.events.security.DecryptionFailure;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
 import org.holodeckb2b.interfaces.persistency.entities.IUserMessageEntity;
@@ -59,20 +59,12 @@ import org.holodeckb2b.module.HolodeckB2BCore;
  */
 public class DecryptMessage extends AbstractUserMessageHandler {
 
-	/**
-	 * User Messages carrying business data can only be send as request, therefore this handler needs to run only
-	 * as responder.
-	 */
     @Override
-    protected byte inFlows() {
-        return IN_FLOW | RESPONDER;
-    }
-
-    @Override
-    protected InvocationResponse doProcessing(MessageContext mc, IUserMessageEntity userMessage) throws Exception {
+    protected InvocationResponse doProcessing(IUserMessageEntity userMessage, MessageProcessingContext procCtx, Log log) 
+    																								throws Exception {
 
         // First check if received message does contain a signed message
-        if (!isEncrypted(mc))
+        if (!isEncrypted(procCtx))
             return InvocationResponse.CONTINUE;
 
         log.debug("Received message is encrypted, get decryption parameters");
@@ -98,37 +90,34 @@ public class DecryptMessage extends AbstractUserMessageHandler {
         
         if (receiverKeyPair == null) {
             log.error("Keypair for receiver is not available. Unable to decrypt the message!");
-            MessageContextUtils.addGeneratedError(mc, new FailedDecryption("Encryption configuration error",
-                                                                            userMessage.getMessageId()));
+            procCtx.addGeneratedError(new FailedDecryption("Encryption configuration error",
+                                                            userMessage.getMessageId()));
             log.debug("Set processing state of message to failed");
             HolodeckB2BCore.getStorageManager().setProcessingState(userMessage, ProcessingState.FAILURE);
             // Raise event to inform external components about failure
             HolodeckB2BCoreInterface.getEventProcessor().raiseEvent(
             								new DecryptionFailure(userMessage,
-            											new SecurityProcessingException("Private key not available!"))
-            								, mc);
+            											new SecurityProcessingException("Private key not available!")));
             return InvocationResponse.CONTINUE;
         }
         try {
-            final MimeBodyPart mimeEnvelope = (MimeBodyPart) mc.getProperty(Constants.MC_MIME_ENVELOPE);
+            final MimeBodyPart mimeEnvelope = (MimeBodyPart) procCtx.getProperty(Constants.MC_MIME_ENVELOPE);
             log.debug("Decrypting the message");
             final MimeBodyPart decryptedData = decrypt(mimeEnvelope, receiverKeyPair);
             log.debug("Successfully decrypted the message, replacing encrypted data with decrypted version");
-            mc.setProperty(Constants.MC_WAS_ENCRYPTED, Boolean.TRUE);
-            mc.setProperty(Constants.MC_MIME_ENVELOPE, decryptedData);            
-            mc.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE,
+            procCtx.setProperty(Constants.MC_WAS_ENCRYPTED, Boolean.TRUE);
+            procCtx.setProperty(Constants.MC_MIME_ENVELOPE, decryptedData);            
+            procCtx.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE,
                                                                      new ContentType(decryptedData.getContentType()));
         } catch (SecurityProcessingException decryptionFailure) {
             log.error("An error occurred during the decryption of the message! Details:\n\t"
                       + Utils.getExceptionTrace(decryptionFailure));
-            MessageContextUtils.addGeneratedError(mc, new FailedDecryption("Decryption of message failed",
-                                                                            userMessage.getMessageId()));
+            procCtx.addGeneratedError(new FailedDecryption("Decryption of message failed", userMessage.getMessageId()));
             log.debug("Set processing state of message to failed");
             HolodeckB2BCore.getStorageManager().setProcessingState(userMessage, ProcessingState.FAILURE);
             // Raise event to inform external components about failure
             HolodeckB2BCoreInterface.getEventProcessor().raiseEvent(
-            												new DecryptionFailure(userMessage, decryptionFailure)
-            											  , mc);            
+            												new DecryptionFailure(userMessage, decryptionFailure));            
         }
 
         return InvocationResponse.CONTINUE;
@@ -166,13 +155,13 @@ public class DecryptMessage extends AbstractUserMessageHandler {
     /**
      * Determines whether the received message is encrypted by checking the Content-Type header.
      *
-     * @param mc  The message context
-     * @return    <code>true</code> if the Content-Type indicate a encrypted SMIME, <br>
-     *            <code>false</code> otherwise
+     * @param procCtx  The message processing context
+     * @return         <code>true</code> if the Content-Type indicate a encrypted SMIME, <br>
+     *                 <code>false</code> otherwise
      */
-    private boolean isEncrypted(MessageContext mc) {
+    private boolean isEncrypted(MessageProcessingContext procCtx) {
         final ContentType contentType = (ContentType)
-                                                mc.getProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE);
+                                            procCtx.getProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE);
         final String sBaseType = contentType.getMediaType().toString();
         final String smimeType = contentType.getParameter("smime-type");
 

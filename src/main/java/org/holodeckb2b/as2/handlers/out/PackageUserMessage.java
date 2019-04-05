@@ -26,13 +26,13 @@ import javax.activation.FileDataSource;
 import javax.mail.internet.MimeBodyPart;
 
 import org.apache.axiom.mime.ContentType;
-import org.apache.axis2.context.MessageContext;
 import org.apache.axis2.transport.http.HTTPConstants;
+import org.apache.commons.logging.Log;
 import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.as2.util.CryptoAlgorithmHelper;
+import org.holodeckb2b.common.handler.AbstractUserMessageHandler;
+import org.holodeckb2b.common.handler.MessageProcessingContext;
 import org.holodeckb2b.common.util.Utils;
-import org.holodeckb2b.ebms3.constants.MessageContextProperties;
-import org.holodeckb2b.ebms3.util.AbstractUserMessageHandler;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
 import org.holodeckb2b.interfaces.messagemodel.IPayload;
 import org.holodeckb2b.interfaces.persistency.entities.IUserMessageEntity;
@@ -45,9 +45,9 @@ import org.holodeckb2b.interfaces.security.SecurityProcessingException;
 
 /**
  * Is the <i>out_flow</i> handler responsible for checking if the message contains a <i>User Message</i> message unit
- * and package its payload as a MIME body part. The User Message to be sent should be included in the {@link
- * MessageContextProperties#OUT_USER_MESSAGE} message context property. As the AS2 message can contain only one MIME
- * part (we don't support multiple attachments) the User Message shall also contain only one payload.
+ * and package its payload as a MIME body part. The User Message to be sent is included in the message processing 
+ * context. As the AS2 message can contain only one MIME part (we don't support multiple attachments) the User Message 
+ * shall also contain only one payload.
  * <p>This handler also adds the HTTP headers for requesting a MDN from the receiver of the message. This will only
  * be done when the P-Mode of the User Message contains a Receipt Configuration. When this User Message is (to be) 
  * signed also a signed MDN will be requested using the same digest algorithm. An asynchronous Receipt/MDN can be 
@@ -61,12 +61,7 @@ import org.holodeckb2b.interfaces.security.SecurityProcessingException;
 public class PackageUserMessage extends AbstractUserMessageHandler {
 
     @Override
-    protected byte inFlows() {
-        return OUT_FLOW;
-    }
-
-    @Override
-    protected InvocationResponse doProcessing(MessageContext mc, IUserMessageEntity userMessage) throws Exception {
+    protected InvocationResponse doProcessing(IUserMessageEntity userMessage, MessageProcessingContext procCtx, Log log) throws Exception {
 
         // Check that the user message contains just one payload
         if (Utils.isNullOrEmpty(userMessage.getPayloads()) || userMessage.getPayloads().size() > 1) {
@@ -92,8 +87,8 @@ public class PackageUserMessage extends AbstractUserMessageHandler {
         mimePart.setHeader(HTTPConstants.CONTENT_TYPE, mimeType);
 
         log.debug("Add MIME part to message");
-        mc.setProperty(Constants.MC_MIME_ENVELOPE, mimePart);
-        mc.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE,
+        procCtx.setProperty(Constants.MC_MIME_ENVELOPE, mimePart);
+        procCtx.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE,
                                                   new ContentType(mimePart.getContentType()).getMediaType().toString());
 
         log.debug("Check if Receipt is requested");
@@ -123,7 +118,7 @@ public class PackageUserMessage extends AbstractUserMessageHandler {
 				mdnReqHeaders.put(Constants.MDNREQ_SIGNING_OPTIONS_HEADER, mdnOptions);				        		
         	}
         	log.debug("Add MDN request headers to the message");
-        	mc.setProperty(HTTPConstants.HTTP_HEADERS,  mdnReqHeaders);
+        	procCtx.getParentContext().setProperty(HTTPConstants.HTTP_HEADERS,  mdnReqHeaders);
         }
         
         return InvocationResponse.CONTINUE;

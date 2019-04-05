@@ -16,15 +16,15 @@
  */
 package org.holodeckb2b.as2.handlers.in;
 
-import org.apache.axis2.context.MessageContext;
+import org.apache.commons.logging.Log;
 import org.holodeckb2b.as2.messagemodel.MDNMetadata;
 import org.holodeckb2b.as2.packaging.MDNInfo;
 import org.holodeckb2b.as2.util.Constants;
-import org.holodeckb2b.common.handler.BaseHandler;
+import org.holodeckb2b.common.handler.AbstractBaseHandler;
+import org.holodeckb2b.common.handler.MessageProcessingContext;
 import org.holodeckb2b.common.messagemodel.Receipt;
 import org.holodeckb2b.common.util.MessageIdUtils;
 import org.holodeckb2b.common.util.Utils;
-import org.holodeckb2b.ebms3.axis2.MessageContextUtils;
 import org.holodeckb2b.interfaces.persistency.entities.IReceiptEntity;
 import org.holodeckb2b.module.HolodeckB2BCore;
 
@@ -34,21 +34,12 @@ import org.holodeckb2b.module.HolodeckB2BCore;
  *
  * @author Sander Fieten (sander at chasquis-consulting.com)
  */
-public class ReadReceipt extends BaseHandler {
+public class ReadReceipt extends AbstractBaseHandler {
 	
-	/**
-	 * As MDN can be send asynchronously this handler needs to run both as initiator (for sync Receipts) and as 
-	 * responder (for async). Because Receipt are positive acks there is no need to run in the fault flow. 
-	 */
     @Override
-    protected byte inFlows() {
-        return IN_FLOW;
-    }	
-    
-    @Override
-    protected InvocationResponse doProcessing(MessageContext mc) throws Exception {
+    protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Log log) throws Exception {
 
-        MDNInfo mdn = (MDNInfo) mc.getProperty(Constants.MC_AS2_MDN_DATA);
+        MDNInfo mdn = (MDNInfo) procCtx.getProperty(Constants.MC_AS2_MDN_DATA);
         // Only positive MDNs are converted 
         if (mdn != null && mdn.getModifierSeverity() == null
                         && Utils.isNullOrEmpty(mdn.getFailures()) && Utils.isNullOrEmpty(mdn.getErrors())
@@ -69,8 +60,8 @@ public class ReadReceipt extends BaseHandler {
             // content
             receipt.addElementToContent(new MDNMetadata(mdn).getAsXML());
             log.debug("Converted AS2 MDN into Receipt, storing Receipt in database");
-            MessageContextUtils.addRcvdReceipt(mc, (IReceiptEntity) HolodeckB2BCore.getStorageManager()
-                                                                          .storeIncomingMessageUnit(receipt));
+            procCtx.addReceivedReceipt((IReceiptEntity) HolodeckB2BCore.getStorageManager()
+                                                                       .storeIncomingMessageUnit(receipt));
             log.info("Positive MDN/Receipt [msgId=" + receipt.getMessageId() + "] received for message with id:"
                      + receipt.getRefToMessageId());
         }

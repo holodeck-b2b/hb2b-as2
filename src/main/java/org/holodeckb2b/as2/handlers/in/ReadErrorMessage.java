@@ -16,18 +16,17 @@
  */
 package org.holodeckb2b.as2.handlers.in;
 
-import org.apache.axis2.context.MessageContext;
+import org.apache.commons.logging.Log;
 import org.holodeckb2b.as2.messagemodel.MDNMetadata;
 import org.holodeckb2b.as2.packaging.MDNInfo;
 import org.holodeckb2b.as2.util.Constants;
-import org.holodeckb2b.common.handler.BaseHandler;
+import org.holodeckb2b.common.handler.AbstractBaseHandler;
+import org.holodeckb2b.common.handler.MessageProcessingContext;
 import org.holodeckb2b.common.messagemodel.EbmsError;
 import org.holodeckb2b.common.messagemodel.ErrorMessage;
 import org.holodeckb2b.common.util.MessageIdUtils;
 import org.holodeckb2b.common.util.Utils;
-import org.holodeckb2b.ebms3.axis2.MessageContextUtils;
 import org.holodeckb2b.interfaces.messagemodel.IEbmsError;
-import org.holodeckb2b.interfaces.persistency.entities.IErrorMessageEntity;
 import org.holodeckb2b.module.HolodeckB2BCore;
 
 /**
@@ -36,21 +35,12 @@ import org.holodeckb2b.module.HolodeckB2BCore;
  * 
  * @author Sander Fieten (sander at chasquis-consulting.com)
  */
-public class ReadErrorMessage extends BaseHandler {
-
-	/**
-	 * To handle also cases where the other implementation returns a negative MDN with HTTP 400/500 this handler
-	 * also runs in the <i>IN_FAULT_FLOW≤/i>
-	 */
-    @Override
-    protected byte inFlows() {
-        return IN_FLOW | IN_FAULT_FLOW;
-    }
+public class ReadErrorMessage extends AbstractBaseHandler {
 
     @Override
-    protected InvocationResponse doProcessing(MessageContext mc) throws Exception {
+    protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Log log) throws Exception {
 
-        MDNInfo mdn = (MDNInfo) mc.getProperty(Constants.MC_AS2_MDN_DATA);
+        MDNInfo mdn = (MDNInfo) procCtx.getProperty(Constants.MC_AS2_MDN_DATA);
         // Check if this is a negative MDN to be converted to an Error Message
         if (mdn != null && ( mdn.getModifierSeverity() != null
                             || !Utils.isNullOrEmpty(mdn.getFailures()) || !Utils.isNullOrEmpty(mdn.getErrors())
@@ -109,8 +99,7 @@ public class ReadErrorMessage extends BaseHandler {
                 errorMsg.addError(err);
             }
             log.debug("Converted AS2 MDN into Error, storing Error in database");
-            MessageContextUtils.addRcvdError(mc, (IErrorMessageEntity) HolodeckB2BCore.getStorageManager()
-                                                                          .storeIncomingMessageUnit(errorMsg));
+            procCtx.addReceivedError(HolodeckB2BCore.getStorageManager().storeIncomingMessageUnit(errorMsg));
             log.info("Negative MDN/Error [msgId=" + errorMsg.getMessageId() + "] received for message with id:"
                      + errorMsg.getRefToMessageId());
         }

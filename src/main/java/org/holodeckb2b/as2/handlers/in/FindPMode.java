@@ -16,13 +16,13 @@
  */
 package org.holodeckb2b.as2.handlers.in;
 
-import org.apache.axis2.context.MessageContext;
+import org.apache.commons.logging.Log;
 import org.holodeckb2b.as2.packaging.GenericMessageInfo;
 import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.as2.util.PModeFinder;
-import org.holodeckb2b.common.handler.BaseHandler;
+import org.holodeckb2b.common.handler.AbstractBaseHandler;
+import org.holodeckb2b.common.handler.MessageProcessingContext;
 import org.holodeckb2b.common.messagemodel.util.MessageUnitUtils;
-import org.holodeckb2b.ebms3.axis2.MessageContextUtils;
 import org.holodeckb2b.ebms3.errors.ProcessingModeMismatch;
 import org.holodeckb2b.interfaces.persistency.entities.IMessageUnitEntity;
 import org.holodeckb2b.interfaces.pmode.IPMode;
@@ -37,23 +37,14 @@ import org.holodeckb2b.module.HolodeckB2BCore;
  *
  * @author Sander Fieten (sander at chasquis-consulting.com)
  */
-public class FindPMode extends BaseHandler {
-
-	/**
-	 * To handle also cases where the other implementation returns a negative MDN with HTTP 400/500 this handler
-	 * also runs in the <i>IN_FAULT_FLOW≤/i>
-	 */
-    @Override
-    protected byte inFlows() {
-        return IN_FLOW | IN_FAULT_FLOW;
-    }
+public class FindPMode extends AbstractBaseHandler {
 
     @Override
-    protected InvocationResponse doProcessing(MessageContext mc) throws Exception {
+    protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Log log) throws Exception {
 
         // First get the message unit and general message info from msg context
-        GenericMessageInfo msgInfo = (GenericMessageInfo) mc.getProperty(Constants.MC_AS2_GENERAL_DATA);
-        IMessageUnitEntity msgUnit = MessageContextUtils.getPrimaryMessageUnit(mc);
+        GenericMessageInfo msgInfo = (GenericMessageInfo) procCtx.getProperty(Constants.MC_AS2_GENERAL_DATA);
+        IMessageUnitEntity msgUnit = procCtx.getPrimaryMessageUnit();
         // If this info is misisng something has probably already gone wrong and we don't need to find a P-Mode
         if (msgInfo == null || msgUnit == null)
             return InvocationResponse.CONTINUE;
@@ -63,7 +54,7 @@ public class FindPMode extends BaseHandler {
                   + ",receiver=" + msgInfo.getToPartyId() + "]");
         IPMode pmode = PModeFinder.findForReceivedMessage(msgUnit, 
         												  msgInfo.getFromPartyId(), msgInfo.getToPartyId(),
-        												  mc);
+        												  procCtx);
                 
         if (pmode == null) {
             // No matching P-Mode could be found for this message, return error
@@ -72,7 +63,7 @@ public class FindPMode extends BaseHandler {
             noPmodeIdError.setRefToMessageInError(msgInfo.getMessageId());
             noPmodeIdError.setErrorDetail("Can not process message [msgId=" + msgUnit.getMessageId()
                                         + "] because no processing configuration was found for the message!");
-            MessageContextUtils.addGeneratedError(mc, noPmodeIdError);
+            procCtx.addGeneratedError(noPmodeIdError);
             log.debug("Set the processing state of this message to failure");
             HolodeckB2BCore.getStorageManager().setProcessingState(msgUnit, ProcessingState.FAILURE);
         } else {

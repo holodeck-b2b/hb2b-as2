@@ -46,6 +46,7 @@ import org.apache.http.HttpException;
 import org.apache.http.HttpStatus;
 import org.holodeckb2b.as2.handlers.in.AS2MessageReceiver;
 import org.holodeckb2b.as2.util.Constants;
+import org.holodeckb2b.common.handler.MessageProcessingContext;
 
 /**
  * Extends Axis2 {@link HTTPWorker} to check whether the received message is an AS2 message and if this Holodeck B2B 
@@ -87,10 +88,12 @@ public class AS2CapableWorker extends HTTPWorker {
 				msgContext.setEnvelope(TransportUtils.createSOAPEnvelope(null));
 				msgContext.setProperty(MessageContext.TRANSPORT_OUT, response.getOutputStream());
 				
+				// Create a new message processing context 
+				MessageProcessingContext procCtx = MessageProcessingContext.getFromMessageContext(msgContext);
 				final ContentType contentType = new ContentType(request.getContentType());
-				msgContext.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE, contentType);
-				msgContext.setProperty(Constants.MC_MIME_ENVELOPE, mimeEnvelope);
-				msgContext.setProperty(Constants.MC_MAIN_MIME_PART, mainPart);
+				procCtx.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE, contentType);
+				procCtx.setProperty(Constants.MC_MIME_ENVELOPE, mimeEnvelope);
+				procCtx.setProperty(Constants.MC_MAIN_MIME_PART, mainPart);
 
 				AxisEngine.receive(msgContext);
 			} catch (MessagingException | ParseException ctParseFailure) {

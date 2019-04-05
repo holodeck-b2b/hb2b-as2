@@ -18,10 +18,9 @@ package org.holodeckb2b.as2.util;
 
 import java.util.Collection;
 
-import org.apache.axis2.context.MessageContext;
+import org.holodeckb2b.common.handler.MessageProcessingContext;
 import org.holodeckb2b.common.messagemodel.util.MessageUnitUtils;
 import org.holodeckb2b.common.util.Utils;
-import org.holodeckb2b.ebms3.axis2.MessageContextUtils;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
 import org.holodeckb2b.interfaces.general.IPartyId;
 import org.holodeckb2b.interfaces.messagemodel.Direction;
@@ -68,13 +67,13 @@ public class PModeFinder {
      * @param as2Message    The message unit to find the P-Mode for, may be both a User and Signal Message
      * @param senderId      Party identifier of the sender of the AS2 message
      * @param receiverId    Party identifier of the receiver of the AS2 message
-     * @param msgCtx		The message context of the received message
+     * @param procCtx		The message processing context of the received message
      * @return          The P-Mode for the message unit if the message unit can be matched to a <b>single</b> P-Mode,
      *                  <code>null</code> if no P-Mode could be found for this message unit.
      */
     public static IPMode findForReceivedMessage(final IMessageUnit as2Message,
                                                 final String senderId, final String receiverId,
-                                                final MessageContext msgCtx) {
+                                                final MessageProcessingContext procCtx) {
         final IPModeSet pmodes = HolodeckB2BCoreInterface.getPModeSet();
         IPMode    hPMode = null;
         int       hValue = 0;
@@ -136,7 +135,7 @@ public class PModeFinder {
         }
 
         if ((hPMode == null || multiple) && as2Message instanceof ISignalMessage) 
-        	return findUsingReference((ISignalMessage) as2Message, msgCtx);
+        	return findUsingReference((ISignalMessage) as2Message, procCtx);
         else 
         	// Only return a single P-Mode
         	return !multiple ? hPMode : null;
@@ -148,14 +147,14 @@ public class PModeFinder {
      * may also be derived from the outgoing message unit.  
      * 
      * @param signal	The signal to find the P-Mode for
-     * @param msgCtx	The message context of the signal message
+     * @param procCtx	The message processing context of the signal message
      * @return			
      */
-    protected static IPMode findUsingReference(final ISignalMessage signal, final MessageContext msgCtx) {
+    protected static IPMode findUsingReference(final ISignalMessage signal, final MessageProcessingContext procCtx) {
         IPMode pmode = null;
         // If the Signal is contained in a response it must be a reference to the sent message unit
-        if (!msgCtx.isServerSide()) {
-            final Collection<IMessageUnitEntity>  reqMUs = MessageContextUtils.getSentMessageUnits(msgCtx);
+        if (procCtx.isHB2BInitiated()) {
+            final Collection<IMessageUnitEntity>  reqMUs = procCtx.getSendingMessageUnits();
             if (reqMUs.size() == 1)
                 // Request contained one message unit, assuming error applies to it, use its P-Mode
                pmode = HolodeckB2BCore.getPModeSet().get(reqMUs.iterator().next().getPModeId());

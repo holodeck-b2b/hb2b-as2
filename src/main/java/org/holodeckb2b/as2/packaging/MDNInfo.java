@@ -102,8 +102,7 @@ public class MDNInfo extends GenericMessageInfo {
     /**
      * End-of-line characters to use when constructing the Mime parts
      */
-    private static final String EOL = "\r\n";
-    private String receiverId;
+    private static final String EOL = "\r\n";    
     /**
      * Enumerates the disposition types that indicate whether the original message was processed successfully or not.
      */

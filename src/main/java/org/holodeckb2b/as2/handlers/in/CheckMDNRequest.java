@@ -22,10 +22,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.axis2.context.MessageContext;
+import org.apache.commons.logging.Log;
 import org.holodeckb2b.as2.messagemodel.MDNRequestOptions;
 import org.holodeckb2b.as2.util.Constants;
+import org.holodeckb2b.common.handler.AbstractUserMessageHandler;
+import org.holodeckb2b.common.handler.MessageProcessingContext;
 import org.holodeckb2b.common.util.Utils;
-import org.holodeckb2b.ebms3.util.AbstractUserMessageHandler;
 import org.holodeckb2b.interfaces.persistency.entities.IUserMessageEntity;
 
 /**
@@ -43,16 +45,13 @@ import org.holodeckb2b.interfaces.persistency.entities.IUserMessageEntity;
 public class CheckMDNRequest extends AbstractUserMessageHandler {
 
     @Override
-    protected byte inFlows() {
-        return IN_FLOW | RESPONDER;
-    }
-
-    @Override
-    protected InvocationResponse doProcessing(MessageContext mc, IUserMessageEntity userMessage) throws Exception {
+    protected InvocationResponse doProcessing(IUserMessageEntity userMessage, MessageProcessingContext procCtx, Log log) 
+    																								throws Exception {
     	
         // Get the HTTP headers
         @SuppressWarnings("unchecked")
-		final Map<String, String> headers = (Map<String, String>) mc.getProperty(MessageContext.TRANSPORT_HEADERS);
+		final Map<String, String> headers = (Map<String, String>) procCtx.getParentContext()
+																		 .getProperty(MessageContext.TRANSPORT_HEADERS);
 
         log.debug("Check if MDN is requested by checking existance of " + Constants.MDN_REQUEST_HEADER + " header.");
         final boolean mdnRequested = !Utils.isNullOrEmpty(headers.get(Constants.MDN_REQUEST_HEADER));
@@ -83,7 +82,7 @@ public class CheckMDNRequest extends AbstractUserMessageHandler {
             	}
             }
             log.debug("Parsed the MDN request parameters, indicate in msg ctx that MDN is requested");
-            mc.setProperty(Constants.MC_AS2_MDN_REQUEST, mdnOptions);
+            procCtx.setProperty(Constants.MC_AS2_MDN_REQUEST, mdnOptions);
         }
 
         return InvocationResponse.CONTINUE;

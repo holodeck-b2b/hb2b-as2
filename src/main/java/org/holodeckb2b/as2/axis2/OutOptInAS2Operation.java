@@ -53,6 +53,8 @@ import org.apache.axis2.wsdl.WSDLConstants;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.holodeckb2b.as2.util.Constants;
+import org.holodeckb2b.common.axis2.OutOptInAxisOperation;
+import org.holodeckb2b.common.handler.MessageProcessingContext;
 import org.holodeckb2b.common.util.Utils;
 
 
@@ -63,7 +65,7 @@ import org.holodeckb2b.common.util.Utils;
  * 
  * @author Sander Fieten (sander at chasquis-consulting.com)
  */
-public class OutOptInAS2Operation extends OutInAxisOperation {
+public class OutOptInAS2Operation extends OutOptInAxisOperation {
 
     /**
      * Create a new instance
@@ -90,11 +92,11 @@ public class OutOptInAS2Operation extends OutInAxisOperation {
      * 
      * TODO: Consider extracting this class to HB2B common as it can be reused for multiple protocols
      */
-    class OutOptInAS2OperationClient extends OperationClient {
+    protected class OutOptInAS2OperationClient extends OutOptInAxisOperationClient {
 
         private final Log log = LogFactory.getLog(OutOptInAS2OperationClient.class);
 
-        OutOptInAS2OperationClient(final OutInAxisOperation axisOp, final ServiceContext sc, final Options options) {
+        public OutOptInAS2OperationClient(final OutInAxisOperation axisOp, final ServiceContext sc, final Options options) {
             super(axisOp, sc, options);
         }
 
@@ -177,7 +179,8 @@ public class OutOptInAS2Operation extends OutInAxisOperation {
          * @param responseMessageContext the active response MessageContext
          * @throws AxisFault if something went wrong
          */
-        protected void handleResponse(final MessageContext responseMessageContext) throws AxisFault {
+        @Override
+		protected void handleResponse(final MessageContext responseMessageContext) throws AxisFault {
         	
         	// If the Content-Type header is set on the response, there should be a response message available
         	// The default Axis http sender does not set the content type in the msg ctx, must be retrievd from http 
@@ -231,7 +234,8 @@ public class OutOptInAS2Operation extends OutInAxisOperation {
          * @return Returns MessageContext.
          * @throws AxisFault Sends the message using a two way transport and waits for a response
          */
-        protected MessageContext send(final MessageContext msgContext) throws AxisFault {
+        @Override
+		protected MessageContext send(final MessageContext msgContext) throws AxisFault {
 
         // create the responseMessageContext
             final MessageContext responseMessageContext
@@ -248,12 +252,15 @@ public class OutOptInAS2Operation extends OutInAxisOperation {
 
             //sending the message
             AxisEngine.send(msgContext);
-
+            
             responseMessageContext.setDoingREST(msgContext.isDoingREST());
-
+            
             // Copy RESPONSE properties which the transport set onto the request message context when it processed
             // the incoming response recieved in reply to an outgoing request.
             // We convert the http headers to lowercase for unambigious processing
+            MessageProcessingContext hb2bMsgProcCtx = MessageProcessingContext.getFromMessageContext(msgContext);
+            hb2bMsgProcCtx.setParentContext(responseMessageContext);
+			
             @SuppressWarnings("unchecked")
 			final Map<String, String> httpHeaders = (Map<String, String>) 
             												msgContext.getProperty(MessageContext.TRANSPORT_HEADERS);

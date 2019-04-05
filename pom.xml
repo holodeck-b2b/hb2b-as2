@@ -3,13 +3,13 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.holodeckb2b</groupId>
     <artifactId>hb2b-as2</artifactId>
-    <version>1.0.1</version>
+    <version>1.1.0</version>
     <packaging>jar</packaging>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <hb2b-version>4.1.0-SNAPSHOT</hb2b-version>
+        <hb2b-version>4.1.1</hb2b-version>
         <axis2-version>1.7.7</axis2-version>
     </properties>
     <name>Holodeck B2B AS2 Extension</name>

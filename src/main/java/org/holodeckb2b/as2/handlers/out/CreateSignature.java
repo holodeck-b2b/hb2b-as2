@@ -30,7 +30,6 @@ import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMultipart;
 
 import org.apache.axiom.mime.ContentType;
-import org.apache.axis2.context.MessageContext;
 import org.apache.axis2.transport.http.HTTPConstants;
 import org.apache.commons.logging.Log;
 import org.bouncycastle.cert.jcajce.JcaCertStore;
@@ -45,9 +44,9 @@ import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.as2.util.CryptoAlgorithmHelper;
 import org.holodeckb2b.as2.util.DigestHelper;
 import org.holodeckb2b.as2.util.SignedContentMetadata;
-import org.holodeckb2b.common.handler.BaseHandler;
+import org.holodeckb2b.common.handler.AbstractBaseHandler;
+import org.holodeckb2b.common.handler.MessageProcessingContext;
 import org.holodeckb2b.common.util.Utils;
-import org.holodeckb2b.ebms3.axis2.MessageContextUtils;
 import org.holodeckb2b.events.security.SignatureCreated;
 import org.holodeckb2b.events.security.SigningFailure;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
@@ -100,25 +99,17 @@ import org.holodeckb2b.pmode.PModeUtils;
  *
  * @author Sander Fieten (sander at chasquis-consulting.com)
  */
-public class CreateSignature extends BaseHandler {
-
-	/**
-	 * Errors can be reported both in the normal as well in the fault flow
-	 */   
-    @Override
-    protected byte inFlows() {
-        return OUT_FLOW | OUT_FAULT_FLOW;
-    }
+public class CreateSignature extends AbstractBaseHandler {
 
     @Override
-    protected InvocationResponse doProcessing(MessageContext mc) throws Exception {
+    protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Log log) throws Exception {
     	// First check that there is content that can be signed
-    	final MimeBodyPart  msgToSign = (MimeBodyPart) mc.getProperty(Constants.MC_MIME_ENVELOPE);
+    	final MimeBodyPart  msgToSign = (MimeBodyPart) procCtx.getProperty(Constants.MC_MIME_ENVELOPE);
         if (msgToSign == null)
         	return InvocationResponse.CONTINUE;
         
     	// Get signature configuration from P-Mode of the primary message unit
-        final IMessageUnitEntity primaryMsgUnit = MessageContextUtils.getPrimaryMessageUnit(mc);
+        final IMessageUnitEntity primaryMsgUnit = procCtx.getPrimaryMessageUnit();
         final ISigningConfiguration signingCfg = getSignatureConfiguration(primaryMsgUnit);
 
         if (signingCfg != null) {
@@ -132,8 +123,7 @@ public class CreateSignature extends BaseHandler {
             	// Change the processing state of the message to failure and raise event to inform others                
             	HolodeckB2BCore.getStorageManager().setProcessingState(primaryMsgUnit, ProcessingState.FAILURE);                
                 HolodeckB2BCoreInterface.getEventProcessor().raiseEvent(new SigningFailure(primaryMsgUnit,
-										new SecurityProcessingException("Private key for signing not available"))
-                								, mc);                
+										new SecurityProcessingException("Private key for signing not available")));                
                 return InvocationResponse.ABORT;
             }
             final X509Certificate signingCert = (X509Certificate) signKeyPair.getCertificate();
@@ -146,7 +136,7 @@ public class CreateSignature extends BaseHandler {
             */
             String signatureAlg = signingCfg.getSignatureAlgorithm();
             if (Utils.isNullOrEmpty(signatureAlg)) {
-                final MDNInfo mdn = (MDNInfo) mc.getProperty(Constants.MC_AS2_MDN_DATA);
+                final MDNInfo mdn = (MDNInfo) procCtx.getProperty(Constants.MC_AS2_MDN_DATA);
                 final MDNRequestOptions mdnRequest = mdn.getMDNRequestOptions();
                 if (mdnRequest != null) {
                     log.debug("No algorithm specified in the P-Mode, getting the signing algorithm from MDN request");
@@ -195,9 +185,9 @@ public class CreateSignature extends BaseHandler {
                 final MimeBodyPart mimeEnvelope = new MimeBodyPart();
                 mimeEnvelope.setContent(signedMultipart);
                 mimeEnvelope.setHeader(HTTPConstants.CONTENT_TYPE, signedMultipart.getContentType());
-                mc.setProperty(Constants.MC_MIME_ENVELOPE, mimeEnvelope);
+                procCtx.setProperty(Constants.MC_MIME_ENVELOPE, mimeEnvelope);
                 final ContentType contentType = new ContentType(mimeEnvelope.getContentType());
-                mc.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE, contentType);
+                procCtx.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE, contentType);
 
                 log.debug("Completed message signing succesfully");
                 // Raise event to inform external components about the successful signing of the user message
@@ -210,7 +200,7 @@ public class CreateSignature extends BaseHandler {
                 																					msgToSign, true))
                 					);
                 	HolodeckB2BCoreInterface.getEventProcessor().raiseEvent(
-                													new SignatureCreated(userMessage, signedInfo), mc);
+                													new SignatureCreated(userMessage, signedInfo));
                 }
             } catch (CertificateEncodingException | ParseException | MessagingException
                     | SMIMEException | IllegalArgumentException | OperatorCreationException signingFailure) {
@@ -219,8 +209,7 @@ public class CreateSignature extends BaseHandler {
             	// Change the processing state of the message to failure and raise event to inform others                
             	HolodeckB2BCore.getStorageManager().setProcessingState(primaryMsgUnit, ProcessingState.FAILURE);                
                 HolodeckB2BCoreInterface.getEventProcessor().raiseEvent(new SigningFailure(primaryMsgUnit,
-										new SecurityProcessingException("Signing of message failed", signingFailure))
-                								, mc);                
+										new SecurityProcessingException("Signing of message failed", signingFailure)));                
                 return InvocationResponse.ABORT;
             }
         }

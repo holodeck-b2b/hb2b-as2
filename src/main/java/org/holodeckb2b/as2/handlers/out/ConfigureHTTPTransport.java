@@ -18,14 +18,14 @@ package org.holodeckb2b.as2.handlers.out;
 
 import org.apache.axis2.Constants;
 import org.apache.axis2.client.Options;
-import org.apache.axis2.context.MessageContext;
 import org.apache.axis2.transport.http.HTTPConstants;
+import org.apache.commons.logging.Log;
 import org.holodeckb2b.as2.messagemodel.MDNRequestOptions;
 import org.holodeckb2b.as2.packaging.MDNInfo;
-import org.holodeckb2b.common.handler.BaseHandler;
+import org.holodeckb2b.common.handler.AbstractBaseHandler;
+import org.holodeckb2b.common.handler.MessageProcessingContext;
 import org.holodeckb2b.common.messagemodel.util.MessageUnitUtils;
 import org.holodeckb2b.common.util.Utils;
-import org.holodeckb2b.ebms3.axis2.MessageContextUtils;
 import org.holodeckb2b.interfaces.messagemodel.IReceipt;
 import org.holodeckb2b.interfaces.messagemodel.ISignalMessage;
 import org.holodeckb2b.interfaces.persistency.PersistenceException;
@@ -62,19 +62,11 @@ import org.holodeckb2b.module.HolodeckB2BCore;
  *
  * @author Sander Fieten (sander at chasquis-consulting.com)
  */
-public class ConfigureHTTPTransport extends BaseHandler {
-
-    /**
-     * Configuration of HTTP is only necessary in the OUT_FLOW because the OUT_FAULT_FLOW is always an HTTP response
-     */
-    @Override
-    protected byte inFlows() {
-        return OUT_FLOW;
-    }
+public class ConfigureHTTPTransport extends AbstractBaseHandler {
 
     @Override
-    protected InvocationResponse doProcessing(final MessageContext mc) throws PersistenceException {
-        final IMessageUnitEntity primaryMU = MessageContextUtils.getPrimaryMessageUnit(mc);
+    protected InvocationResponse doProcessing(final MessageProcessingContext procCtx, Log log) throws PersistenceException {
+        final IMessageUnitEntity primaryMU = procCtx.getPrimaryMessageUnit();
         // Only when message contains a message unit there is something to do
         if (primaryMU != null) {
             log.debug("Get P-Mode configuration for primary MU");
@@ -85,14 +77,14 @@ public class ConfigureHTTPTransport extends BaseHandler {
                 return InvocationResponse.CONTINUE;
             }
             // Get current set of options
-            final Options options = mc.getOptions();
+            final Options options = procCtx.getParentContext().getOptions();
             // AS2 is always a One-Way MEP
             final ILeg leg = pmode.getLeg(Label.REQUEST);
 
             // If Holodeck B2B is initiator the destination URL must be set
-            if (isInFlow(INITIATOR)) {
+            if (procCtx.isHB2BInitiated()) {
                 // Get the destination URL via the P-Mode of this message unit
-                String destURL = getDestinationURL(primaryMU, leg, mc);
+                String destURL = getDestinationURL(primaryMU, leg, procCtx);
                 
                 if (Utils.isNullOrEmpty(destURL)) {
                 	// No destination URL available, unable to sent this message!
@@ -102,7 +94,7 @@ public class ConfigureHTTPTransport extends BaseHandler {
                     return InvocationResponse.ABORT;
                 }                
                 log.debug("Destination URL=" + destURL);
-                mc.setProperty(Constants.Configuration.TRANSPORT_URL, destURL);
+                procCtx.getParentContext().setProperty(Constants.Configuration.TRANSPORT_URL, destURL);
             }
 
             // Check if HTTP compression and/or chunking should be used and set options accordingly
@@ -111,7 +103,7 @@ public class ConfigureHTTPTransport extends BaseHandler {
             if (compress) {
                 log.debug("Enable HTTP compression using gzip Content-Encoding");
                 log.debug("Enable gzip content-encoding");
-                if (isInFlow(INITIATOR))
+                if (procCtx.isHB2BInitiated())
                     // Holodeck B2B is sending the message, so request has to be compressed
                     options.setProperty(HTTPConstants.MC_GZIP_REQUEST, Boolean.TRUE);
                 else
@@ -130,7 +122,7 @@ public class ConfigureHTTPTransport extends BaseHandler {
             }
 
             // If the message does not contain any attachments we can disable SwA
-            if (mc.getAttachmentMap().getContentIDSet().isEmpty()) {
+            if (procCtx.getParentContext().getAttachmentMap().getContentIDSet().isEmpty()) {
                 log.debug("Disable SwA as message does not contain attachments");
                 options.setProperty(Constants.Configuration.ENABLE_SWA, Boolean.FALSE);
             }
@@ -148,14 +140,14 @@ public class ConfigureHTTPTransport extends BaseHandler {
 	 *  
 	 * @param msgToSend		The message unit being send
 	 * @param leg			The P-Mode configuration parameters for this leg
-	 * @param mc			The message context
+	 * @param mc			The message processing context
 	 * @return				The destination URL, <code>null</code> if URL cannot be determined 
 	 */
-	private String getDestinationURL(IMessageUnitEntity msgToSend, ILeg leg, MessageContext mc) {
+	private String getDestinationURL(IMessageUnitEntity msgToSend, ILeg leg, MessageProcessingContext procCtx) {
 		String destURL = null;
 		
 		if (msgToSend instanceof ISignalMessage) {
-			final MDNInfo mdn = (MDNInfo) mc.getProperty(org.holodeckb2b.as2.util.Constants.MC_AS2_MDN_DATA);
+			final MDNInfo mdn = (MDNInfo) procCtx.getProperty(org.holodeckb2b.as2.util.Constants.MC_AS2_MDN_DATA);
 			MDNRequestOptions mdnRequest = mdn.getMDNRequestOptions();
 			destURL = mdnRequest != null ? mdnRequest.getReplyTo() : null;
 			if (Utils.isNullOrEmpty(destURL))

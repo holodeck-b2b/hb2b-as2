@@ -42,7 +42,6 @@ import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMultipart;
 
 import org.apache.axiom.mime.ContentType;
-import org.apache.axis2.context.MessageContext;
 import org.apache.commons.logging.Log;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
@@ -59,10 +58,9 @@ import org.bouncycastle.util.CollectionStore;
 import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.as2.util.CryptoAlgorithmHelper;
 import org.holodeckb2b.as2.util.SignedContentMetadata;
-import org.holodeckb2b.common.handler.BaseHandler;
+import org.holodeckb2b.common.handler.AbstractBaseHandler;
+import org.holodeckb2b.common.handler.MessageProcessingContext;
 import org.holodeckb2b.common.util.Utils;
-import org.holodeckb2b.ebms3.axis2.MessageContextUtils;
-import org.holodeckb2b.ebms3.constants.MessageContextProperties;
 import org.holodeckb2b.ebms3.errors.FailedAuthentication;
 import org.holodeckb2b.events.security.SignatureVerificationFailure;
 import org.holodeckb2b.events.security.SignatureVerified;
@@ -89,31 +87,27 @@ import org.holodeckb2b.security.results.SignatureProcessingResult;
  *
  * @author Sander Fieten (sander at chasquis-consulting.com)
  */
-public class ProcessSignature extends BaseHandler {
+public class ProcessSignature extends AbstractBaseHandler {
 
     @Override
-    protected byte inFlows() {
-        return IN_FLOW;
-    }
-
-    @Override
-    protected InvocationResponse doProcessing(MessageContext mc) throws Exception {
+    protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Log log) throws Exception {
 
         // First check if received message does contain a signed message
-        final IMessageUnitEntity msgUnit = MessageContextUtils.getPrimaryMessageUnit(mc);
+        final IMessageUnitEntity msgUnit = procCtx.getPrimaryMessageUnit();
         final ContentType contentType = (ContentType)
-                                                mc.getProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE);
+                                            procCtx.getProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE);
         if (msgUnit == null || !"multipart/signed".equalsIgnoreCase(contentType.getMediaType().toString())) {
         	// If the message is not signed, the main part is the current MIME envelope 
-        	mc.setProperty(Constants.MC_MAIN_MIME_PART, mc.getProperty(Constants.MC_MIME_ENVELOPE));
+        	procCtx.setProperty(Constants.MC_MAIN_MIME_PART, procCtx.getProperty(Constants.MC_MIME_ENVELOPE));
             return InvocationResponse.CONTINUE;
         }
 
         ISignatureProcessingResult result = null;
         log.debug("Received message is signed, verify signature");
-        final MimeMultipart mimeEnvelope = (MimeMultipart) ((MimeBodyPart) mc.getProperty(Constants.MC_MIME_ENVELOPE))
+        final MimeMultipart mimeEnvelope = (MimeMultipart) 
+        											  ((MimeBodyPart) procCtx.getProperty(Constants.MC_MIME_ENVELOPE))
                                                                              .getContent();
-        result = verify(mimeEnvelope, contentType.getParameter("micalg"));
+        result = verify(mimeEnvelope, contentType.getParameter("micalg"), log);
         if (result.isSuccessful()) {
             log.debug("Message signature successfully verified");
             // If the processed message is a User Message, the signature result applies to the (single) payload,
@@ -127,30 +121,28 @@ public class ProcessSignature extends BaseHandler {
             										   );		
             }
             // Store result in message context for creating the Receipt
-            mc.setProperty(MessageContextProperties.SIG_VERIFICATION_RESULT, result);
+            procCtx.addSecurityProcessingResult(result);
             // We don't need the signature info anymore, so we can replace the Mime Envelope in the message context
             // with only the signed data.
             final MimeBodyPart signedPart = (MimeBodyPart) mimeEnvelope.getBodyPart(0);
-            mc.setProperty(Constants.MC_MIME_ENVELOPE, signedPart);      
-            mc.setProperty(Constants.MC_MAIN_MIME_PART, signedPart);                  
-            mc.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE,
+            procCtx.setProperty(Constants.MC_MIME_ENVELOPE, signedPart);      
+            procCtx.setProperty(Constants.MC_MAIN_MIME_PART, signedPart);                  
+            procCtx.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE,
                                                                     new ContentType(signedPart.getContentType()));
             // Raise event to inform external components about the successful verification
             final SignatureVerified event = msgUnit instanceof IUserMessage ?
             					  new SignatureVerified((IUserMessage) msgUnit, null, result.getPayloadDigests())
             					: new SignatureVerified((ISignalMessage) msgUnit, result.getHeaderDigest());            
-            HolodeckB2BCoreInterface.getEventProcessor().raiseEvent(event, mc);               
+            HolodeckB2BCoreInterface.getEventProcessor().raiseEvent(event);               
         } else {
             log.warn("Signature verification failed!");
-            MessageContextUtils.addGeneratedError(mc, new FailedAuthentication("Signature validation failed",
-                                                                               msgUnit.getMessageId()));
+            procCtx.addGeneratedError(new FailedAuthentication("Signature validation failed", msgUnit.getMessageId()));
             log.debug("Set processing state of message to failed");
             HolodeckB2BCore.getStorageManager().setProcessingState(msgUnit, ProcessingState.FAILURE);
             // Raise event to inform external components about failure
             HolodeckB2BCoreInterface.getEventProcessor().raiseEvent(
             												new SignatureVerificationFailure(msgUnit, 
-            																			 	result.getFailureReason())
-            											  , mc);               
+            																			 	result.getFailureReason()));               
         }
 
         return InvocationResponse.CONTINUE;
@@ -168,12 +160,14 @@ public class ProcessSignature extends BaseHandler {
      * message and only if it isn't the key store with trusted certificates as managed by the Holodeck B2B <i>security 
      * provider</i> is checked.
      *
-     * @param signedData     The signed MIME multipart
+     * @param signedData     		The signed MIME multipart
+     * @param mimeMicAlgParameter	The MIC algorithm as specified in the MIME header
+     * @param log					The log to be used
      * @return The result of the signature verification.
      * @throws SecurityProcessingException  When an error occurs during the verification of the signature
      */
-    private ISignatureProcessingResult verify(final MimeMultipart signedData, final String mimeMicAlgParameter)
-                                                                                  throws SecurityProcessingException {
+    private ISignatureProcessingResult verify(final MimeMultipart signedData, final String mimeMicAlgParameter,
+    										  final Log log) throws SecurityProcessingException {
         try {
             log.debug("Parsing the SMIME envelope");
             // SMIMESignedParser uses "7bit" as the default - AS2 is "binary"
