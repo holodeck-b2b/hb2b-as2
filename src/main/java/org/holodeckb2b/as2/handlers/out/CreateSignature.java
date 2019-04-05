@@ -135,6 +135,7 @@ public class CreateSignature extends AbstractBaseHandler {
                the P-Mode specified algorithm will take precedence.
             */
             String signatureAlg = signingCfg.getSignatureAlgorithm();
+            String requestedAlg = null;
             if (Utils.isNullOrEmpty(signatureAlg)) {
                 final MDNInfo mdn = (MDNInfo) procCtx.getProperty(Constants.MC_AS2_MDN_DATA);
                 final MDNRequestOptions mdnRequest = mdn.getMDNRequestOptions();
@@ -144,9 +145,11 @@ public class CreateSignature extends AbstractBaseHandler {
                                                                     .filter(a -> CryptoAlgorithmHelper.isSupported(a))
                                                                     .findFirst();
                     // If a supported digest algorithm is specified, combine with encryption algorithm of the public key
-                    signatureAlg = supportedAlg.isPresent() ? CryptoAlgorithmHelper.getRFC3851Name(supportedAlg.get())                    															   
-                                                              + "WITH" + signingCert.getPublicKey().getAlgorithm()
-                                                            : null;
+                    if (supportedAlg.isPresent()) {
+                    	requestedAlg = supportedAlg.get();                  
+                    	signatureAlg =  CryptoAlgorithmHelper.getRFC3851Name(requestedAlg)                    															   
+                                                              + "WITH" + signingCert.getPublicKey().getAlgorithm();
+                    }
                 }
                 if (signatureAlg == null) {
                     log.debug("No algorithm in P-Mode or in request from sender, use certificate's algorithm");
@@ -157,9 +160,12 @@ public class CreateSignature extends AbstractBaseHandler {
             log.debug("Signing algorithm to be used " + signatureAlg);
 
             try {
-                // Create the S/MIME generator using the RFC3851 or RFC5751 algorithm names depending on the P-Mode
-                // If not specified the RFC3851 names are used as this RFC is ref'd in AS2 spec
-                final Map digestAlgoNames = "RFC5751".equalsIgnoreCase(signingCfg.getHashFunction()) ?
+            	/* Create the S/MIME generator using the RFC3851 or RFC5751 algorithm names. If this is a MDN and the 
+            	   MDN request contained a specific digest algorithm, we will use that one.
+            	   Otherwise use the setting from the P-Mode or if nothing specified the RFC3851 names 
+            	*/            	
+                final Map digestAlgoNames = (requestedAlg != null && CryptoAlgorithmHelper.isRFC5751Name(requestedAlg))
+                							|| "RFC5751".equalsIgnoreCase(signingCfg.getHashFunction()) ?
                                             SMIMESignedGenerator.RFC5751_MICALGS : SMIMESignedGenerator.RFC3851_MICALGS;
                 log.debug("Prepare S/MIME generator");
                 final SMIMESignedGenerator smimeGenerator = new SMIMESignedGenerator(digestAlgoNames);

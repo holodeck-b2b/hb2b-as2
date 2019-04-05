@@ -27,6 +27,7 @@ import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 import org.bouncycastle.asn1.x9.X9ObjectIdentifiers;
 import org.bouncycastle.operator.DefaultDigestAlgorithmIdentifierFinder;
 import org.bouncycastle.operator.DefaultSignatureAlgorithmIdentifierFinder;
+import org.holodeckb2b.common.util.Utils;
 
 /**
  * Contains functions to support the handling the cryptographic algorithms used in securing the AS2 messages. Because
@@ -185,7 +186,7 @@ public class CryptoAlgorithmHelper {
         else
             return digestAlgorithm;
     }
-
+    
     /**
      * Ensures that the digest algorithm name is in JCA format as used in P-Modes and by BouncyCastle.
      * <p>As AS2 is based on RFC3851 the digest algorithm names used are in lower case and don't contain a '-', i.e.
@@ -202,4 +203,15 @@ public class CryptoAlgorithmHelper {
             return ucName;
     }
 
+    /**
+     * Checks if the given digest algorithm name is in the format defined in section 3.4.3.2 of RFC5751.  
+     * 
+     * @param algorithm		The digest algorithm name
+     * @return				<code>true</code> if it is a algorithm name as defined in RFC5751,
+     * 						<code>false</code> otherwise
+     * @since 1.1.0
+     */
+    public static boolean isRFC5751Name(final String algorithm) {
+    	return !Utils.isNullOrEmpty(algorithm) && ( algorithm.equals("md5") || algorithm.matches("sha\\d+"));
+    }
 }
