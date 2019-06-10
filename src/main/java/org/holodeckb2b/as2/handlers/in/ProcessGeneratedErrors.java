@@ -118,7 +118,8 @@ public class ProcessGeneratedErrors extends AbstractBaseHandler {
                             HolodeckB2BCore.getConfiguration().shouldReportErrorOnReceipt();
             
 			log.debug("Create and log Error Signal for generated errors");
-        	ErrorMessage errorMessage = new ErrorMessage(errors);  
+        	ErrorMessage errorMessage = new ErrorMessage(errors);
+        	errorMessage.setPModeId(pmodeId);
         	// Always log the error
         	if (MessageUnitUtils.isWarning(errorMessage))
         		errorLog.warn(MessageUnitUtils.errorSignalToString(errorMessage));

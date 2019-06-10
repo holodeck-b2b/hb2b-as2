@@ -16,6 +16,7 @@
  */
 package org.holodeckb2b.as2.messagemodel;
 
+import java.util.Collection;
 import java.util.Optional;
 
 import javax.mail.internet.MimeBodyPart;
@@ -79,11 +80,13 @@ public class MDNMetadataFactory {
 		String base64Digest = null;
 		if (signedMDN) {
 			log.debug("MDN should be signed => determine digest algorithm to use for MIC");
-			ISignatureProcessingResult signatureResult = (ISignatureProcessingResult) 
+			Collection<ISignatureProcessingResult> signatureResult =  
 												procCtx.getSecurityProcessingResults(ISignatureProcessingResult.class);
-			if (signatureResult != null) {
+			if (!Utils.isNullOrEmpty(signatureResult)) {
 				log.debug("Using digest algorithm from original message's signature");
-				digestAlgorithm = signatureResult.getPayloadDigests().values().iterator().next().getDigestAlgorithm();
+				// There is always just one signature and one payload
+				digestAlgorithm = signatureResult.iterator().next().getPayloadDigests().values().iterator().next()
+																   .getDigestAlgorithm();
 			} else {
 				if (mdnRequest != null && !Utils.isNullOrEmpty(mdnRequest.getPreferredHashingAlgorithms())) {
 					log.debug("Using digest algorithm from MDN reqest");
@@ -91,11 +94,11 @@ public class MDNMetadataFactory {
 							.filter(a -> CryptoAlgorithmHelper.isSupported(a)).findFirst();
 					digestAlgorithm = supportedAlg.isPresent() ? supportedAlg.get() : null;
 				}
-				if (digestAlgorithm == null) {
+				if (digestAlgorithm == null && pModeSignatureCfg != null 
+						&& !Utils.isNullOrEmpty(pModeSignatureCfg.getSignatureAlgorithm())) {
 					log.debug("Getting digest algorithm from P-Mode");
-					digestAlgorithm = pModeSignatureCfg != null
-							? CryptoAlgorithmHelper.getDefaultDigestAlgorithm(pModeSignatureCfg.getSignatureAlgorithm())
-							: null;
+					digestAlgorithm = CryptoAlgorithmHelper.getDefaultDigestAlgorithm(
+																			pModeSignatureCfg.getSignatureAlgorithm());							
 				}
 			}
 			// If a digest algorithm is specified, calculate the MIC of the original message
