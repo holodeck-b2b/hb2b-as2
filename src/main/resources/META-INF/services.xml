@@ -7,6 +7,7 @@
     </operation>
 
     <parameter name="supportSingleOperation" locked="xsd:true">true</parameter>
+    <parameter name="hb2b:builder" locked="xsd:true">org.holodeckb2b.as2.axis2.AS2MessageBuilder</parameter>
 
     <module ref="holodeckb2b-as2"/>
 </service>
