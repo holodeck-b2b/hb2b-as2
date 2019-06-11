@@ -139,7 +139,7 @@ public class CreateSignature extends AbstractBaseHandler {
             if (Utils.isNullOrEmpty(signatureAlg)) {
                 final MDNInfo mdn = (MDNInfo) procCtx.getProperty(Constants.MC_AS2_MDN_DATA);
                 final MDNRequestOptions mdnRequest = mdn.getMDNRequestOptions();
-                if (mdnRequest != null) {
+                if (mdnRequest != null && !Utils.isNullOrEmpty(mdnRequest.getPreferredHashingAlgorithms())) {
                     log.debug("No algorithm specified in the P-Mode, getting the signing algorithm from MDN request");
                     Optional<String> supportedAlg = mdnRequest.getPreferredHashingAlgorithms().parallelStream()
                                                                     .filter(a -> CryptoAlgorithmHelper.isSupported(a))
