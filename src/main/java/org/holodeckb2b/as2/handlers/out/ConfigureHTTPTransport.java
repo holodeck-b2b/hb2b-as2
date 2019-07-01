@@ -147,7 +147,7 @@ public class ConfigureHTTPTransport extends AbstractBaseHandler {
 		String destURL = null;
 		
 		if (msgToSend instanceof ISignalMessage) {
-			final MDNInfo mdn = (MDNInfo) procCtx.getProperty(org.holodeckb2b.as2.util.Constants.MC_AS2_MDN_DATA);
+			final MDNInfo mdn = (MDNInfo) procCtx.getProperty(org.holodeckb2b.as2.util.Constants.CTX_AS2_MDN_DATA);
 			MDNRequestOptions mdnRequest = mdn.getMDNRequestOptions();
 			destURL = mdnRequest != null ? mdnRequest.getReplyTo() : null;
 			if (Utils.isNullOrEmpty(destURL))

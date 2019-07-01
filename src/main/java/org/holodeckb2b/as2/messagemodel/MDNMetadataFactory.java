@@ -107,9 +107,9 @@ public class MDNMetadataFactory {
 				// Headers must be included in MIC when original message was signed or encrypted
 				try {
 					base64Digest = DigestHelper.calculateDigestAsString(digestAlgorithm, 
-															(MimeBodyPart) procCtx.getProperty(Constants.MC_MAIN_MIME_PART),
+															(MimeBodyPart) procCtx.getProperty(Constants.CTX_MAIN_MIME_PART),
 															signatureResult != null 
-																|| procCtx.getProperty(Constants.MC_WAS_ENCRYPTED) != null);
+																|| procCtx.getProperty(Constants.CTX_WAS_ENCRYPTED) != null);
 				} catch (SecurityProcessingException digestError) {
 					log.error("Could not calculate the digest for the original message! Error details: {}", 
 								digestError.getMessage());
@@ -119,7 +119,7 @@ public class MDNMetadataFactory {
 			}
 		}
 
-		GenericMessageInfo generalMetaData = (GenericMessageInfo) procCtx.getProperty(Constants.MC_AS2_GENERAL_DATA);
+		GenericMessageInfo generalMetaData = (GenericMessageInfo) procCtx.getProperty(Constants.CTX_AS2_GENERAL_DATA);
 		return new MDNMetadata(mdnRequest, 
 							   generalMetaData.getToPartyId(), 
 							   generalMetaData.getFromPartyId(),

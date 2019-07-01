@@ -104,7 +104,7 @@ public class CreateSignature extends AbstractBaseHandler {
     @Override
     protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Log log) throws Exception {
     	// First check that there is content that can be signed
-    	final MimeBodyPart  msgToSign = (MimeBodyPart) procCtx.getProperty(Constants.MC_MIME_ENVELOPE);
+    	final MimeBodyPart  msgToSign = (MimeBodyPart) procCtx.getProperty(Constants.CTX_MIME_ENVELOPE);
         if (msgToSign == null)
         	return InvocationResponse.CONTINUE;
         
@@ -137,7 +137,7 @@ public class CreateSignature extends AbstractBaseHandler {
             String signatureAlg = signingCfg.getSignatureAlgorithm();
             String requestedAlg = null;
             if (Utils.isNullOrEmpty(signatureAlg)) {
-                final MDNInfo mdn = (MDNInfo) procCtx.getProperty(Constants.MC_AS2_MDN_DATA);
+                final MDNInfo mdn = (MDNInfo) procCtx.getProperty(Constants.CTX_AS2_MDN_DATA);
                 final MDNRequestOptions mdnRequest = mdn.getMDNRequestOptions();
                 if (mdnRequest != null && !Utils.isNullOrEmpty(mdnRequest.getPreferredHashingAlgorithms())) {
                     log.debug("No algorithm specified in the P-Mode, getting the signing algorithm from MDN request");
@@ -191,7 +191,7 @@ public class CreateSignature extends AbstractBaseHandler {
                 final MimeBodyPart mimeEnvelope = new MimeBodyPart();
                 mimeEnvelope.setContent(signedMultipart);
                 mimeEnvelope.setHeader(HTTPConstants.CONTENT_TYPE, signedMultipart.getContentType());
-                procCtx.setProperty(Constants.MC_MIME_ENVELOPE, mimeEnvelope);
+                procCtx.setProperty(Constants.CTX_MIME_ENVELOPE, mimeEnvelope);
                 final ContentType contentType = new ContentType(mimeEnvelope.getContentType());
                 procCtx.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE, contentType);
 

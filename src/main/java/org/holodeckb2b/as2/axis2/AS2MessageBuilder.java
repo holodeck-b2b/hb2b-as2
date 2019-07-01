@@ -71,8 +71,8 @@ public class AS2MessageBuilder implements Builder {
 			MessageProcessingContext procCtx = MessageProcessingContext.getFromMessageContext(messageContext);
 			
 			procCtx.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE, new ContentType(contentType));
-			procCtx.setProperty(Constants.MC_MIME_ENVELOPE, mimeEnvelope);
-			procCtx.setProperty(Constants.MC_MAIN_MIME_PART, mainPart);
+			procCtx.setProperty(Constants.CTX_MIME_ENVELOPE, mimeEnvelope);
+			procCtx.setProperty(Constants.CTX_MAIN_MIME_PART, mainPart);
 	
 			return TransportUtils.createSOAPEnvelope(null);
 		} catch (Exception msgBuildError) {

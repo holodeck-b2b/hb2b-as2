@@ -59,7 +59,7 @@ public class SavePayload extends AbstractUserMessageHandler {
             // Create a unique filename for temporarily storing the payload
             final File plFile = File.createTempFile("pl-", null, getTempDir());
             log.debug("Saving the payload data from the message to temp file: " + plFile.getAbsolutePath());
-            savePayload((MimeBodyPart) procCtx.getProperty(Constants.MC_MIME_ENVELOPE), plFile);
+            savePayload((MimeBodyPart) procCtx.getProperty(Constants.CTX_MIME_ENVELOPE), plFile);
             log.debug("Saved payload data to file, update message meta-data");
             Payload payloadInfo = new Payload();
             payloadInfo.setContainment(IPayload.Containment.BODY);

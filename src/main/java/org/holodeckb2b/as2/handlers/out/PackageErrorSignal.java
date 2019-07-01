@@ -76,11 +76,11 @@ public class PackageErrorSignal extends AbstractBaseHandler {
         if (mdnObject != null) {
         	log.debug("Error must be packaged as MDN, create the MIME multi-part and add it to message context");
             MimeBodyPart mdnPart = mdnObject.toMimePart();
-            procCtx.setProperty(Constants.MC_MIME_ENVELOPE, mdnPart);
+            procCtx.setProperty(Constants.CTX_MIME_ENVELOPE, mdnPart);
             procCtx.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE,
                                                  new ContentType(mdnPart.getContentType()).getMediaType().toString());
             // For easy access to MDN options the MDN object is also stored in the msgCtx
-            procCtx.setProperty(Constants.MC_AS2_MDN_DATA, mdnObject);
+            procCtx.setProperty(Constants.CTX_AS2_MDN_DATA, mdnObject);
         } else if (!procCtx.isHB2BInitiated()) {
         	log.debug("Error must be reported using HTTP Error Code");
         	// If the Error has a reference to another message unit, use 403 (Bad Request). If there is no reference,

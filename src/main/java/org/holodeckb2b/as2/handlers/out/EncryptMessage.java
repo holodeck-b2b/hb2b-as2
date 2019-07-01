@@ -102,7 +102,7 @@ public class EncryptMessage extends AbstractUserMessageHandler {
         
         try {
         	// First check that there is content that can be compressed
-        	final MimeBodyPart  msgToEncrypt = (MimeBodyPart) procCtx.getProperty(Constants.MC_MIME_ENVELOPE);
+        	final MimeBodyPart  msgToEncrypt = (MimeBodyPart) procCtx.getProperty(Constants.CTX_MIME_ENVELOPE);
             if (msgToEncrypt == null)
             	return InvocationResponse.CONTINUE;
             
@@ -154,7 +154,7 @@ public class EncryptMessage extends AbstractUserMessageHandler {
                                                                          );
                 log.debug("Message MIME part successfully encrypted, set as new MIME Envelope");
                 // Create the MIME body part to include in message context
-                procCtx.setProperty(Constants.MC_MIME_ENVELOPE, encryptedMsg);
+                procCtx.setProperty(Constants.CTX_MIME_ENVELOPE, encryptedMsg);
                 final ContentType contentType = new ContentType(encryptedMsg.getContentType());
                 procCtx.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE, contentType);
 

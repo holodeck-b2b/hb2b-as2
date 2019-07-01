@@ -101,12 +101,12 @@ public class DecryptMessage extends AbstractUserMessageHandler {
             return InvocationResponse.CONTINUE;
         }
         try {
-            final MimeBodyPart mimeEnvelope = (MimeBodyPart) procCtx.getProperty(Constants.MC_MIME_ENVELOPE);
+            final MimeBodyPart mimeEnvelope = (MimeBodyPart) procCtx.getProperty(Constants.CTX_MIME_ENVELOPE);
             log.debug("Decrypting the message");
             final MimeBodyPart decryptedData = decrypt(mimeEnvelope, receiverKeyPair);
             log.debug("Successfully decrypted the message, replacing encrypted data with decrypted version");
-            procCtx.setProperty(Constants.MC_WAS_ENCRYPTED, Boolean.TRUE);
-            procCtx.setProperty(Constants.MC_MIME_ENVELOPE, decryptedData);            
+            procCtx.setProperty(Constants.CTX_WAS_ENCRYPTED, Boolean.TRUE);
+            procCtx.setProperty(Constants.CTX_MIME_ENVELOPE, decryptedData);            
             procCtx.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE,
                                                                      new ContentType(decryptedData.getContentType()));
         } catch (SecurityProcessingException decryptionFailure) {

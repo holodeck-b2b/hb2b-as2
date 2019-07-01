@@ -43,7 +43,7 @@ public class FindPMode extends AbstractBaseHandler {
     protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Log log) throws Exception {
 
         // First get the message unit and general message info from msg context
-        GenericMessageInfo msgInfo = (GenericMessageInfo) procCtx.getProperty(Constants.MC_AS2_GENERAL_DATA);
+        GenericMessageInfo msgInfo = (GenericMessageInfo) procCtx.getProperty(Constants.CTX_AS2_GENERAL_DATA);
         IMessageUnitEntity msgUnit = procCtx.getPrimaryMessageUnit();
         // If this info is misisng something has probably already gone wrong and we don't need to find a P-Mode
         if (msgInfo == null || msgUnit == null)

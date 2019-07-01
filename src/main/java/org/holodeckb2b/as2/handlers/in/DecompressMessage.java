@@ -57,11 +57,11 @@ public class DecompressMessage extends AbstractUserMessageHandler {
         try {
             log.debug("Received message is compressed, decompress");
             final SMIMECompressed compressedPart = new SMIMECompressed((MimeBodyPart)
-                                                                       procCtx.getProperty(Constants.MC_MIME_ENVELOPE));
+                                                                       procCtx.getProperty(Constants.CTX_MIME_ENVELOPE));
             final MimeBodyPart decompressedPart = SMIMEUtil.toMimeBodyPart(compressedPart
                                                                              .getContent(new ZlibExpanderProvider()));
             log.debug("Successfully decompressed the message, replacing compressed data with decompressed version");
-            procCtx.setProperty(Constants.MC_MIME_ENVELOPE, decompressedPart);
+            procCtx.setProperty(Constants.CTX_MIME_ENVELOPE, decompressedPart);
             procCtx.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE,
                                                                   new ContentType(decompressedPart.getContentType()));
         } catch (CMSException | MessagingException | SMIMEException | ParseException compressionFailure) {

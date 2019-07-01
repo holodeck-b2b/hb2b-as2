@@ -40,7 +40,7 @@ public class ReadMDNInfo extends AbstractBaseHandler {
     @Override
     protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Log log) {
  
-    	final BodyPart mainPart = (BodyPart) procCtx.getProperty(Constants.MC_MAIN_MIME_PART);
+    	final BodyPart mainPart = (BodyPart) procCtx.getProperty(Constants.CTX_MAIN_MIME_PART);
     	try {			
 			if (!mainPart.isMimeType(Constants.REPORT_MIME_TYPE) 
 					&& !mainPart.isMimeType(Constants.MDN_DISPOSITION_MIME_TYPE)) 
@@ -54,13 +54,13 @@ public class ReadMDNInfo extends AbstractBaseHandler {
 	    log.debug("Parsing MDN contained in the message");
 	    try {
 	        log.debug("Get the general message info of the MDN from msgCtx");
-	        GenericMessageInfo generalInfo = (GenericMessageInfo) procCtx.getProperty(Constants.MC_AS2_GENERAL_DATA);
+	        GenericMessageInfo generalInfo = (GenericMessageInfo) procCtx.getProperty(Constants.CTX_AS2_GENERAL_DATA);
 	        log.debug("Received MDN with msgId [" + generalInfo.getMessageId() + "] from ["
 	                   + generalInfo.getFromPartyId() + "] addressed to [" + generalInfo.getToPartyId() + "]");
 	        log.debug("Parse the MDN Mime part");
 	        MDNInfo mdnObject = new MDNInfo(generalInfo, mainPart);
 	        log.debug("Read all data from the MDN, storing it in msgCtx for further processing");
-	        procCtx.setProperty(Constants.MC_AS2_MDN_DATA, mdnObject);
+	        procCtx.setProperty(Constants.CTX_AS2_MDN_DATA, mdnObject);
 	    } catch (MDNTransformationException invalidMDN) {
 	        log.error("Could not parse the MDN! Error details: " + invalidMDN.getMessage());
 			// We use the InvalidHeader error to signal this

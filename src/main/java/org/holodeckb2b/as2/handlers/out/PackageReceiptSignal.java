@@ -57,11 +57,11 @@ public class PackageReceiptSignal extends AbstractBaseHandler {
         final MDNInfo mdnObject = new MDNInfo(receipts.iterator().next());
         log.debug("Create the MDN MIME multi-part and add it to message context");
         MimeBodyPart mdnPart = mdnObject.toMimePart();
-        procCtx.setProperty(Constants.MC_MIME_ENVELOPE, mdnPart);
+        procCtx.setProperty(Constants.CTX_MIME_ENVELOPE, mdnPart);
         procCtx.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE,
                                               new ContentType(mdnPart.getContentType()).getMediaType().toString());
         // For easy access to MDN options the MDN object is also stored in the msgCtx
-        procCtx.setProperty(Constants.MC_AS2_MDN_DATA, mdnObject);
+        procCtx.setProperty(Constants.CTX_AS2_MDN_DATA, mdnObject);
 
         return InvocationResponse.CONTINUE;
     }

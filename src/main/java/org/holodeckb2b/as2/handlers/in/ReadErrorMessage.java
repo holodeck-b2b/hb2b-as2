@@ -40,7 +40,7 @@ public class ReadErrorMessage extends AbstractBaseHandler {
     @Override
     protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Log log) throws Exception {
 
-        MDNInfo mdn = (MDNInfo) procCtx.getProperty(Constants.MC_AS2_MDN_DATA);
+        MDNInfo mdn = (MDNInfo) procCtx.getProperty(Constants.CTX_AS2_MDN_DATA);
         // Check if this is a negative MDN to be converted to an Error Message
         if (mdn != null && ( mdn.getModifierSeverity() != null
                             || !Utils.isNullOrEmpty(mdn.getFailures()) || !Utils.isNullOrEmpty(mdn.getErrors())

@@ -41,8 +41,8 @@ public class SetMessageFormatter extends AbstractBaseHandler {
     	final MessageContext mc = procCtx.getParentContext();
         mc.setProperty(MESSAGE_FORMATTER, new AS2MessageFormatter());
         
-        final MimeBodyPart mimeEnvelope = (MimeBodyPart) procCtx.getProperty(Constants.MC_MIME_ENVELOPE);
-        mc.setProperty(Constants.MC_MIME_ENVELOPE, mimeEnvelope);
+        final MimeBodyPart mimeEnvelope = (MimeBodyPart) procCtx.getProperty(Constants.CTX_MIME_ENVELOPE);
+        mc.setProperty(Constants.CTX_MIME_ENVELOPE, mimeEnvelope);
         mc.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE, 
         															new ContentType(mimeEnvelope.getContentType()));        
         mc.setDoingREST(true);

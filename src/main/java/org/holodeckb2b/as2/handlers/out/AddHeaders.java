@@ -54,7 +54,7 @@ public class AddHeaders extends AbstractBaseHandler {
         if (primaryMsg instanceof IUserMessage)
             msgInfo = new GenericMessageInfo((IUserMessage) primaryMsg);
         else
-            msgInfo = (GenericMessageInfo) procCtx.getProperty(Constants.MC_AS2_MDN_DATA);
+            msgInfo = (GenericMessageInfo) procCtx.getProperty(Constants.CTX_AS2_MDN_DATA);
 
         if (msgInfo != null) {
 	        log.debug("Adding the generic AS2 HTTP headers");

@@ -53,7 +53,7 @@ public class ReadUserMessage extends AbstractBaseHandler {
     @Override
     protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Log log) throws Exception {
 
-    	final BodyPart mainPart = (BodyPart) procCtx.getProperty(Constants.MC_MAIN_MIME_PART);
+    	final BodyPart mainPart = (BodyPart) procCtx.getProperty(Constants.CTX_MAIN_MIME_PART);
     	try {			
 			if (mainPart.isMimeType(Constants.REPORT_MIME_TYPE) 
 				|| mainPart.isMimeType(Constants.MDN_DISPOSITION_MIME_TYPE))
@@ -64,7 +64,7 @@ public class ReadUserMessage extends AbstractBaseHandler {
     	}
 
         log.debug("Get the general message info of the User Message from msgCtx");
-        GenericMessageInfo generalInfo = (GenericMessageInfo) procCtx.getProperty(Constants.MC_AS2_GENERAL_DATA);
+        GenericMessageInfo generalInfo = (GenericMessageInfo) procCtx.getProperty(Constants.CTX_AS2_GENERAL_DATA);
         
         // Check that at least the party ids of the sender and receiver are included in the message
         final String fromId = generalInfo.getFromPartyId();

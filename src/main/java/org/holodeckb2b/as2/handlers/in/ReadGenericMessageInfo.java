@@ -43,7 +43,7 @@ public class ReadGenericMessageInfo extends AbstractBaseHandler {
 		Map<String, String> httpHeaders = (Map<String, String>) procCtx.getParentContext()
 																	   .getProperty(MessageContext.TRANSPORT_HEADERS);
         log.debug("Parse the HTTP header and store data in msgCtx for further processing");
-        procCtx.setProperty(Constants.MC_AS2_GENERAL_DATA, new GenericMessageInfo(httpHeaders));
+        procCtx.setProperty(Constants.CTX_AS2_GENERAL_DATA, new GenericMessageInfo(httpHeaders));
 
         return InvocationResponse.CONTINUE;
     }

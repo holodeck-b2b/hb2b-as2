@@ -63,7 +63,7 @@ public class CreateReceipt extends AbstractUserMessageHandler {
             rcptConfig = pmode.getLeg(ILeg.Label.REQUEST).getReceiptConfiguration();
 
         // A Receipt can be specified in the P-Mode but can also be requested by the sender
-        final MDNRequestOptions mdnRequest = (MDNRequestOptions) procCtx.getProperty(Constants.MC_AS2_MDN_REQUEST);
+        final MDNRequestOptions mdnRequest = (MDNRequestOptions) procCtx.getProperty(Constants.CTX_AS2_MDN_REQUEST);
 
         if (rcptConfig != null || mdnRequest != null) {
             log.debug("Receipt requested for this message exchange, create new Receipt signal");

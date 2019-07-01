@@ -87,7 +87,7 @@ public class PackageUserMessage extends AbstractUserMessageHandler {
         mimePart.setHeader(HTTPConstants.CONTENT_TYPE, mimeType);
 
         log.debug("Add MIME part to message");
-        procCtx.setProperty(Constants.MC_MIME_ENVELOPE, mimePart);
+        procCtx.setProperty(Constants.CTX_MIME_ENVELOPE, mimePart);
         procCtx.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE,
                                                   new ContentType(mimePart.getContentType()).getMediaType().toString());
 

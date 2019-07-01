@@ -54,7 +54,7 @@ public class CompressMessage extends AbstractUserMessageHandler {
     @Override
     protected InvocationResponse doProcessing(IUserMessageEntity userMessage, MessageProcessingContext procCtx, Log log) throws Exception {
     	// First check that there is content that can be compressed
-    	final MimeBodyPart  msgToCompress = (MimeBodyPart) procCtx.getProperty(Constants.MC_MIME_ENVELOPE);
+    	final MimeBodyPart  msgToCompress = (MimeBodyPart) procCtx.getProperty(Constants.CTX_MIME_ENVELOPE);
         if (msgToCompress == null)
         	return InvocationResponse.CONTINUE;
 
@@ -70,7 +70,7 @@ public class CompressMessage extends AbstractUserMessageHandler {
             final MimeBodyPart compressedMsg = smimeGenerator.generate(msgToCompress, new ZlibCompressor());
             log.debug("Message MIME part successfully compressed, set as new MIME Envelope");
             // Create the MIME body part to include in message context
-            procCtx.setProperty(Constants.MC_MIME_ENVELOPE, compressedMsg);
+            procCtx.setProperty(Constants.CTX_MIME_ENVELOPE, compressedMsg);
             final ContentType contentType = new ContentType(compressedMsg.getContentType());
             procCtx.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE, contentType);
 

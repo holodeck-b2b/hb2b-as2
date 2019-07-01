@@ -39,7 +39,7 @@ public class ReadReceipt extends AbstractBaseHandler {
     @Override
     protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Log log) throws Exception {
 
-        MDNInfo mdn = (MDNInfo) procCtx.getProperty(Constants.MC_AS2_MDN_DATA);
+        MDNInfo mdn = (MDNInfo) procCtx.getProperty(Constants.CTX_AS2_MDN_DATA);
         // Only positive MDNs are converted 
         if (mdn != null && mdn.getModifierSeverity() == null
                         && Utils.isNullOrEmpty(mdn.getFailures()) && Utils.isNullOrEmpty(mdn.getErrors())

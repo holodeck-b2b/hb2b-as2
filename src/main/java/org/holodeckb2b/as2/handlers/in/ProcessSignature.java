@@ -98,14 +98,14 @@ public class ProcessSignature extends AbstractBaseHandler {
                                             procCtx.getProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE);
         if (msgUnit == null || !"multipart/signed".equalsIgnoreCase(contentType.getMediaType().toString())) {
         	// If the message is not signed, the main part is the current MIME envelope 
-        	procCtx.setProperty(Constants.MC_MAIN_MIME_PART, procCtx.getProperty(Constants.MC_MIME_ENVELOPE));
+        	procCtx.setProperty(Constants.CTX_MAIN_MIME_PART, procCtx.getProperty(Constants.CTX_MIME_ENVELOPE));
             return InvocationResponse.CONTINUE;
         }
 
         ISignatureProcessingResult result = null;
         log.debug("Received message is signed, verify signature");
         final MimeMultipart mimeEnvelope = (MimeMultipart) 
-        											  ((MimeBodyPart) procCtx.getProperty(Constants.MC_MIME_ENVELOPE))
+        											  ((MimeBodyPart) procCtx.getProperty(Constants.CTX_MIME_ENVELOPE))
                                                                              .getContent();
         result = verify(mimeEnvelope, contentType.getParameter("micalg"), log);
         if (result.isSuccessful()) {
@@ -125,8 +125,8 @@ public class ProcessSignature extends AbstractBaseHandler {
             // We don't need the signature info anymore, so we can replace the Mime Envelope in the message context
             // with only the signed data.
             final MimeBodyPart signedPart = (MimeBodyPart) mimeEnvelope.getBodyPart(0);
-            procCtx.setProperty(Constants.MC_MIME_ENVELOPE, signedPart);      
-            procCtx.setProperty(Constants.MC_MAIN_MIME_PART, signedPart);                  
+            procCtx.setProperty(Constants.CTX_MIME_ENVELOPE, signedPart);      
+            procCtx.setProperty(Constants.CTX_MAIN_MIME_PART, signedPart);                  
             procCtx.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE,
                                                                     new ContentType(signedPart.getContentType()));
             // Raise event to inform external components about the successful verification

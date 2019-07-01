@@ -87,7 +87,7 @@ public class ProcessGeneratedErrors extends AbstractBaseHandler {
         	// If so it must be communicated as a MDN and we need to prepare the Error Signal as such 
         	// P-Mode is leading, but in case of a User Message the sender's MDN request options are used as fall back         	
         	IPMode pmode = null;
-        	MDNRequestOptions mdnRequest = (MDNRequestOptions) procCtx.getProperty(Constants.MC_AS2_MDN_REQUEST);
+        	MDNRequestOptions mdnRequest = (MDNRequestOptions) procCtx.getProperty(Constants.CTX_AS2_MDN_REQUEST);
         	final String pmodeId = msgInError != null ? msgInError.getPModeId() : null;
         	if (!Utils.isNullOrEmpty(pmodeId)) 
         		pmode = HolodeckB2BCoreInterface.getPModeSet().get(pmodeId);        	

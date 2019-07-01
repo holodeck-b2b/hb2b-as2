@@ -82,7 +82,7 @@ public class CheckMDNRequest extends AbstractUserMessageHandler {
             	}
             }
             log.debug("Parsed the MDN request parameters, indicate in msg ctx that MDN is requested");
-            procCtx.setProperty(Constants.MC_AS2_MDN_REQUEST, mdnOptions);
+            procCtx.setProperty(Constants.CTX_AS2_MDN_REQUEST, mdnOptions);
         }
 
         return InvocationResponse.CONTINUE;
