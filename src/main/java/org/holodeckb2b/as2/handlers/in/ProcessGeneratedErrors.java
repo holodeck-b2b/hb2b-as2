@@ -26,12 +26,16 @@ import org.apache.logging.log4j.Logger;
 import org.holodeckb2b.as2.messagemodel.MDNMetadataFactory;
 import org.holodeckb2b.as2.messagemodel.MDNRequestOptions;
 import org.holodeckb2b.as2.util.Constants;
+import org.holodeckb2b.as4.compression.DeCompressionFailure;
 import org.holodeckb2b.common.handler.AbstractBaseHandler;
 import org.holodeckb2b.common.handler.MessageProcessingContext;
 import org.holodeckb2b.common.messagemodel.EbmsError;
 import org.holodeckb2b.common.messagemodel.ErrorMessage;
 import org.holodeckb2b.common.messagemodel.util.MessageUnitUtils;
 import org.holodeckb2b.common.util.Utils;
+import org.holodeckb2b.ebms3.errors.FailedAuthentication;
+import org.holodeckb2b.ebms3.errors.FailedDecryption;
+import org.holodeckb2b.ebms3.errors.PolicyNoncompliance;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
 import org.holodeckb2b.interfaces.general.ReplyPattern;
 import org.holodeckb2b.interfaces.messagemodel.IEbmsError;
@@ -168,9 +172,24 @@ public class ProcessGeneratedErrors extends AbstractBaseHandler {
 	 * @return			The disposition modifier text to use 
 	 */
 	private String determineDispositionModifierText(ArrayList<IEbmsError> errors) {
-		String dispositionText = "Error: unexpected-processing-error";
+		String dispositionText = null;
 		
-		
+		if (errors.size() == 1) {
+			switch (errors.iterator().next().getErrorCode()) {
+			case FailedAuthentication.ERROR_CODE :
+				dispositionText = "error: authentication-failed"; break;
+			case DeCompressionFailure.ERROR_CODE :
+				dispositionText = "error: decompression-failed"; break;
+			case FailedDecryption.ERROR_CODE :
+				dispositionText = "error: decryption-failed"; break;
+			case PolicyNoncompliance.ERROR_CODE :
+				dispositionText = "error: insufficient-message-security"; break;
+			default:
+				dispositionText = "error: unexpected-processing-error";
+			}			
+ 		} else 
+ 			// Multiple errors, so use generic main error description and list individual errors later
+ 			dispositionText = "error: unexpected-processing-error";
 		
 		return dispositionText;
 	}
