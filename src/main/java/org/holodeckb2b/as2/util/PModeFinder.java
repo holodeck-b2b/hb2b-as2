@@ -121,6 +121,8 @@ public class PModeFinder {
             if (isMatchResponder != null)
                 if (isMatchResponder)
                     cValue++;
+                else
+                	continue;
 
             // Does this P-Mode better match to the message meta data than the current highest match? For AS2 this means
             // that both the initiator and responder identifiers are specified and match
