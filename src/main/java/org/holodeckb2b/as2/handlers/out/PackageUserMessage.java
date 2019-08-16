@@ -26,13 +26,14 @@ import javax.activation.FileDataSource;
 import javax.mail.internet.MimeBodyPart;
 
 import org.apache.axiom.mime.ContentType;
+import org.apache.axis2.engine.Handler.InvocationResponse;
 import org.apache.axis2.transport.http.HTTPConstants;
 import org.apache.commons.logging.Log;
 import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.as2.util.CryptoAlgorithmHelper;
-import org.holodeckb2b.common.handler.AbstractUserMessageHandler;
-import org.holodeckb2b.common.handler.MessageProcessingContext;
+import org.holodeckb2b.common.handlers.AbstractUserMessageHandler;
 import org.holodeckb2b.common.util.Utils;
+import org.holodeckb2b.core.handlers.MessageProcessingContext;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
 import org.holodeckb2b.interfaces.messagemodel.IPayload;
 import org.holodeckb2b.interfaces.persistency.entities.IUserMessageEntity;
@@ -87,7 +88,7 @@ public class PackageUserMessage extends AbstractUserMessageHandler {
         mimePart.setHeader(HTTPConstants.CONTENT_TYPE, mimeType);
 
         log.debug("Add MIME part to message");
-        procCtx.setProperty(Constants.MC_MIME_ENVELOPE, mimePart);
+        procCtx.setProperty(Constants.CTX_MIME_ENVELOPE, mimePart);
         procCtx.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE,
                                                   new ContentType(mimePart.getContentType()).getMediaType().toString());
 

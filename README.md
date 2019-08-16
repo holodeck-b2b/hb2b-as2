@@ -16,18 +16,14 @@ Issue tracker https://github.com/holodeck-b2b/hb2b-as2/issues
 
 ## Installation
 ### Prerequisites  
-This extension requires that you have already deployed Holodeck B2B version 4.1.0 or later. 
+This extension requires that you have already deployed Holodeck B2B version 4.2.0 or later. 
 You will also need the Bouncy Castle security libraries for processing S/MIME. Download these libraries from Maven Central and copy them to the `lib` directory of the Holodeck B2B instance. The libraries you download *must* have the same version number as the one already installed in the Holodeck B2B instance (check the `bcprov-jdk15on` file). You need to install both the [bcmail](http://repo2.maven.org/maven2/org/bouncycastle/bcmail-jdk15on) and [bcpkix](http://repo2.maven.org/maven2/org/bouncycastle/bcpkix-jdk15on) library.
 
 ### Set up  
-To add this extension to a Holodeck B2B instance follow these six steps. Please note that you cannot install the extension in a running Holodeck B2B instance.
+To add this extension to a Holodeck B2B instance follow these three steps. Please note that you cannot install the extension in a running Holodeck B2B instance.
 1. Build the extension or download the latest release package. You should now have the `holodeck-as2-«version».jar` and `holodeck-as2-msh.aar` files available.
 2. Copy the jar file to the `lib` directory of the Holodeck B2B instance and copy the aar file to the `repository/services` directory.
-3. In `conf/axis2.xml` change the implementation class for the _http_ `transportReceiver` to _org.holodeckb2b.as2.axis2.http.AS2EnabledListener_
-4. In `conf/holodeckb2b.xml` change the value for the _PModeValidator_ parameter to _org.holodeckb2b.as2.PModeValidator_. Note that this parameter is not used by default and you therefore may need to uncomment this element.
-5. In the `conf/workers.xml` file change the implementation class for the _senderWorker_ to _org.holodeckb2b.as2.AS2EnabledSenderWorker_.
-6. Change the logging configuration to keep logging the same as default by adding the following child element to `Loggers` in `conf/log4j2.xml`:
-`<Logger name="org.holodeckb2b.as2.AS2EnabledSenderWorker" level="WARN"/>`
+3. In `conf/holodeckb2b.xml` change the value for the _PModeValidator_ parameter to _org.holodeckb2b.as2.PModeValidator_. Note that this parameter is not used by default and you therefore may need to uncomment this element.
 
 ### Messaging Configuration
 To configure AS2 message exchanges the Holodeck B2B Core P-Modes are used. As the messaging model of AS2 is very similar to AS4 most settings in the P-Mode can be directly mapped to an AS2 message exchange, although some parameters might use different values for AS2.   

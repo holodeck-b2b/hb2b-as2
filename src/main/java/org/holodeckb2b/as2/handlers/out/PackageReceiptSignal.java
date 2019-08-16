@@ -21,12 +21,13 @@ import java.util.Collection;
 import javax.mail.internet.MimeBodyPart;
 
 import org.apache.axiom.mime.ContentType;
+import org.apache.axis2.engine.Handler.InvocationResponse;
 import org.apache.commons.logging.Log;
 import org.holodeckb2b.as2.packaging.MDNInfo;
 import org.holodeckb2b.as2.util.Constants;
-import org.holodeckb2b.common.handler.AbstractBaseHandler;
-import org.holodeckb2b.common.handler.MessageProcessingContext;
+import org.holodeckb2b.common.handlers.AbstractBaseHandler;
 import org.holodeckb2b.common.util.Utils;
+import org.holodeckb2b.core.handlers.MessageProcessingContext;
 import org.holodeckb2b.interfaces.persistency.entities.IReceiptEntity;
 
 /**
@@ -57,11 +58,11 @@ public class PackageReceiptSignal extends AbstractBaseHandler {
         final MDNInfo mdnObject = new MDNInfo(receipts.iterator().next());
         log.debug("Create the MDN MIME multi-part and add it to message context");
         MimeBodyPart mdnPart = mdnObject.toMimePart();
-        procCtx.setProperty(Constants.MC_MIME_ENVELOPE, mdnPart);
+        procCtx.setProperty(Constants.CTX_MIME_ENVELOPE, mdnPart);
         procCtx.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE,
                                               new ContentType(mdnPart.getContentType()).getMediaType().toString());
         // For easy access to MDN options the MDN object is also stored in the msgCtx
-        procCtx.setProperty(Constants.MC_AS2_MDN_DATA, mdnObject);
+        procCtx.setProperty(Constants.CTX_AS2_MDN_DATA, mdnObject);
 
         return InvocationResponse.CONTINUE;
     }

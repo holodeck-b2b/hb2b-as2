@@ -19,11 +19,12 @@ package org.holodeckb2b.as2.handlers.in;
 import javax.mail.BodyPart;
 import javax.mail.MessagingException;
 
+import org.apache.axis2.engine.Handler.InvocationResponse;
 import org.apache.commons.logging.Log;
 import org.holodeckb2b.as2.packaging.GenericMessageInfo;
 import org.holodeckb2b.as2.util.Constants;
-import org.holodeckb2b.common.handler.AbstractBaseHandler;
-import org.holodeckb2b.common.handler.MessageProcessingContext;
+import org.holodeckb2b.common.errors.InvalidHeader;
+import org.holodeckb2b.common.handlers.AbstractBaseHandler;
 import org.holodeckb2b.common.messagemodel.PartyId;
 import org.holodeckb2b.common.messagemodel.Payload;
 import org.holodeckb2b.common.messagemodel.Property;
@@ -31,9 +32,9 @@ import org.holodeckb2b.common.messagemodel.TradingPartner;
 import org.holodeckb2b.common.messagemodel.UserMessage;
 import org.holodeckb2b.common.util.MessageIdUtils;
 import org.holodeckb2b.common.util.Utils;
-import org.holodeckb2b.ebms3.errors.InvalidHeader;
+import org.holodeckb2b.core.HolodeckB2BCore;
+import org.holodeckb2b.core.handlers.MessageProcessingContext;
 import org.holodeckb2b.interfaces.messagemodel.IPayload;
-import org.holodeckb2b.module.HolodeckB2BCore;
 
 /**
  * Is the <i>in_flow</i> handler that checks whether the message contains a business document and if it does creates
@@ -53,7 +54,7 @@ public class ReadUserMessage extends AbstractBaseHandler {
     @Override
     protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Log log) throws Exception {
 
-    	final BodyPart mainPart = (BodyPart) procCtx.getProperty(Constants.MC_MAIN_MIME_PART);
+    	final BodyPart mainPart = (BodyPart) procCtx.getProperty(Constants.CTX_MAIN_MIME_PART);
     	try {			
 			if (mainPart.isMimeType(Constants.REPORT_MIME_TYPE) 
 				|| mainPart.isMimeType(Constants.MDN_DISPOSITION_MIME_TYPE))
@@ -64,7 +65,7 @@ public class ReadUserMessage extends AbstractBaseHandler {
     	}
 
         log.debug("Get the general message info of the User Message from msgCtx");
-        GenericMessageInfo generalInfo = (GenericMessageInfo) procCtx.getProperty(Constants.MC_AS2_GENERAL_DATA);
+        GenericMessageInfo generalInfo = (GenericMessageInfo) procCtx.getProperty(Constants.CTX_AS2_GENERAL_DATA);
         
         // Check that at least the party ids of the sender and receiver are included in the message
         final String fromId = generalInfo.getFromPartyId();

@@ -21,7 +21,6 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertPath;
 import java.security.cert.CertPathValidator;
-import java.security.cert.CertPathValidatorException;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateExpiredException;
@@ -31,11 +30,13 @@ import java.security.cert.PKIXParameters;
 import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeBodyPart;
@@ -43,6 +44,7 @@ import javax.mail.internet.MimeMultipart;
 
 import org.apache.axiom.mime.ContentType;
 import org.apache.commons.logging.Log;
+import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cms.CMSException;
@@ -58,12 +60,13 @@ import org.bouncycastle.util.CollectionStore;
 import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.as2.util.CryptoAlgorithmHelper;
 import org.holodeckb2b.as2.util.SignedContentMetadata;
-import org.holodeckb2b.common.handler.AbstractBaseHandler;
-import org.holodeckb2b.common.handler.MessageProcessingContext;
+import org.holodeckb2b.common.errors.FailedAuthentication;
+import org.holodeckb2b.common.events.impl.SignatureVerificationFailure;
+import org.holodeckb2b.common.events.impl.SignatureVerified;
+import org.holodeckb2b.common.handlers.AbstractBaseHandler;
 import org.holodeckb2b.common.util.Utils;
-import org.holodeckb2b.ebms3.errors.FailedAuthentication;
-import org.holodeckb2b.events.security.SignatureVerificationFailure;
-import org.holodeckb2b.events.security.SignatureVerified;
+import org.holodeckb2b.core.HolodeckB2BCore;
+import org.holodeckb2b.core.handlers.MessageProcessingContext;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
 import org.holodeckb2b.interfaces.messagemodel.IPayload;
 import org.holodeckb2b.interfaces.messagemodel.ISignalMessage;
@@ -75,7 +78,6 @@ import org.holodeckb2b.interfaces.security.ISignatureProcessingResult;
 import org.holodeckb2b.interfaces.security.ISignedPartMetadata;
 import org.holodeckb2b.interfaces.security.SecurityProcessingException;
 import org.holodeckb2b.interfaces.security.X509ReferenceType;
-import org.holodeckb2b.module.HolodeckB2BCore;
 import org.holodeckb2b.security.results.SignatureProcessingResult;
 
 /**
@@ -98,14 +100,14 @@ public class ProcessSignature extends AbstractBaseHandler {
                                             procCtx.getProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE);
         if (msgUnit == null || !"multipart/signed".equalsIgnoreCase(contentType.getMediaType().toString())) {
         	// If the message is not signed, the main part is the current MIME envelope 
-        	procCtx.setProperty(Constants.MC_MAIN_MIME_PART, procCtx.getProperty(Constants.MC_MIME_ENVELOPE));
+        	procCtx.setProperty(Constants.CTX_MAIN_MIME_PART, procCtx.getProperty(Constants.CTX_MIME_ENVELOPE));
             return InvocationResponse.CONTINUE;
         }
 
         ISignatureProcessingResult result = null;
         log.debug("Received message is signed, verify signature");
         final MimeMultipart mimeEnvelope = (MimeMultipart) 
-        											  ((MimeBodyPart) procCtx.getProperty(Constants.MC_MIME_ENVELOPE))
+        											  ((MimeBodyPart) procCtx.getProperty(Constants.CTX_MIME_ENVELOPE))
                                                                              .getContent();
         result = verify(mimeEnvelope, contentType.getParameter("micalg"), log);
         if (result.isSuccessful()) {
@@ -125,8 +127,8 @@ public class ProcessSignature extends AbstractBaseHandler {
             // We don't need the signature info anymore, so we can replace the Mime Envelope in the message context
             // with only the signed data.
             final MimeBodyPart signedPart = (MimeBodyPart) mimeEnvelope.getBodyPart(0);
-            procCtx.setProperty(Constants.MC_MIME_ENVELOPE, signedPart);      
-            procCtx.setProperty(Constants.MC_MAIN_MIME_PART, signedPart);                  
+            procCtx.setProperty(Constants.CTX_MIME_ENVELOPE, signedPart);      
+            procCtx.setProperty(Constants.CTX_MAIN_MIME_PART, signedPart);                  
             procCtx.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE,
                                                                     new ContentType(signedPart.getContentType()));
             // Raise event to inform external components about the successful verification
@@ -226,11 +228,11 @@ public class ProcessSignature extends AbstractBaseHandler {
                             log.warn("Found " + containedCerts.size ()
                                      + " certificates in keystore - using the first one!");
                         signingCert = (X509CertificateHolder) knownCerts.iterator().next();
+	                    log.debug("Signer's certificate retrieved from local key store");
+	                    // Check how the certificate was referenced in the message
+	                    keyReference = signerID.getIssuer() != null && signerID.getSerialNumber() != null ?
+	                                                  X509ReferenceType.IssuerAndSerial : X509ReferenceType.KeyIdentifier;
                     }
-                    log.debug("Signer's certificate retrieved from local key store");
-                    // Check how the certificate was referenced in the message
-                    keyReference = signerID.getIssuer() != null && signerID.getSerialNumber() != null ?
-                                                  X509ReferenceType.IssuerAndSerial : X509ReferenceType.KeyIdentifier;
                 } catch (CertificateEncodingException | IOException ex) {
                     log.error("An error occurred when retrieving Certificate of signer from the key store! Details:"
                              + ex.getMessage());
@@ -265,30 +267,15 @@ public class ProcessSignature extends AbstractBaseHandler {
                 return new SignatureProcessingResult(new SecurityProcessingException("Certificate is not valid "
                                                   + (ex instanceof CertificateExpiredException ? "anymore" : "yet")));
             }
-            log.debug("Validating trust of the certificate chain");
-            try {
-                final CertificateFactory cf = CertificateFactory.getInstance("X.509");
-                final CertPath cp = cf.generateCertPath(Collections.singletonList(x509Certificate));
-                final Collection<X509Certificate> trustedCerts = HolodeckB2BCore.getCertificateManager()
-                																.getValidationCertificates();
-                final Set<TrustAnchor> trustedAnchors = new HashSet<>(trustedCerts.size());
-                trustedCerts.forEach((c) -> trustedAnchors.add(new TrustAnchor(c, null)));
-                PKIXParameters params = new PKIXParameters(trustedAnchors);
-                params.setRevocationEnabled(false);
-                CertPathValidator.getInstance("PKIX").validate(cp, params);
-                log.debug("Successfully validated trust of the certificate chain");
-            } catch (CertPathValidatorException untrustedPath) {
-                log.error("Signing certificate [Issuer/Serial=" + x509Certificate.getIssuerX500Principal().getName()
-                            + "/" + x509Certificate.getSerialNumber().toString()
-                            + "] has no valid path to a trusted certificate");
-                return new SignatureProcessingResult(new SecurityProcessingException("Certificate is not trusted"));
-            } catch (CertificateException | InvalidAlgorithmParameterException | NoSuchAlgorithmException ex) {
-                log.error("An error occurred while verifying the certificate chain. Unable to verify signature!"
-                            + "\n\tDetails: " + ex.getMessage());
-                throw new SecurityProcessingException("Error during certificate path validation", ex);
-            }
 
-            log.debug("Verify the signature of the message by comparing digests");
+            log.debug("Validate trust in certificate");
+            if (!isTrusted(x509Certificate, log)) {
+				log.error("Signing certificate [Issuer/Serial=" + x509Certificate.getIssuerX500Principal().getName()
+			            + "/" + x509Certificate.getSerialNumber().toString()
+			            + "] is not directly trusted and has no valid path to a trusted certificate");
+				return new SignatureProcessingResult(new SecurityProcessingException("Untrusted certificate"));
+            }
+            log.debug("Validated trust in certificate, verify message's signature by comparing digests");
             final SignerInformationVerifier signatureVerifier = new JcaSimpleSignerInfoVerifierBuilder()
                                                                       .setProvider(BouncyCastleProvider.PROVIDER_NAME)
                                                                       .build(x509Certificate.getPublicKey());
@@ -310,5 +297,62 @@ public class ProcessSignature extends AbstractBaseHandler {
             throw new SecurityProcessingException("Signature verification failed!", ex);
         }
     }
+
+    /**
+     * Validates that the given certificate is trusted by this Holodeck B2B instance. This can be because the 
+     * certificate itself is included in the collection of trusted certificates or because a valid certificate chain
+     * exists  
+     * 
+     * @param x509Certificate	Certificate to be validated
+     * @param log				The handler's log
+     * @throws SecurityProcessingException	When an error occurs during the trust validation
+     */
+	private boolean isTrusted(X509Certificate x509Certificate, Log log) throws SecurityProcessingException {
+        if (HolodeckB2BCore.getCertificateManager()
+        		.getCertificateAlias(ICertificateManager.CertificateUsage.Validation, x509Certificate) != null) {
+        	log.debug("Signing certificate [Issuer/Serial=" + x509Certificate.getIssuerX500Principal().getName()
+			            + "/" + x509Certificate.getSerialNumber().toString()
+			            + "] is a directly trusted certificate");
+        	return true;
+		} else {
+			try {
+				log.debug("Certificate not directly trusted, check if a valid cert path exists");
+				final X500Name issuerName = new X500Name(x509Certificate.getIssuerX500Principal().getName());
+				final Collection<X509Certificate> trustedCerts = HolodeckB2BCoreInterface.getCertificateManager()
+																						 .getValidationCertificates();				       
+	
+				final CertificateFactory cf = CertificateFactory.getInstance("X.509");
+				final List<X509Certificate[]> aCerts = trustedCerts.parallelStream()
+													   .filter(c -> issuerName.equals(
+																  new X500Name(c.getSubjectX500Principal().getName())))
+													   .map(c -> new X509Certificate[] { x509Certificate, c })
+													   .collect(Collectors.toList());
+				if (Utils.isNullOrEmpty(aCerts)) {
+					log.error("No certificate paths exist for signing certificate [Issuer/Serial=" 
+								+ x509Certificate.getIssuerX500Principal().getName() + "/" 
+								+ x509Certificate.getSerialNumber().toString() + "]");
+					return false;
+				}
+				
+				final List<CertPath> certpaths = new ArrayList<>(aCerts.size());
+				for(X509Certificate[] cp : aCerts) 
+					certpaths.add(cf.generateCertPath(Arrays.asList(cp)));
+				
+				final Set<TrustAnchor> trustedAnchors = new HashSet<>(trustedCerts.size());
+				trustedCerts.forEach((c) -> trustedAnchors.add(new TrustAnchor(c, null)));
+			
+				final PKIXParameters params = new PKIXParameters(trustedAnchors);
+				params.setRevocationEnabled(false);
+				final CertPathValidator validator = CertPathValidator.getInstance("PKIX");
+				
+				return certpaths.stream().anyMatch(cp -> { try { validator.validate(cp, params); return true; }
+														   catch (Exception invalid) { return false; }});
+			} catch (CertificateException | InvalidAlgorithmParameterException | NoSuchAlgorithmException ex) {
+				log.error("An error occurred while verifying the certificate chain. Unable to validate trust!"
+				            + "\n\tDetails: " + ex.getMessage());
+				throw new SecurityProcessingException("Error during certificate validation", ex);
+			}
+		}
+	}
 }
 

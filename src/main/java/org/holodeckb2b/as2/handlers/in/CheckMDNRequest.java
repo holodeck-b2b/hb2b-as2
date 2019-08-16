@@ -22,12 +22,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.axis2.context.MessageContext;
+import org.apache.axis2.engine.Handler.InvocationResponse;
 import org.apache.commons.logging.Log;
 import org.holodeckb2b.as2.messagemodel.MDNRequestOptions;
 import org.holodeckb2b.as2.util.Constants;
-import org.holodeckb2b.common.handler.AbstractUserMessageHandler;
-import org.holodeckb2b.common.handler.MessageProcessingContext;
+import org.holodeckb2b.common.handlers.AbstractUserMessageHandler;
 import org.holodeckb2b.common.util.Utils;
+import org.holodeckb2b.core.handlers.MessageProcessingContext;
 import org.holodeckb2b.interfaces.persistency.entities.IUserMessageEntity;
 
 /**
@@ -82,7 +83,7 @@ public class CheckMDNRequest extends AbstractUserMessageHandler {
             	}
             }
             log.debug("Parsed the MDN request parameters, indicate in msg ctx that MDN is requested");
-            procCtx.setProperty(Constants.MC_AS2_MDN_REQUEST, mdnOptions);
+            procCtx.setProperty(Constants.CTX_AS2_MDN_REQUEST, mdnOptions);
         }
 
         return InvocationResponse.CONTINUE;

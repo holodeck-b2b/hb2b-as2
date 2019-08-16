@@ -53,7 +53,7 @@ public class AS2MessageFormatter implements MessageFormatter {
 	@Override
 	public void writeTo(MessageContext messageContext, OMOutputFormat format, OutputStream outputStream,
 						boolean preserve) throws AxisFault {
-		MimeBodyPart mimeEnvelope = (MimeBodyPart) messageContext.getProperty(Constants.MC_MIME_ENVELOPE);
+		MimeBodyPart mimeEnvelope = (MimeBodyPart) messageContext.getProperty(Constants.CTX_MIME_ENVELOPE);
 		if (mimeEnvelope == null)
 			return;
 		
@@ -70,7 +70,7 @@ public class AS2MessageFormatter implements MessageFormatter {
 	@Override
 	public String getContentType(MessageContext messageContext, OMOutputFormat format, String soapAction) {
 		try {
-			return ((MimeBodyPart) messageContext.getProperty(Constants.MC_MIME_ENVELOPE)).getContentType();
+			return ((MimeBodyPart) messageContext.getProperty(Constants.CTX_MIME_ENVELOPE)).getContentType();
 		} catch (Exception me) {
 			return null;
 		}

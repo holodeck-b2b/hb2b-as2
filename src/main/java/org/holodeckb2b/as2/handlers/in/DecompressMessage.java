@@ -22,6 +22,7 @@ import javax.mail.MessagingException;
 import javax.mail.internet.MimeBodyPart;
 
 import org.apache.axiom.mime.ContentType;
+import org.apache.axis2.engine.Handler.InvocationResponse;
 import org.apache.commons.logging.Log;
 import org.bouncycastle.cms.CMSException;
 import org.bouncycastle.cms.jcajce.ZlibExpanderProvider;
@@ -30,11 +31,11 @@ import org.bouncycastle.mail.smime.SMIMEException;
 import org.bouncycastle.mail.smime.SMIMEUtil;
 import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.as4.compression.DeCompressionFailure;
-import org.holodeckb2b.common.handler.AbstractUserMessageHandler;
-import org.holodeckb2b.common.handler.MessageProcessingContext;
+import org.holodeckb2b.common.handlers.AbstractUserMessageHandler;
+import org.holodeckb2b.core.HolodeckB2BCore;
+import org.holodeckb2b.core.handlers.MessageProcessingContext;
 import org.holodeckb2b.interfaces.persistency.entities.IUserMessageEntity;
 import org.holodeckb2b.interfaces.processingmodel.ProcessingState;
-import org.holodeckb2b.module.HolodeckB2BCore;
 
 /**
  * Is the <i>in_flow</i> handler responsible for the decompression of a received AS2 User Message. Because compression
@@ -57,11 +58,11 @@ public class DecompressMessage extends AbstractUserMessageHandler {
         try {
             log.debug("Received message is compressed, decompress");
             final SMIMECompressed compressedPart = new SMIMECompressed((MimeBodyPart)
-                                                                       procCtx.getProperty(Constants.MC_MIME_ENVELOPE));
+                                                                       procCtx.getProperty(Constants.CTX_MIME_ENVELOPE));
             final MimeBodyPart decompressedPart = SMIMEUtil.toMimeBodyPart(compressedPart
                                                                              .getContent(new ZlibExpanderProvider()));
             log.debug("Successfully decompressed the message, replacing compressed data with decompressed version");
-            procCtx.setProperty(Constants.MC_MIME_ENVELOPE, decompressedPart);
+            procCtx.setProperty(Constants.CTX_MIME_ENVELOPE, decompressedPart);
             procCtx.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE,
                                                                   new ContentType(decompressedPart.getContentType()));
         } catch (CMSException | MessagingException | SMIMEException | ParseException compressionFailure) {
