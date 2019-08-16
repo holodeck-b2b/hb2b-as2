@@ -19,14 +19,15 @@ package org.holodeckb2b.as2.handlers.in;
 import javax.mail.BodyPart;
 import javax.mail.MessagingException;
 
+import org.apache.axis2.engine.Handler.InvocationResponse;
 import org.apache.commons.logging.Log;
 import org.holodeckb2b.as2.packaging.GenericMessageInfo;
 import org.holodeckb2b.as2.packaging.MDNInfo;
 import org.holodeckb2b.as2.packaging.MDNTransformationException;
 import org.holodeckb2b.as2.util.Constants;
-import org.holodeckb2b.common.handler.AbstractBaseHandler;
-import org.holodeckb2b.common.handler.MessageProcessingContext;
-import org.holodeckb2b.ebms3.errors.InvalidHeader;
+import org.holodeckb2b.common.errors.InvalidHeader;
+import org.holodeckb2b.common.handlers.AbstractBaseHandler;
+import org.holodeckb2b.core.handlers.MessageProcessingContext;
 
 /**
  * Is the <i>in_flow</i> handler that checks if the incoming AS2 message is an MDN and if it is parses the MDN

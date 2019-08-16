@@ -17,8 +17,8 @@
 package org.holodeckb2b.as2;
 
 import org.holodeckb2b.as2.util.Constants;
+import org.holodeckb2b.ebms3.pmode.BasicPModeValidator;
 import org.holodeckb2b.interfaces.pmode.validation.IPModeValidator;
-import org.holodeckb2b.pmode.BasicPModeValidator;
 
 /**
  * Extends Holodeck B2B's default P-Mode validator {@link BasicPModeValidator} to support "AS2 P-Modes". These can be

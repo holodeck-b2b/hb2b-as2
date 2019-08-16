@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 
+import org.apache.axis2.engine.Handler.InvocationResponse;
 import org.apache.commons.logging.Log;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -27,15 +28,17 @@ import org.holodeckb2b.as2.messagemodel.MDNMetadataFactory;
 import org.holodeckb2b.as2.messagemodel.MDNRequestOptions;
 import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.as4.compression.DeCompressionFailure;
-import org.holodeckb2b.common.handler.AbstractBaseHandler;
-import org.holodeckb2b.common.handler.MessageProcessingContext;
+import org.holodeckb2b.common.errors.FailedAuthentication;
+import org.holodeckb2b.common.errors.FailedDecryption;
+import org.holodeckb2b.common.errors.PolicyNoncompliance;
+import org.holodeckb2b.common.handlers.AbstractBaseHandler;
 import org.holodeckb2b.common.messagemodel.EbmsError;
 import org.holodeckb2b.common.messagemodel.ErrorMessage;
 import org.holodeckb2b.common.messagemodel.util.MessageUnitUtils;
 import org.holodeckb2b.common.util.Utils;
-import org.holodeckb2b.ebms3.errors.FailedAuthentication;
-import org.holodeckb2b.ebms3.errors.FailedDecryption;
-import org.holodeckb2b.ebms3.errors.PolicyNoncompliance;
+import org.holodeckb2b.core.HolodeckB2BCore;
+import org.holodeckb2b.core.StorageManager;
+import org.holodeckb2b.core.handlers.MessageProcessingContext;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
 import org.holodeckb2b.interfaces.general.ReplyPattern;
 import org.holodeckb2b.interfaces.messagemodel.IEbmsError;
@@ -48,8 +51,6 @@ import org.holodeckb2b.interfaces.pmode.IErrorHandling;
 import org.holodeckb2b.interfaces.pmode.ILeg.Label;
 import org.holodeckb2b.interfaces.pmode.IPMode;
 import org.holodeckb2b.interfaces.processingmodel.ProcessingState;
-import org.holodeckb2b.module.HolodeckB2BCore;
-import org.holodeckb2b.persistency.dao.StorageManager;
 
 /**
  * Is the in flow handler that collects all Errors generated during the processing of the received message. 

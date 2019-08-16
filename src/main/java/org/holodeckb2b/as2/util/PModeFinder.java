@@ -18,9 +18,10 @@ package org.holodeckb2b.as2.util;
 
 import java.util.Collection;
 
-import org.holodeckb2b.common.handler.MessageProcessingContext;
 import org.holodeckb2b.common.messagemodel.util.MessageUnitUtils;
 import org.holodeckb2b.common.util.Utils;
+import org.holodeckb2b.core.HolodeckB2BCore;
+import org.holodeckb2b.core.handlers.MessageProcessingContext;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
 import org.holodeckb2b.interfaces.general.IPartyId;
 import org.holodeckb2b.interfaces.messagemodel.Direction;
@@ -33,7 +34,6 @@ import org.holodeckb2b.interfaces.pmode.ILeg;
 import org.holodeckb2b.interfaces.pmode.IPMode;
 import org.holodeckb2b.interfaces.pmode.IPModeSet;
 import org.holodeckb2b.interfaces.pmode.ITradingPartnerConfiguration;
-import org.holodeckb2b.module.HolodeckB2BCore;
 
 /**
  * Is a helper class for finding the correct P-Mode for a received AS2 message. Since the meta-data for AS2 messages is

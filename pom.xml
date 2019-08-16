@@ -39,9 +39,10 @@
     </developers>
         
     <dependencies>
+    	<!-- Adding the ebms3as4 module of the main project automatically includes the core -->
         <dependency>
             <groupId>org.holodeckb2b</groupId>
-            <artifactId>holodeckb2b-core</artifactId>
+            <artifactId>holodeckb2b-ebms3as4</artifactId>
             <version>${hb2b-version}</version>
             <scope>provided</scope>
         </dependency>

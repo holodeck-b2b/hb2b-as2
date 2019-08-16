@@ -19,11 +19,12 @@ package org.holodeckb2b.as2.handlers.in;
 import java.util.Map;
 
 import org.apache.axis2.context.MessageContext;
+import org.apache.axis2.engine.Handler.InvocationResponse;
 import org.apache.commons.logging.Log;
 import org.holodeckb2b.as2.packaging.GenericMessageInfo;
 import org.holodeckb2b.as2.util.Constants;
-import org.holodeckb2b.common.handler.AbstractBaseHandler;
-import org.holodeckb2b.common.handler.MessageProcessingContext;
+import org.holodeckb2b.common.handlers.AbstractBaseHandler;
+import org.holodeckb2b.core.handlers.MessageProcessingContext;
 
 /**
  * Is the <i>in_flow</i> handler that reads the HTTP headers of the incoming AS2 message to get the general message

@@ -3,10 +3,16 @@ All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## 1.2.0
-###### 2019-06-11
+###### (Unreleased)
+
+### Added
+* Detailed disposition text for errors
 
 ### Changed
 * Adapted to Holodeck B2B 4.2.0: using customised AS2 message builder.
+
+### Fixed
+* Failed validation of direct trust
 
 ## 1.1.1
 ###### 2019-06-11

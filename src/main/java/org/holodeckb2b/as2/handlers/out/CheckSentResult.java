@@ -19,7 +19,7 @@ package org.holodeckb2b.as2.handlers.out;
 import org.apache.axis2.AxisFault;
 import org.apache.axis2.context.MessageContext;
 import org.apache.axis2.wsdl.WSDLConstants;
-import org.holodeckb2b.common.handler.MessageProcessingContext;
+import org.holodeckb2b.core.handlers.MessageProcessingContext;
 
 /**
  * Is the <i>out_flow</i> handler responsible for changing the processing state of the message unit that are and has 

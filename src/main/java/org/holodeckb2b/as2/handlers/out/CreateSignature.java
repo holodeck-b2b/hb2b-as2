@@ -44,14 +44,17 @@ import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.as2.util.CryptoAlgorithmHelper;
 import org.holodeckb2b.as2.util.DigestHelper;
 import org.holodeckb2b.as2.util.SignedContentMetadata;
-import org.holodeckb2b.common.handler.AbstractBaseHandler;
-import org.holodeckb2b.common.handler.MessageProcessingContext;
+import org.holodeckb2b.common.events.impl.SignatureCreated;
+import org.holodeckb2b.common.events.impl.SigningFailure;
+import org.holodeckb2b.common.handlers.AbstractBaseHandler;
 import org.holodeckb2b.common.util.Utils;
-import org.holodeckb2b.events.security.SignatureCreated;
-import org.holodeckb2b.events.security.SigningFailure;
+import org.holodeckb2b.core.HolodeckB2BCore;
+import org.holodeckb2b.core.handlers.MessageProcessingContext;
+import org.holodeckb2b.core.pmode.PModeUtils;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
 import org.holodeckb2b.interfaces.messagemodel.IMessageUnit;
 import org.holodeckb2b.interfaces.messagemodel.IPayload;
+import org.holodeckb2b.interfaces.messagemodel.ISignalMessage;
 import org.holodeckb2b.interfaces.messagemodel.IUserMessage;
 import org.holodeckb2b.interfaces.persistency.entities.IMessageUnitEntity;
 import org.holodeckb2b.interfaces.pmode.IPMode;
@@ -62,8 +65,6 @@ import org.holodeckb2b.interfaces.processingmodel.ProcessingState;
 import org.holodeckb2b.interfaces.security.ISignedPartMetadata;
 import org.holodeckb2b.interfaces.security.SecurityProcessingException;
 import org.holodeckb2b.interfaces.security.X509ReferenceType;
-import org.holodeckb2b.module.HolodeckB2BCore;
-import org.holodeckb2b.pmode.PModeUtils;
 
 /**
  * Is the <i>out_flow</i> handler responsible for signing the AS2 message. It creates the S/MIME package with the
@@ -136,7 +137,7 @@ public class CreateSignature extends AbstractBaseHandler {
             */
             String signatureAlg = signingCfg.getSignatureAlgorithm();
             String requestedAlg = null;
-            if (Utils.isNullOrEmpty(signatureAlg)) {
+            if (Utils.isNullOrEmpty(signatureAlg) && primaryMsgUnit instanceof ISignalMessage) {
                 final MDNInfo mdn = (MDNInfo) procCtx.getProperty(Constants.CTX_AS2_MDN_DATA);
                 final MDNRequestOptions mdnRequest = mdn.getMDNRequestOptions();
                 if (mdnRequest != null && !Utils.isNullOrEmpty(mdnRequest.getPreferredHashingAlgorithms())) {
@@ -151,10 +152,10 @@ public class CreateSignature extends AbstractBaseHandler {
                                                               + "WITH" + signingCert.getPublicKey().getAlgorithm();
                     }
                 }
-                if (signatureAlg == null) {
-                    log.debug("No algorithm in P-Mode or in request from sender, use certificate's algorithm");
-                    signatureAlg = CryptoAlgorithmHelper.getName(signingCert.getSigAlgOID());
-                }
+            }
+            if (signatureAlg == null) {
+                log.debug("No algorithm in P-Mode or in request from sender, use certificate's algorithm");
+                signatureAlg = CryptoAlgorithmHelper.getName(signingCert.getSigAlgOID());
             }
             signatureAlg = signatureAlg.toUpperCase();
             log.debug("Signing algorithm to be used " + signatureAlg);
