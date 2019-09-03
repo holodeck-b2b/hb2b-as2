@@ -266,6 +266,10 @@ public class MDNInfo extends GenericMessageInfo {
         try {
         	// Use XML with MDN meta-data in ErrorDetail of error for other fields        
 	        final MDNMetadata mdnInfo = new MDNMetadata(err.getErrorDetail());
+	        // The Sender and Receiver identifiers can be get from the MDN meta-data
+	        setFromPartyId(mdnInfo.getSenderId());
+	        setToPartyId(mdnInfo.getReceiverId());
+	        
 	        this.originalRecipient = mdnInfo.getOrigRecipient();
 	        this.finalRecipient = mdnInfo.getFinalRecipient();
 	        this.origMessageId = mdnInfo.getOriginalMessageId();
