@@ -60,7 +60,7 @@ public class FindPMode extends AbstractBaseHandler {
             // No matching P-Mode could be found for this message, return error
             log.error("No P-Mode found for message [" + msgUnit.getMessageId() + "], unable to process it!");
             final ProcessingModeMismatch   noPmodeIdError = new ProcessingModeMismatch();
-            noPmodeIdError.setRefToMessageInError(msgInfo.getMessageId());
+            noPmodeIdError.setRefToMessageInError(msgUnit.getMessageId());
             noPmodeIdError.setErrorDetail("Can not process message [msgId=" + msgUnit.getMessageId()
                                         + "] because no processing configuration was found for the message!");
             procCtx.addGeneratedError(noPmodeIdError);
