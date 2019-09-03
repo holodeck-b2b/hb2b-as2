@@ -27,7 +27,6 @@ import javax.mail.MessagingException;
 import javax.mail.internet.MimeBodyPart;
 
 import org.apache.axiom.mime.ContentType;
-import org.apache.axis2.engine.Handler.InvocationResponse;
 import org.apache.commons.logging.Log;
 import org.bouncycastle.cms.CMSException;
 import org.bouncycastle.cms.jcajce.JceCMSContentEncryptorBuilder;
@@ -50,7 +49,6 @@ import org.holodeckb2b.interfaces.pmode.IPMode;
 import org.holodeckb2b.interfaces.pmode.ISecurityConfiguration;
 import org.holodeckb2b.interfaces.pmode.ITradingPartnerConfiguration;
 import org.holodeckb2b.interfaces.processingmodel.ProcessingState;
-import org.holodeckb2b.interfaces.security.ICertificateManager.CertificateUsage;
 import org.holodeckb2b.interfaces.security.SecurityProcessingException;
 import org.holodeckb2b.interfaces.security.X509ReferenceType;
 
@@ -109,8 +107,7 @@ public class EncryptMessage extends AbstractUserMessageHandler {
             
         	// Get the certificate to be used for encryption
             final X509Certificate encryptionCert = HolodeckB2BCoreInterface.getCertificateManager()
-                                                                      .getCertificate(CertificateUsage.Encryption,
-                                                                                      encryptionCfg.getKeystoreAlias());
+                                                                      .getCertificate(encryptionCfg.getKeystoreAlias());
 
             if (encryptionCert == null) {
                 log.error("The configured certificate for encryption is not available!");

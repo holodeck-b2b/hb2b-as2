@@ -17,34 +17,21 @@
 package org.holodeckb2b.as2.handlers.in;
 
 import java.io.IOException;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertPath;
-import java.security.cert.CertPathValidator;
-import java.security.cert.CertificateEncodingException;
+import java.math.BigInteger;
 import java.security.cert.CertificateException;
-import java.security.cert.CertificateExpiredException;
-import java.security.cert.CertificateFactory;
-import java.security.cert.CertificateNotYetValidException;
-import java.security.cert.PKIXParameters;
-import java.security.cert.TrustAnchor;
 import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMultipart;
+import javax.security.auth.x500.X500Principal;
 
 import org.apache.axiom.mime.ContentType;
-import org.apache.commons.logging.Log;
-import org.bouncycastle.asn1.x500.X500Name;
+import org.apache.commons.codec.binary.Hex;
+import org.apache.logging.log4j.Logger;
 import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cms.CMSException;
@@ -56,28 +43,32 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.mail.smime.SMIMESignedParser;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaDigestCalculatorProviderBuilder;
-import org.bouncycastle.util.CollectionStore;
 import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.as2.util.CryptoAlgorithmHelper;
 import org.holodeckb2b.as2.util.SignedContentMetadata;
 import org.holodeckb2b.common.errors.FailedAuthentication;
 import org.holodeckb2b.common.events.impl.SignatureVerificationFailure;
 import org.holodeckb2b.common.events.impl.SignatureVerified;
+import org.holodeckb2b.common.events.impl.SignatureVerifiedWithWarning;
 import org.holodeckb2b.common.handlers.AbstractBaseHandler;
 import org.holodeckb2b.common.util.Utils;
 import org.holodeckb2b.core.HolodeckB2BCore;
 import org.holodeckb2b.core.handlers.MessageProcessingContext;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
+import org.holodeckb2b.interfaces.events.security.ISignatureVerified;
 import org.holodeckb2b.interfaces.messagemodel.IPayload;
 import org.holodeckb2b.interfaces.messagemodel.ISignalMessage;
 import org.holodeckb2b.interfaces.messagemodel.IUserMessage;
 import org.holodeckb2b.interfaces.persistency.entities.IMessageUnitEntity;
 import org.holodeckb2b.interfaces.processingmodel.ProcessingState;
-import org.holodeckb2b.interfaces.security.ICertificateManager;
 import org.holodeckb2b.interfaces.security.ISignatureProcessingResult;
 import org.holodeckb2b.interfaces.security.ISignedPartMetadata;
 import org.holodeckb2b.interfaces.security.SecurityProcessingException;
+import org.holodeckb2b.interfaces.security.SignatureTrustException;
 import org.holodeckb2b.interfaces.security.X509ReferenceType;
+import org.holodeckb2b.interfaces.security.trust.ICertificateManager;
+import org.holodeckb2b.interfaces.security.trust.IValidationResult;
+import org.holodeckb2b.interfaces.security.trust.IValidationResult.Trust;
 import org.holodeckb2b.security.results.SignatureProcessingResult;
 
 /**
@@ -92,7 +83,7 @@ import org.holodeckb2b.security.results.SignatureProcessingResult;
 public class ProcessSignature extends AbstractBaseHandler {
 
     @Override
-    protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Log log) throws Exception {
+    protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Logger log) throws Exception {
 
         // First check if received message does contain a signed message
         final IMessageUnitEntity msgUnit = procCtx.getPrimaryMessageUnit();
@@ -117,6 +108,7 @@ public class ProcessSignature extends AbstractBaseHandler {
             	final HashMap<IPayload, ISignedPartMetadata> signedInfo = new HashMap<>(1);
             	signedInfo.put(((IUserMessage) msgUnit).getPayloads().iterator().next(), result.getHeaderDigest());
             	result = new SignatureProcessingResult(result.getSigningCertificate(), 
+            										   result.getTrustValidation(),
             										   result.getCertificateReferenceType(),
             										   result.getSignatureAlgorithm(),
             										   null, signedInfo
@@ -132,9 +124,24 @@ public class ProcessSignature extends AbstractBaseHandler {
             procCtx.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE,
                                                                     new ContentType(signedPart.getContentType()));
             // Raise event to inform external components about the successful verification
-            final SignatureVerified event = msgUnit instanceof IUserMessage ?
-            					  new SignatureVerified((IUserMessage) msgUnit, null, result.getPayloadDigests())
-            					: new SignatureVerified((ISignalMessage) msgUnit, result.getHeaderDigest());            
+            ISignatureVerified event;
+            boolean trustWarnings = result.getTrustValidation().getTrust() == Trust.WITH_WARNINGS;                
+            if (msgUnit instanceof IUserMessage)                    
+            	event = trustWarnings ? new SignatureVerifiedWithWarning((IUserMessage) msgUnit, 
+												            			  result.getHeaderDigest(),
+												            			  result.getPayloadDigests(),
+												            			  result.getTrustValidation())
+            						  :  new SignatureVerified((IUserMessage) msgUnit, 
+					            								  result.getHeaderDigest(),
+					            								  result.getPayloadDigests(),
+					            								  result.getTrustValidation());
+            else
+            	event = trustWarnings ? new SignatureVerifiedWithWarning((ISignalMessage) msgUnit, 
+												            			result.getHeaderDigest(),
+												            			result.getTrustValidation())
+								      :  new SignatureVerified((ISignalMessage) msgUnit, 
+													    		  result.getHeaderDigest(),
+													    		  result.getTrustValidation());                        
             HolodeckB2BCoreInterface.getEventProcessor().raiseEvent(event);               
         } else {
             log.warn("Signature verification failed!");
@@ -169,7 +176,7 @@ public class ProcessSignature extends AbstractBaseHandler {
      * @throws SecurityProcessingException  When an error occurs during the verification of the signature
      */
     private ISignatureProcessingResult verify(final MimeMultipart signedData, final String mimeMicAlgParameter,
-    										  final Log log) throws SecurityProcessingException {
+    										  final Logger log) throws SecurityProcessingException {
         try {
             log.debug("Parsing the SMIME envelope");
             // SMIMESignedParser uses "7bit" as the default - AS2 is "binary"
@@ -201,94 +208,85 @@ public class ProcessSignature extends AbstractBaseHandler {
 
             log.debug("Getting certificate of the (first) signer");
             X509ReferenceType keyReference = null;
-            X509CertificateHolder signingCert = null;
+            X509Certificate signingCert = null;
             // Get id of the signer, needed to get the certificate
             SignerId signerID = signatureInfo.getSID();
             final Collection<?> containedCerts = aSignedParser.getCertificates().getMatches(signerID);
             if (!containedCerts.isEmpty()) {
                 if (containedCerts.size () > 1)
                     log.warn("Message contains " + containedCerts.size () + " certificates - using the first one!");
-                signingCert = (X509CertificateHolder) containedCerts.iterator().next();
-                log.debug("Signer's certificate retrieved from message");
+                try {
+                	signingCert = new JcaX509CertificateConverter().setProvider(BouncyCastleProvider.PROVIDER_NAME)
+                                                                   .getCertificate((X509CertificateHolder) 
+                                                                		   			  containedCerts.iterator().next());
+                } catch (CertificateException conversionFailed) {
+                    log.error("Certificate included in message is not a X509 Certificate! Details: {}",
+                                conversionFailed.getMessage());
+                    throw new SecurityProcessingException ("Unsupported certificate used for signing");
+                }                
                 // As the BST reference type also indicates a certificate included in the message, we use it here to
                 // indicate an included certificate
                 keyReference = X509ReferenceType.BSTReference;
             } else {
-                log.debug("Certificate of signer is not included in message, get it from key store");
+                log.trace("Certificate of signer is not included in message, get it from key store");
                 try {
-                    Collection<X509CertificateHolder> validationCerts = new ArrayList<>();
-                    for(X509Certificate c : HolodeckB2BCoreInterface.getCertificateManager()
-                                                                    .getValidationCertificates())
-                        validationCerts.add(new X509CertificateHolder(c.getEncoded()));
-
-                    CollectionStore certStore = new CollectionStore(validationCerts);
-                    final Collection<?> knownCerts = certStore.getMatches(signerID);
-                    if (!knownCerts.isEmpty()) {
-                        if (knownCerts.size () > 1)
-                            log.warn("Found " + containedCerts.size ()
-                                     + " certificates in keystore - using the first one!");
-                        signingCert = (X509CertificateHolder) knownCerts.iterator().next();
-	                    log.debug("Signer's certificate retrieved from local key store");
-	                    // Check how the certificate was referenced in the message
-	                    keyReference = signerID.getIssuer() != null && signerID.getSerialNumber() != null ?
-	                                                  X509ReferenceType.IssuerAndSerial : X509ReferenceType.KeyIdentifier;
-                    }
-                } catch (CertificateEncodingException | IOException ex) {
-                    log.error("An error occurred when retrieving Certificate of signer from the key store! Details:"
-                             + ex.getMessage());
+                	if (signerID.getIssuer() != null && signerID.getSerialNumber() != null) {
+                		final X500Principal issuer = new X500Principal(signerID.getIssuer().getEncoded("DER"));
+                		final BigInteger serial = signerID.getSerialNumber();
+                		log.trace("Retrieve signing certificate [Issuer/Serial={}/{}] from Certificate Manager",
+                					issuer.toString(), serial.toString());
+                		signingCert = HolodeckB2BCoreInterface.getCertificateManager().findCertificate(issuer, serial);
+                		keyReference = X509ReferenceType.IssuerAndSerial;
+                	} else if (signerID.getSubjectKeyIdentifier() != null) {                	
+                		byte[] ski = signerID.getSubjectKeyIdentifier();
+                		log.trace("Retrieve signing certificate [SKI={}] from Certificate Manager", 
+                					Hex.encodeHexString(ski));
+                		signingCert = HolodeckB2BCoreInterface.getCertificateManager().findCertificate(ski);
+                		keyReference = X509ReferenceType.KeyIdentifier;                		
+                	} else 
+                		log.error("Cannot retrieve certificate a no Issuer & SerialNo or SKI available!");
+                } catch (IOException ex) {
+                    log.error("Error while retrieving Certificate of signer from the Certificate Manager! Details: {}",
+                              ex.getMessage());
                 }
             }
+            
             if (signingCert == null) {
                 log.error("Could not retrieve the certificate used for signed. Unable to verify signature!");
                 return new SignatureProcessingResult(new SecurityProcessingException("Certificate unavailable"));
             }
-            // When searching the certificate are contained in a X509CertificateHolder which now needs to be converted
-            // (back) into a X509Certificate object
-            X509Certificate x509Certificate = null;
-            try {
-                x509Certificate = new JcaX509CertificateConverter().setProvider(BouncyCastleProvider.PROVIDER_NAME)
-                                                                   .getCertificate(signingCert);
-            } catch (CertificateException conversionFailed) {
-                log.error("An error occurred when converting between certificate formats! Details:"
-                            + conversionFailed.getMessage());
-                throw new SecurityProcessingException ("Could not convert between certificate formats");
-            }
+            
             log.debug("Retrieved signing certificate [Issuer/Serial="
-                       + x509Certificate.getIssuerX500Principal().getName() + "/"
-                       + x509Certificate.getSerialNumber().toString() + "] from "
-                       + (keyReference == X509ReferenceType.BSTReference ? "message" : "key store"));
-            try {
-                // Check if the certificate is expired or active.
-                x509Certificate.checkValidity();
-            } catch (CertificateExpiredException | CertificateNotYetValidException ex) {
-                log.error("Signing certificate [Issuer/Serial=" + x509Certificate.getIssuerX500Principal().getName()
-                            + "/" + x509Certificate.getSerialNumber().toString() + "] is not valid "
-                            + (ex instanceof CertificateExpiredException ? "anymore" : "yet"));
-                return new SignatureProcessingResult(new SecurityProcessingException("Certificate is not valid "
-                                                  + (ex instanceof CertificateExpiredException ? "anymore" : "yet")));
-            }
+                       + signingCert.getIssuerX500Principal().getName() + "/"
+                       + signingCert.getSerialNumber().toString() + "] from "
+                       + (keyReference == X509ReferenceType.BSTReference ? "message" : "Certificate Manager"));
 
-            log.debug("Validate trust in certificate");
-            if (!isTrusted(x509Certificate, log)) {
-				log.error("Signing certificate [Issuer/Serial=" + x509Certificate.getIssuerX500Principal().getName()
-			            + "/" + x509Certificate.getSerialNumber().toString()
-			            + "] is not directly trusted and has no valid path to a trusted certificate");
-				return new SignatureProcessingResult(new SecurityProcessingException("Untrusted certificate"));
-            }
-            log.debug("Validated trust in certificate, verify message's signature by comparing digests");
+            log.trace("Validate trust in certificate");
+            IValidationResult trust = HolodeckB2BCoreInterface.getCertificateManager()
+            													.validateTrust(Collections.singletonList(signingCert));
+            
+            if (trust.getTrust() == Trust.NOK) {
+				log.error("Signing certificate is not trusted by Certificate Manager! Details: {}", trust.getMessage());
+				return new SignatureProcessingResult(new SignatureTrustException(trust));
+            } else if (trust.getTrust() == Trust.WITH_WARNINGS)
+            	log.warn("Signing certificate is trusted, but with warnings! Details: {}", trust.getMessage());
+            else
+            	log.debug("Signing certificate is trusted");
+            
+            log.debug("Verify message's signature by comparing digests");
             final SignerInformationVerifier signatureVerifier = new JcaSimpleSignerInfoVerifierBuilder()
                                                                       .setProvider(BouncyCastleProvider.PROVIDER_NAME)
-                                                                      .build(x509Certificate.getPublicKey());
+                                                                      .build(signingCert.getPublicKey());
             final boolean isValid = signatureInfo.verify(signatureVerifier);
             log.debug("Signature completely processed");
             if (isValid) {
                 // When reporting the result we use the digest algorithm name from the Content-Type header as it
                 // expressed which naming format the sender used
-                return new SignatureProcessingResult(x509Certificate, keyReference,
+                return new SignatureProcessingResult(signingCert, trust, keyReference,
                                              CryptoAlgorithmHelper.getSigningAlgName(signatureInfo.getDigestAlgOID(),
                                                                                  signatureInfo.getEncryptionAlgOID()),
                                              new SignedContentMetadata(mimeMicAlgParameter,
-                                                     signatureInfo.getContentDigest()), 
+                                                     				   signatureInfo.getContentDigest()), 
                                              null);
             } else {
                 return new SignatureProcessingResult(new SecurityProcessingException("Digest mismatch"));
@@ -297,62 +295,5 @@ public class ProcessSignature extends AbstractBaseHandler {
             throw new SecurityProcessingException("Signature verification failed!", ex);
         }
     }
-
-    /**
-     * Validates that the given certificate is trusted by this Holodeck B2B instance. This can be because the 
-     * certificate itself is included in the collection of trusted certificates or because a valid certificate chain
-     * exists  
-     * 
-     * @param x509Certificate	Certificate to be validated
-     * @param log				The handler's log
-     * @throws SecurityProcessingException	When an error occurs during the trust validation
-     */
-	private boolean isTrusted(X509Certificate x509Certificate, Log log) throws SecurityProcessingException {
-        if (HolodeckB2BCore.getCertificateManager()
-        		.getCertificateAlias(ICertificateManager.CertificateUsage.Validation, x509Certificate) != null) {
-        	log.debug("Signing certificate [Issuer/Serial=" + x509Certificate.getIssuerX500Principal().getName()
-			            + "/" + x509Certificate.getSerialNumber().toString()
-			            + "] is a directly trusted certificate");
-        	return true;
-		} else {
-			try {
-				log.debug("Certificate not directly trusted, check if a valid cert path exists");
-				final X500Name issuerName = new X500Name(x509Certificate.getIssuerX500Principal().getName());
-				final Collection<X509Certificate> trustedCerts = HolodeckB2BCoreInterface.getCertificateManager()
-																						 .getValidationCertificates();				       
-	
-				final CertificateFactory cf = CertificateFactory.getInstance("X.509");
-				final List<X509Certificate[]> aCerts = trustedCerts.parallelStream()
-													   .filter(c -> issuerName.equals(
-																  new X500Name(c.getSubjectX500Principal().getName())))
-													   .map(c -> new X509Certificate[] { x509Certificate, c })
-													   .collect(Collectors.toList());
-				if (Utils.isNullOrEmpty(aCerts)) {
-					log.error("No certificate paths exist for signing certificate [Issuer/Serial=" 
-								+ x509Certificate.getIssuerX500Principal().getName() + "/" 
-								+ x509Certificate.getSerialNumber().toString() + "]");
-					return false;
-				}
-				
-				final List<CertPath> certpaths = new ArrayList<>(aCerts.size());
-				for(X509Certificate[] cp : aCerts) 
-					certpaths.add(cf.generateCertPath(Arrays.asList(cp)));
-				
-				final Set<TrustAnchor> trustedAnchors = new HashSet<>(trustedCerts.size());
-				trustedCerts.forEach((c) -> trustedAnchors.add(new TrustAnchor(c, null)));
-			
-				final PKIXParameters params = new PKIXParameters(trustedAnchors);
-				params.setRevocationEnabled(false);
-				final CertPathValidator validator = CertPathValidator.getInstance("PKIX");
-				
-				return certpaths.stream().anyMatch(cp -> { try { validator.validate(cp, params); return true; }
-														   catch (Exception invalid) { return false; }});
-			} catch (CertificateException | InvalidAlgorithmParameterException | NoSuchAlgorithmException ex) {
-				log.error("An error occurred while verifying the certificate chain. Unable to validate trust!"
-				            + "\n\tDetails: " + ex.getMessage());
-				throw new SecurityProcessingException("Error during certificate validation", ex);
-			}
-		}
-	}
 }
 
