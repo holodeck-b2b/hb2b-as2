@@ -31,7 +31,7 @@ import javax.mail.internet.MimeMultipart;
 
 import org.apache.axiom.mime.ContentType;
 import org.apache.axis2.transport.http.HTTPConstants;
-import org.apache.commons.logging.Log;
+import org.apache.logging.log4j.Logger;
 import org.bouncycastle.cert.jcajce.JcaCertStore;
 import org.bouncycastle.cms.jcajce.JcaSimpleSignerInfoGeneratorBuilder;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -103,7 +103,7 @@ import org.holodeckb2b.interfaces.security.X509ReferenceType;
 public class CreateSignature extends AbstractBaseHandler {
 
     @Override
-    protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Log log) throws Exception {
+    protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Logger log) throws Exception {
     	// First check that there is content that can be signed
     	final MimeBodyPart  msgToSign = (MimeBodyPart) procCtx.getProperty(Constants.CTX_MIME_ENVELOPE);
         if (msgToSign == null)

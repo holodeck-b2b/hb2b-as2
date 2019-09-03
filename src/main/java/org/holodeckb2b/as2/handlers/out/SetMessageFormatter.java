@@ -24,7 +24,7 @@ import javax.mail.internet.MimeBodyPart;
 import org.apache.axiom.mime.ContentType;
 import org.apache.axis2.context.MessageContext;
 import org.apache.axis2.engine.Handler.InvocationResponse;
-import org.apache.commons.logging.Log;
+import org.apache.logging.log4j.Logger;
 import org.holodeckb2b.as2.packaging.AS2MessageFormatter;
 import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.common.handlers.AbstractBaseHandler;
@@ -38,7 +38,7 @@ import org.holodeckb2b.core.handlers.MessageProcessingContext;
 public class SetMessageFormatter extends AbstractBaseHandler {
 
     @Override
-    protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Log log) throws Exception {
+    protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Logger log) throws Exception {
     	final MessageContext mc = procCtx.getParentContext();
         mc.setProperty(MESSAGE_FORMATTER, new AS2MessageFormatter());
         

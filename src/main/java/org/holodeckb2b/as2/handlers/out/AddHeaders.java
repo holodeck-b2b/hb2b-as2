@@ -21,7 +21,7 @@ import java.util.Map;
 
 import org.apache.axis2.engine.Handler.InvocationResponse;
 import org.apache.axis2.transport.http.HTTPConstants;
-import org.apache.commons.logging.Log;
+import org.apache.logging.log4j.Logger;
 import org.holodeckb2b.as2.packaging.GenericMessageInfo;
 import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.common.handlers.AbstractBaseHandler;
@@ -42,7 +42,7 @@ import org.holodeckb2b.interfaces.messagemodel.IUserMessage;
 public class AddHeaders extends AbstractBaseHandler {
 
     @Override
-    protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Log log) throws Exception {
+    protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Logger log) throws Exception {
 
     	log.debug("Getting already set HTTP headers");
         @SuppressWarnings("unchecked")

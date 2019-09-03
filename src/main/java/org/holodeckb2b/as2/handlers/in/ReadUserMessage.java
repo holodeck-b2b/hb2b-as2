@@ -20,7 +20,7 @@ import javax.mail.BodyPart;
 import javax.mail.MessagingException;
 
 import org.apache.axis2.engine.Handler.InvocationResponse;
-import org.apache.commons.logging.Log;
+import org.apache.logging.log4j.Logger;
 import org.holodeckb2b.as2.packaging.GenericMessageInfo;
 import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.common.errors.InvalidHeader;
@@ -52,7 +52,7 @@ import org.holodeckb2b.interfaces.messagemodel.IPayload;
 public class ReadUserMessage extends AbstractBaseHandler {
     
     @Override
-    protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Log log) throws Exception {
+    protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Logger log) throws Exception {
 
     	final BodyPart mainPart = (BodyPart) procCtx.getProperty(Constants.CTX_MAIN_MIME_PART);
     	try {			

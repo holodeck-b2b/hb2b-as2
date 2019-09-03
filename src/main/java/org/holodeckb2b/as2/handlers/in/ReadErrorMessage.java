@@ -17,7 +17,7 @@
 package org.holodeckb2b.as2.handlers.in;
 
 import org.apache.axis2.engine.Handler.InvocationResponse;
-import org.apache.commons.logging.Log;
+import org.apache.logging.log4j.Logger;
 import org.holodeckb2b.as2.messagemodel.MDNMetadata;
 import org.holodeckb2b.as2.packaging.MDNInfo;
 import org.holodeckb2b.as2.util.Constants;
@@ -39,7 +39,7 @@ import org.holodeckb2b.interfaces.messagemodel.IEbmsError;
 public class ReadErrorMessage extends AbstractBaseHandler {
 
     @Override
-    protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Log log) throws Exception {
+    protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Logger log) throws Exception {
 
         MDNInfo mdn = (MDNInfo) procCtx.getProperty(Constants.CTX_AS2_MDN_DATA);
         // Check if this is a negative MDN to be converted to an Error Message

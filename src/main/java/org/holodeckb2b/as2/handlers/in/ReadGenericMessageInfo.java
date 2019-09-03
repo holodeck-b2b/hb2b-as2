@@ -20,7 +20,7 @@ import java.util.Map;
 
 import org.apache.axis2.context.MessageContext;
 import org.apache.axis2.engine.Handler.InvocationResponse;
-import org.apache.commons.logging.Log;
+import org.apache.logging.log4j.Logger;
 import org.holodeckb2b.as2.packaging.GenericMessageInfo;
 import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.common.handlers.AbstractBaseHandler;
@@ -39,7 +39,7 @@ public class ReadGenericMessageInfo extends AbstractBaseHandler {
 
     @Override
     @SuppressWarnings("unchecked")
-    protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Log log) throws Exception {
+    protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Logger log) throws Exception {
         log.debug("Get http headers for general AS2 message info");
 		Map<String, String> httpHeaders = (Map<String, String>) procCtx.getParentContext()
 																	   .getProperty(MessageContext.TRANSPORT_HEADERS);

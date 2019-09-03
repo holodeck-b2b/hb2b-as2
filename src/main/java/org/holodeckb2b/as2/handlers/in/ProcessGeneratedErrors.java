@@ -21,7 +21,6 @@ import java.util.Collection;
 import java.util.Map;
 
 import org.apache.axis2.engine.Handler.InvocationResponse;
-import org.apache.commons.logging.Log;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.holodeckb2b.as2.messagemodel.MDNMetadataFactory;
@@ -71,7 +70,7 @@ public class ProcessGeneratedErrors extends AbstractBaseHandler {
     private final Logger     errorLog = LogManager.getLogger("org.holodeckb2b.msgproc.errors.generated.AS2");
 
 	@Override
-	protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Log log) throws Exception {
+	protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Logger log) throws Exception {
         log.debug("Check if errors were generated");
         final Map<String, Collection<IEbmsError>> errorsByMsgId = procCtx.getGeneratedErrors();
 

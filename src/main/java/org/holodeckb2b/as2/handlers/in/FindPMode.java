@@ -17,7 +17,7 @@
 package org.holodeckb2b.as2.handlers.in;
 
 import org.apache.axis2.engine.Handler.InvocationResponse;
-import org.apache.commons.logging.Log;
+import org.apache.logging.log4j.Logger;
 import org.holodeckb2b.as2.packaging.GenericMessageInfo;
 import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.as2.util.PModeFinder;
@@ -41,7 +41,7 @@ import org.holodeckb2b.interfaces.processingmodel.ProcessingState;
 public class FindPMode extends AbstractBaseHandler {
 
     @Override
-    protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Log log) throws Exception {
+    protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Logger log) throws Exception {
 
         // First get the message unit and general message info from msg context
         GenericMessageInfo msgInfo = (GenericMessageInfo) procCtx.getProperty(Constants.CTX_AS2_GENERAL_DATA);

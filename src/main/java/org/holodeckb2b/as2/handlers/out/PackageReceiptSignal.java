@@ -22,7 +22,7 @@ import javax.mail.internet.MimeBodyPart;
 
 import org.apache.axiom.mime.ContentType;
 import org.apache.axis2.engine.Handler.InvocationResponse;
-import org.apache.commons.logging.Log;
+import org.apache.logging.log4j.Logger;
 import org.holodeckb2b.as2.packaging.MDNInfo;
 import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.common.handlers.AbstractBaseHandler;
@@ -44,7 +44,7 @@ import org.holodeckb2b.interfaces.persistency.entities.IReceiptEntity;
 public class PackageReceiptSignal extends AbstractBaseHandler {
 
     @Override
-    protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Log log) throws Exception {
+    protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Logger log) throws Exception {
         // Check if the message includes a receipt. Although there can be just one Signal in AS2, for alignment
         // with other protocols the context contains collection of Receipts objects 
         Collection<IReceiptEntity> receipts = procCtx.getSendingReceipts();
