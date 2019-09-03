@@ -27,8 +27,7 @@ import javax.mail.MessagingException;
 import javax.mail.internet.MimeBodyPart;
 
 import org.apache.axiom.mime.ContentType;
-import org.apache.axis2.engine.Handler.InvocationResponse;
-import org.apache.commons.logging.Log;
+import org.apache.logging.log4j.Logger;
 import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.common.errors.OtherContentError;
 import org.holodeckb2b.common.handlers.AbstractUserMessageHandler;
@@ -53,9 +52,9 @@ public class SavePayload extends AbstractUserMessageHandler {
     private static final String PAYLOAD_DIR = "plcin";
 
     @Override
-    protected InvocationResponse doProcessing(IUserMessageEntity userMessage, MessageProcessingContext procCtx, Log log) 
-    																								throws Exception {
-
+    protected InvocationResponse doProcessing(final IUserMessageEntity userMessage, 
+											  final MessageProcessingContext procCtx, final Logger log) 
+													  												throws Exception {
         try {
             // Create a unique filename for temporarily storing the payload
             final File plFile = File.createTempFile("pl-", null, getTempDir());

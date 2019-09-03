@@ -22,8 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.axis2.context.MessageContext;
-import org.apache.axis2.engine.Handler.InvocationResponse;
-import org.apache.commons.logging.Log;
+import org.apache.logging.log4j.Logger;
 import org.holodeckb2b.as2.messagemodel.MDNRequestOptions;
 import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.common.handlers.AbstractUserMessageHandler;
@@ -46,9 +45,9 @@ import org.holodeckb2b.interfaces.persistency.entities.IUserMessageEntity;
 public class CheckMDNRequest extends AbstractUserMessageHandler {
 
     @Override
-    protected InvocationResponse doProcessing(IUserMessageEntity userMessage, MessageProcessingContext procCtx, Log log) 
-    																								throws Exception {
-    	
+    protected InvocationResponse doProcessing(final IUserMessageEntity userMessage, 
+    										  final MessageProcessingContext procCtx, final Logger log) 
+    												  												throws Exception {    	
         // Get the HTTP headers
         @SuppressWarnings("unchecked")
 		final Map<String, String> headers = (Map<String, String>) procCtx.getParentContext()

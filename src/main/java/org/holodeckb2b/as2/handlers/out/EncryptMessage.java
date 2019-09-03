@@ -27,7 +27,7 @@ import javax.mail.MessagingException;
 import javax.mail.internet.MimeBodyPart;
 
 import org.apache.axiom.mime.ContentType;
-import org.apache.commons.logging.Log;
+import org.apache.logging.log4j.Logger;
 import org.bouncycastle.cms.CMSException;
 import org.bouncycastle.cms.jcajce.JceCMSContentEncryptorBuilder;
 import org.bouncycastle.cms.jcajce.JceKeyTransRecipientInfoGenerator;
@@ -88,9 +88,9 @@ public class EncryptMessage extends AbstractUserMessageHandler {
     private static final String DEFAULT_ALGORITHM = "AES128_GCM";
 
     @Override
-    protected InvocationResponse doProcessing(IUserMessageEntity userMessage, MessageProcessingContext procCtx, Log log)
-    																								throws Exception {
-
+    protected InvocationResponse doProcessing(final IUserMessageEntity userMessage, 
+											  final MessageProcessingContext procCtx, final Logger log) 
+													  												throws Exception {
         // Get encryption configuration from P-Mode of the User Message
         IEncryptionConfiguration encryptionCfg = getEncryptionConfiguration(userMessage);
 

@@ -22,8 +22,7 @@ import javax.mail.MessagingException;
 import javax.mail.internet.MimeBodyPart;
 
 import org.apache.axiom.mime.ContentType;
-import org.apache.axis2.engine.Handler.InvocationResponse;
-import org.apache.commons.logging.Log;
+import org.apache.logging.log4j.Logger;
 import org.bouncycastle.cms.CMSException;
 import org.bouncycastle.cms.jcajce.ZlibExpanderProvider;
 import org.bouncycastle.mail.smime.SMIMECompressed;
@@ -48,9 +47,9 @@ import org.holodeckb2b.interfaces.processingmodel.ProcessingState;
 public class DecompressMessage extends AbstractUserMessageHandler {
 
     @Override
-    protected InvocationResponse doProcessing(IUserMessageEntity userMessage, MessageProcessingContext procCtx, Log log) 
-    																								throws Exception {
-
+    protected InvocationResponse doProcessing(final IUserMessageEntity userMessage, 
+											  final MessageProcessingContext procCtx, final Logger log) 
+													  												throws Exception {
         // First check if received message does contain a compressed User Message
         if (!isCompressed(procCtx))
             return InvocationResponse.CONTINUE;

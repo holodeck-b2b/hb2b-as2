@@ -18,8 +18,7 @@ package org.holodeckb2b.as2.handlers.in;
 
 import java.util.Collections;
 
-import org.apache.axis2.engine.Handler.InvocationResponse;
-import org.apache.commons.logging.Log;
+import org.apache.logging.log4j.Logger;
 import org.holodeckb2b.as2.messagemodel.MDNMetadataFactory;
 import org.holodeckb2b.as2.messagemodel.MDNRequestOptions;
 import org.holodeckb2b.as2.util.Constants;
@@ -50,8 +49,9 @@ import org.holodeckb2b.interfaces.processingmodel.ProcessingState;
 public class CreateReceipt extends AbstractUserMessageHandler {
 
     @Override
-    protected InvocationResponse doProcessing(IUserMessageEntity userMessage, MessageProcessingContext procCtx, Log log) 
-    																								throws Exception {
+    protected InvocationResponse doProcessing(final IUserMessageEntity userMessage, 
+    										  final MessageProcessingContext procCtx, final Logger log) 
+    												  												throws Exception {
         IReceiptConfiguration rcptConfig = null;
         
         log.debug("Check P-Mode if Receipt should be created for message [msgId=" + userMessage.getMessageId() + "]");

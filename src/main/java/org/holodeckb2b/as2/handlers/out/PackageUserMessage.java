@@ -26,9 +26,8 @@ import javax.activation.FileDataSource;
 import javax.mail.internet.MimeBodyPart;
 
 import org.apache.axiom.mime.ContentType;
-import org.apache.axis2.engine.Handler.InvocationResponse;
 import org.apache.axis2.transport.http.HTTPConstants;
-import org.apache.commons.logging.Log;
+import org.apache.logging.log4j.Logger;
 import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.as2.util.CryptoAlgorithmHelper;
 import org.holodeckb2b.common.handlers.AbstractUserMessageHandler;
@@ -62,8 +61,9 @@ import org.holodeckb2b.interfaces.security.SecurityProcessingException;
 public class PackageUserMessage extends AbstractUserMessageHandler {
 
     @Override
-    protected InvocationResponse doProcessing(IUserMessageEntity userMessage, MessageProcessingContext procCtx, Log log) throws Exception {
-
+    protected InvocationResponse doProcessing(final IUserMessageEntity userMessage, 
+											  final MessageProcessingContext procCtx, final Logger log) 
+													  												throws Exception {
         // Check that the user message contains just one payload
         if (Utils.isNullOrEmpty(userMessage.getPayloads()) || userMessage.getPayloads().size() > 1) {
             log.error("The user message [msgId=" + userMessage.getMessageId()
