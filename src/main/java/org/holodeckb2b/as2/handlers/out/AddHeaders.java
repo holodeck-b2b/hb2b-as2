@@ -19,7 +19,6 @@ package org.holodeckb2b.as2.handlers.out;
 
 import java.util.Map;
 
-import org.apache.axis2.engine.Handler.InvocationResponse;
 import org.apache.axis2.transport.http.HTTPConstants;
 import org.apache.logging.log4j.Logger;
 import org.holodeckb2b.as2.packaging.GenericMessageInfo;

@@ -16,7 +16,6 @@
  */
 package org.holodeckb2b.as2.handlers.in;
 
-import org.apache.axis2.engine.Handler.InvocationResponse;
 import org.apache.logging.log4j.Logger;
 import org.holodeckb2b.as2.messagemodel.MDNMetadata;
 import org.holodeckb2b.as2.packaging.MDNInfo;

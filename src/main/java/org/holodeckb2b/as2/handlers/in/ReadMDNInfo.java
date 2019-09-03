@@ -19,7 +19,6 @@ package org.holodeckb2b.as2.handlers.in;
 import javax.mail.BodyPart;
 import javax.mail.MessagingException;
 
-import org.apache.axis2.engine.Handler.InvocationResponse;
 import org.apache.logging.log4j.Logger;
 import org.holodeckb2b.as2.packaging.GenericMessageInfo;
 import org.holodeckb2b.as2.packaging.MDNInfo;

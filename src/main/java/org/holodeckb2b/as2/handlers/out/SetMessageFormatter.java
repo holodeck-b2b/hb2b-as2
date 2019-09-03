@@ -23,7 +23,6 @@ import javax.mail.internet.MimeBodyPart;
 
 import org.apache.axiom.mime.ContentType;
 import org.apache.axis2.context.MessageContext;
-import org.apache.axis2.engine.Handler.InvocationResponse;
 import org.apache.logging.log4j.Logger;
 import org.holodeckb2b.as2.packaging.AS2MessageFormatter;
 import org.holodeckb2b.as2.util.Constants;

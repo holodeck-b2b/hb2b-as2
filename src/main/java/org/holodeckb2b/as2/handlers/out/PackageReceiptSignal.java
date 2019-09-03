@@ -21,7 +21,6 @@ import java.util.Collection;
 import javax.mail.internet.MimeBodyPart;
 
 import org.apache.axiom.mime.ContentType;
-import org.apache.axis2.engine.Handler.InvocationResponse;
 import org.apache.logging.log4j.Logger;
 import org.holodeckb2b.as2.packaging.MDNInfo;
 import org.holodeckb2b.as2.util.Constants;
