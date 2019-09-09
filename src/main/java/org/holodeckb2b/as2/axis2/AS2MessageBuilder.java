@@ -33,7 +33,7 @@ import org.apache.axis2.transport.TransportUtils;
 import org.apache.axis2.transport.http.HTTPConstants;
 import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.common.util.Utils;
-import org.holodeckb2b.core.handlers.MessageProcessingContext;
+import org.holodeckb2b.core.MessageProcessingContext;
 
 /**
  * Is a {@link Builder} implementation for parsing the main MIME part of a received AS2 message. It makes the parsed
