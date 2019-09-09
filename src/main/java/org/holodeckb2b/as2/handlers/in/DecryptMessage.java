@@ -38,8 +38,8 @@ import org.holodeckb2b.common.events.impl.DecryptionFailure;
 import org.holodeckb2b.common.handlers.AbstractUserMessageHandler;
 import org.holodeckb2b.common.util.Utils;
 import org.holodeckb2b.core.HolodeckB2BCore;
-import org.holodeckb2b.core.handlers.MessageProcessingContext;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
+import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
 import org.holodeckb2b.interfaces.persistency.entities.IUserMessageEntity;
 import org.holodeckb2b.interfaces.pmode.IEncryptionConfiguration;
 import org.holodeckb2b.interfaces.pmode.IPMode;
@@ -61,7 +61,7 @@ public class DecryptMessage extends AbstractUserMessageHandler {
 
     @Override
     protected InvocationResponse doProcessing(final IUserMessageEntity userMessage, 
-											  final MessageProcessingContext procCtx, final Logger log) 
+											  final IMessageProcessingContext procCtx, final Logger log) 
 													  												throws Exception {
         // First check if received message does contain a signed message
         if (!isEncrypted(procCtx))
@@ -159,7 +159,7 @@ public class DecryptMessage extends AbstractUserMessageHandler {
      * @return         <code>true</code> if the Content-Type indicate a encrypted SMIME, <br>
      *                 <code>false</code> otherwise
      */
-    private boolean isEncrypted(MessageProcessingContext procCtx) {
+    private boolean isEncrypted(IMessageProcessingContext procCtx) {
         final ContentType contentType = (ContentType)
                                             procCtx.getProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE);
         final String sBaseType = contentType.getMediaType().toString();

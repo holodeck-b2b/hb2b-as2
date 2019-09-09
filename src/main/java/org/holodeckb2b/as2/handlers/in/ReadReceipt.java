@@ -25,7 +25,7 @@ import org.holodeckb2b.common.messagemodel.Receipt;
 import org.holodeckb2b.common.util.MessageIdUtils;
 import org.holodeckb2b.common.util.Utils;
 import org.holodeckb2b.core.HolodeckB2BCore;
-import org.holodeckb2b.core.handlers.MessageProcessingContext;
+import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
 import org.holodeckb2b.interfaces.persistency.entities.IReceiptEntity;
 
 /**
@@ -37,7 +37,7 @@ import org.holodeckb2b.interfaces.persistency.entities.IReceiptEntity;
 public class ReadReceipt extends AbstractBaseHandler {
 	
     @Override
-    protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Logger log) throws Exception {
+    protected InvocationResponse doProcessing(IMessageProcessingContext procCtx, Logger log) throws Exception {
 
         MDNInfo mdn = (MDNInfo) procCtx.getProperty(Constants.CTX_AS2_MDN_DATA);
         // Only positive MDNs are converted 

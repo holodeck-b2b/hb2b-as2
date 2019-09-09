@@ -32,7 +32,7 @@ import org.holodeckb2b.common.messagemodel.UserMessage;
 import org.holodeckb2b.common.util.MessageIdUtils;
 import org.holodeckb2b.common.util.Utils;
 import org.holodeckb2b.core.HolodeckB2BCore;
-import org.holodeckb2b.core.handlers.MessageProcessingContext;
+import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
 import org.holodeckb2b.interfaces.messagemodel.IPayload;
 
 /**
@@ -51,7 +51,7 @@ import org.holodeckb2b.interfaces.messagemodel.IPayload;
 public class ReadUserMessage extends AbstractBaseHandler {
     
     @Override
-    protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Logger log) throws Exception {
+    protected InvocationResponse doProcessing(IMessageProcessingContext procCtx, Logger log) throws Exception {
 
     	final BodyPart mainPart = (BodyPart) procCtx.getProperty(Constants.CTX_MAIN_MIME_PART);
     	try {			

@@ -21,8 +21,8 @@ import java.util.Collection;
 import org.holodeckb2b.common.messagemodel.util.MessageUnitUtils;
 import org.holodeckb2b.common.util.Utils;
 import org.holodeckb2b.core.HolodeckB2BCore;
-import org.holodeckb2b.core.handlers.MessageProcessingContext;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
+import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
 import org.holodeckb2b.interfaces.general.IPartyId;
 import org.holodeckb2b.interfaces.messagemodel.Direction;
 import org.holodeckb2b.interfaces.messagemodel.IMessageUnit;
@@ -73,7 +73,7 @@ public class PModeFinder {
      */
     public static IPMode findForReceivedMessage(final IMessageUnit as2Message,
                                                 final String senderId, final String receiverId,
-                                                final MessageProcessingContext procCtx) {
+                                                final IMessageProcessingContext procCtx) {
         final IPModeSet pmodes = HolodeckB2BCoreInterface.getPModeSet();
         IPMode    hPMode = null;
         int       hValue = 0;
@@ -152,7 +152,7 @@ public class PModeFinder {
      * @param procCtx	The message processing context of the signal message
      * @return			
      */
-    protected static IPMode findUsingReference(final ISignalMessage signal, final MessageProcessingContext procCtx) {
+    protected static IPMode findUsingReference(final ISignalMessage signal, final IMessageProcessingContext procCtx) {
         IPMode pmode = null;
         // If the Signal is contained in a response it must be a reference to the sent message unit
         if (procCtx.isHB2BInitiated()) {

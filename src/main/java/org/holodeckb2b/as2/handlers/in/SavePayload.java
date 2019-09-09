@@ -33,8 +33,8 @@ import org.holodeckb2b.common.errors.OtherContentError;
 import org.holodeckb2b.common.handlers.AbstractUserMessageHandler;
 import org.holodeckb2b.common.messagemodel.Payload;
 import org.holodeckb2b.core.HolodeckB2BCore;
-import org.holodeckb2b.core.handlers.MessageProcessingContext;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
+import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
 import org.holodeckb2b.interfaces.messagemodel.IPayload;
 import org.holodeckb2b.interfaces.persistency.entities.IUserMessageEntity;
 import org.holodeckb2b.interfaces.processingmodel.ProcessingState;
@@ -53,7 +53,7 @@ public class SavePayload extends AbstractUserMessageHandler {
 
     @Override
     protected InvocationResponse doProcessing(final IUserMessageEntity userMessage, 
-											  final MessageProcessingContext procCtx, final Logger log) 
+											  final IMessageProcessingContext procCtx, final Logger log) 
 													  												throws Exception {
         try {
             // Create a unique filename for temporarily storing the payload

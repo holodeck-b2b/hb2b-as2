@@ -29,9 +29,9 @@ import org.bouncycastle.mail.smime.SMIMEException;
 import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.common.handlers.AbstractUserMessageHandler;
 import org.holodeckb2b.common.util.Utils;
-import org.holodeckb2b.core.handlers.MessageProcessingContext;
 import org.holodeckb2b.interfaces.as4.pmode.IAS4PayloadProfile;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
+import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
 import org.holodeckb2b.interfaces.messagemodel.IUserMessage;
 import org.holodeckb2b.interfaces.persistency.entities.IUserMessageEntity;
 import org.holodeckb2b.interfaces.pmode.ILeg;
@@ -53,7 +53,7 @@ public class CompressMessage extends AbstractUserMessageHandler {
 
     @Override
     protected InvocationResponse doProcessing(final IUserMessageEntity userMessage, 
-											  final MessageProcessingContext procCtx, final Logger log) 
+											  final IMessageProcessingContext procCtx, final Logger log) 
 													  												throws Exception {
     	// First check that there is content that can be compressed
     	final MimeBodyPart  msgToCompress = (MimeBodyPart) procCtx.getProperty(Constants.CTX_MIME_ENVELOPE);

@@ -27,7 +27,7 @@ import org.holodeckb2b.as2.messagemodel.MDNRequestOptions;
 import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.common.handlers.AbstractUserMessageHandler;
 import org.holodeckb2b.common.util.Utils;
-import org.holodeckb2b.core.handlers.MessageProcessingContext;
+import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
 import org.holodeckb2b.interfaces.persistency.entities.IUserMessageEntity;
 
 /**
@@ -46,7 +46,7 @@ public class CheckMDNRequest extends AbstractUserMessageHandler {
 
     @Override
     protected InvocationResponse doProcessing(final IUserMessageEntity userMessage, 
-    										  final MessageProcessingContext procCtx, final Logger log) 
+    										  final IMessageProcessingContext procCtx, final Logger log) 
     												  												throws Exception {    	
         // Get the HTTP headers
         @SuppressWarnings("unchecked")

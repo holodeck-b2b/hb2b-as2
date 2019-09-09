@@ -26,7 +26,7 @@ import org.holodeckb2b.common.handlers.AbstractBaseHandler;
 import org.holodeckb2b.common.messagemodel.util.MessageUnitUtils;
 import org.holodeckb2b.common.util.Utils;
 import org.holodeckb2b.core.HolodeckB2BCore;
-import org.holodeckb2b.core.handlers.MessageProcessingContext;
+import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
 import org.holodeckb2b.interfaces.messagemodel.IReceipt;
 import org.holodeckb2b.interfaces.messagemodel.ISignalMessage;
 import org.holodeckb2b.interfaces.persistency.PersistenceException;
@@ -65,7 +65,7 @@ import org.holodeckb2b.interfaces.processingmodel.ProcessingState;
 public class ConfigureHTTPTransport extends AbstractBaseHandler {
 
     @Override
-    protected InvocationResponse doProcessing(final MessageProcessingContext procCtx, Logger log) throws PersistenceException {
+    protected InvocationResponse doProcessing(final IMessageProcessingContext procCtx, Logger log) throws PersistenceException {
         final IMessageUnitEntity primaryMU = procCtx.getPrimaryMessageUnit();
         // Only when message contains a message unit there is something to do
         if (primaryMU != null) {
@@ -143,7 +143,7 @@ public class ConfigureHTTPTransport extends AbstractBaseHandler {
 	 * @param mc			The message processing context
 	 * @return				The destination URL, <code>null</code> if URL cannot be determined 
 	 */
-	private String getDestinationURL(IMessageUnitEntity msgToSend, ILeg leg, MessageProcessingContext procCtx) {
+	private String getDestinationURL(IMessageUnitEntity msgToSend, ILeg leg, IMessageProcessingContext procCtx) {
 		String destURL = null;
 		
 		if (msgToSend instanceof ISignalMessage) {

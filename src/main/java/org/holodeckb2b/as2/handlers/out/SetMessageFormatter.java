@@ -27,7 +27,7 @@ import org.apache.logging.log4j.Logger;
 import org.holodeckb2b.as2.packaging.AS2MessageFormatter;
 import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.common.handlers.AbstractBaseHandler;
-import org.holodeckb2b.core.handlers.MessageProcessingContext;
+import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
 
 /**
  * Is the <i>out_flow</i> handler that ensure that the AS2 message will be correctly formatted when send by Axis.
@@ -37,7 +37,7 @@ import org.holodeckb2b.core.handlers.MessageProcessingContext;
 public class SetMessageFormatter extends AbstractBaseHandler {
 
     @Override
-    protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Logger log) throws Exception {
+    protected InvocationResponse doProcessing(IMessageProcessingContext procCtx, Logger log) throws Exception {
     	final MessageContext mc = procCtx.getParentContext();
         mc.setProperty(MESSAGE_FORMATTER, new AS2MessageFormatter());
         

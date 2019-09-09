@@ -23,7 +23,7 @@ import org.apache.logging.log4j.Logger;
 import org.holodeckb2b.as2.packaging.GenericMessageInfo;
 import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.common.handlers.AbstractBaseHandler;
-import org.holodeckb2b.core.handlers.MessageProcessingContext;
+import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
 
 /**
  * Is the <i>in_flow</i> handler that reads the HTTP headers of the incoming AS2 message to get the general message
@@ -38,7 +38,7 @@ public class ReadGenericMessageInfo extends AbstractBaseHandler {
 
     @Override
     @SuppressWarnings("unchecked")
-    protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Logger log) throws Exception {
+    protected InvocationResponse doProcessing(IMessageProcessingContext procCtx, Logger log) throws Exception {
         log.debug("Get http headers for general AS2 message info");
 		Map<String, String> httpHeaders = (Map<String, String>) procCtx.getParentContext()
 																	   .getProperty(MessageContext.TRANSPORT_HEADERS);

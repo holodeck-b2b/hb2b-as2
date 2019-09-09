@@ -40,8 +40,8 @@ import org.holodeckb2b.common.events.impl.EncryptionFailure;
 import org.holodeckb2b.common.handlers.AbstractUserMessageHandler;
 import org.holodeckb2b.common.util.Utils;
 import org.holodeckb2b.core.HolodeckB2BCore;
-import org.holodeckb2b.core.handlers.MessageProcessingContext;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
+import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
 import org.holodeckb2b.interfaces.messagemodel.IUserMessage;
 import org.holodeckb2b.interfaces.persistency.entities.IUserMessageEntity;
 import org.holodeckb2b.interfaces.pmode.IEncryptionConfiguration;
@@ -89,7 +89,7 @@ public class EncryptMessage extends AbstractUserMessageHandler {
 
     @Override
     protected InvocationResponse doProcessing(final IUserMessageEntity userMessage, 
-											  final MessageProcessingContext procCtx, final Logger log) 
+											  final IMessageProcessingContext procCtx, final Logger log) 
 													  												throws Exception {
         // Get encryption configuration from P-Mode of the User Message
         IEncryptionConfiguration encryptionCfg = getEncryptionConfiguration(userMessage);

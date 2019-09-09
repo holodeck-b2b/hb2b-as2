@@ -26,7 +26,7 @@ import org.holodeckb2b.as2.packaging.MDNTransformationException;
 import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.common.errors.InvalidHeader;
 import org.holodeckb2b.common.handlers.AbstractBaseHandler;
-import org.holodeckb2b.core.handlers.MessageProcessingContext;
+import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
 
 /**
  * Is the <i>in_flow</i> handler that checks if the incoming AS2 message is an MDN and if it is parses the MDN
@@ -38,7 +38,7 @@ import org.holodeckb2b.core.handlers.MessageProcessingContext;
 public class ReadMDNInfo extends AbstractBaseHandler {
 
     @Override
-    protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Logger log) {
+    protected InvocationResponse doProcessing(IMessageProcessingContext procCtx, Logger log) {
  
     	final BodyPart mainPart = (BodyPart) procCtx.getProperty(Constants.CTX_MAIN_MIME_PART);
     	try {			

@@ -53,8 +53,8 @@ import org.holodeckb2b.common.events.impl.SignatureVerifiedWithWarning;
 import org.holodeckb2b.common.handlers.AbstractBaseHandler;
 import org.holodeckb2b.common.util.Utils;
 import org.holodeckb2b.core.HolodeckB2BCore;
-import org.holodeckb2b.core.handlers.MessageProcessingContext;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
+import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
 import org.holodeckb2b.interfaces.events.security.ISignatureVerified;
 import org.holodeckb2b.interfaces.messagemodel.IPayload;
 import org.holodeckb2b.interfaces.messagemodel.ISignalMessage;
@@ -83,7 +83,7 @@ import org.holodeckb2b.security.results.SignatureProcessingResult;
 public class ProcessSignature extends AbstractBaseHandler {
 
     @Override
-    protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Logger log) throws Exception {
+    protected InvocationResponse doProcessing(IMessageProcessingContext procCtx, Logger log) throws Exception {
 
         // First check if received message does contain a signed message
         final IMessageUnitEntity msgUnit = procCtx.getPrimaryMessageUnit();

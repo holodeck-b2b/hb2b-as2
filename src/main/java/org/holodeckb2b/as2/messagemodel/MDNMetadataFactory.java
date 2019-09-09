@@ -28,7 +28,7 @@ import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.as2.util.CryptoAlgorithmHelper;
 import org.holodeckb2b.as2.util.DigestHelper;
 import org.holodeckb2b.common.util.Utils;
-import org.holodeckb2b.core.handlers.MessageProcessingContext;
+import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
 import org.holodeckb2b.interfaces.pmode.IPMode;
 import org.holodeckb2b.interfaces.pmode.ISecurityConfiguration;
 import org.holodeckb2b.interfaces.pmode.ISigningConfiguration;
@@ -56,7 +56,7 @@ public class MDNMetadataFactory {
 	 * @return	The meta-data of the MDN for the received message  
 	 */
 	public static MDNMetadata createMDN(final IPMode pmode, final MDNRequestOptions mdnRequest,
-										final MessageProcessingContext procCtx) {
+										final IMessageProcessingContext procCtx) {
 		// First check if the MDN should be signed, based on P-Mode configuration or MDN request
 		boolean signedMDN = false;
 		final ITradingPartnerConfiguration responderCfg = pmode != null ? pmode.getResponder() : null;

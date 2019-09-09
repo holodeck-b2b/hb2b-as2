@@ -19,7 +19,7 @@ package org.holodeckb2b.as2.handlers.out;
 import org.apache.axis2.AxisFault;
 import org.apache.axis2.context.MessageContext;
 import org.apache.axis2.wsdl.WSDLConstants;
-import org.holodeckb2b.core.handlers.MessageProcessingContext;
+import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
 
 /**
  * Is the <i>out_flow</i> handler responsible for changing the processing state of the message unit that are and has 
@@ -31,7 +31,7 @@ import org.holodeckb2b.core.handlers.MessageProcessingContext;
 public class CheckSentResult extends org.holodeckb2b.ebms3.handlers.outflow.CheckSentResult {
 
 	@Override
-	protected boolean isSuccessful(final MessageProcessingContext procCtx) {
+	protected boolean isSuccessful(final IMessageProcessingContext procCtx) {
 		final MessageContext outMsgCtx = procCtx.getParentContext();
 		if (procCtx.isHB2BInitiated()) {
 			MessageContext responseMsgCtx = null;		

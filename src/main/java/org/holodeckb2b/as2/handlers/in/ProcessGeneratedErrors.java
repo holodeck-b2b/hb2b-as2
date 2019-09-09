@@ -36,8 +36,8 @@ import org.holodeckb2b.common.messagemodel.util.MessageUnitUtils;
 import org.holodeckb2b.common.util.Utils;
 import org.holodeckb2b.core.HolodeckB2BCore;
 import org.holodeckb2b.core.StorageManager;
-import org.holodeckb2b.core.handlers.MessageProcessingContext;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
+import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
 import org.holodeckb2b.interfaces.general.ReplyPattern;
 import org.holodeckb2b.interfaces.messagemodel.IEbmsError;
 import org.holodeckb2b.interfaces.messagemodel.IErrorMessage;
@@ -69,7 +69,7 @@ public class ProcessGeneratedErrors extends AbstractBaseHandler {
     private final Logger     errorLog = LogManager.getLogger("org.holodeckb2b.msgproc.errors.generated.AS2");
 
 	@Override
-	protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Logger log) throws Exception {
+	protected InvocationResponse doProcessing(IMessageProcessingContext procCtx, Logger log) throws Exception {
         log.debug("Check if errors were generated");
         final Map<String, Collection<IEbmsError>> errorsByMsgId = procCtx.getGeneratedErrors();
 
@@ -83,7 +83,7 @@ public class ProcessGeneratedErrors extends AbstractBaseHandler {
         										msgInError.getMessageId() : null; 
         	ArrayList<IEbmsError> errors = new ArrayList<IEbmsError>(errorsByMsgId.get(refToMsgInError != null 
         																	 ? refToMsgInError : 
-        																	   MessageProcessingContext.UNREFD_ERRORS)); 
+        																	   IMessageProcessingContext.UNREFD_ERRORS)); 
         	log.debug(errors.size() + " error(s) were generated during this in flow");
         	        	
         	// Check if the Error must be reported back to the sender of the message and if it is for a User Message. 

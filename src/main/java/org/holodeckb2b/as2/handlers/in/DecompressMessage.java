@@ -32,7 +32,7 @@ import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.as4.compression.DeCompressionFailure;
 import org.holodeckb2b.common.handlers.AbstractUserMessageHandler;
 import org.holodeckb2b.core.HolodeckB2BCore;
-import org.holodeckb2b.core.handlers.MessageProcessingContext;
+import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
 import org.holodeckb2b.interfaces.persistency.entities.IUserMessageEntity;
 import org.holodeckb2b.interfaces.processingmodel.ProcessingState;
 
@@ -48,7 +48,7 @@ public class DecompressMessage extends AbstractUserMessageHandler {
 
     @Override
     protected InvocationResponse doProcessing(final IUserMessageEntity userMessage, 
-											  final MessageProcessingContext procCtx, final Logger log) 
+											  final IMessageProcessingContext procCtx, final Logger log) 
 													  												throws Exception {
         // First check if received message does contain a compressed User Message
         if (!isCompressed(procCtx))
@@ -82,7 +82,7 @@ public class DecompressMessage extends AbstractUserMessageHandler {
      * @return    		<code>true</code> if the Content-Type indicate a compressed SMIME, <br>
      *            		<code>false</code> otherwise
      */
-    private boolean isCompressed(MessageProcessingContext procCtx) {
+    private boolean isCompressed(IMessageProcessingContext procCtx) {
         final ContentType contentType = (ContentType)
                                              procCtx.getProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE);
         final String sBaseType = contentType.getMediaType().toString();

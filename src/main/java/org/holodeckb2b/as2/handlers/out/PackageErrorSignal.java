@@ -29,7 +29,7 @@ import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.common.handlers.AbstractBaseHandler;
 import org.holodeckb2b.common.util.Utils;
 import org.holodeckb2b.core.HolodeckB2BCore;
-import org.holodeckb2b.core.handlers.MessageProcessingContext;
+import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
 import org.holodeckb2b.interfaces.persistency.entities.IErrorMessageEntity;
 import org.holodeckb2b.interfaces.processingmodel.ProcessingState;
 
@@ -53,7 +53,7 @@ import org.holodeckb2b.interfaces.processingmodel.ProcessingState;
 public class PackageErrorSignal extends AbstractBaseHandler {
 
     @Override
-    protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Logger log) throws Exception {
+    protected InvocationResponse doProcessing(IMessageProcessingContext procCtx, Logger log) throws Exception {
         // Check if the message includes a error. Although there can be just one Signal in AS2, for alignment
         // with other protocols the context contains collection of Error objects 
         Collection<IErrorMessageEntity> errors = procCtx.getSendingErrors();

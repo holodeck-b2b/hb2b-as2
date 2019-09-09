@@ -26,7 +26,7 @@ import org.holodeckb2b.as2.packaging.MDNInfo;
 import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.common.handlers.AbstractBaseHandler;
 import org.holodeckb2b.common.util.Utils;
-import org.holodeckb2b.core.handlers.MessageProcessingContext;
+import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
 import org.holodeckb2b.interfaces.persistency.entities.IReceiptEntity;
 
 /**
@@ -43,7 +43,7 @@ import org.holodeckb2b.interfaces.persistency.entities.IReceiptEntity;
 public class PackageReceiptSignal extends AbstractBaseHandler {
 
     @Override
-    protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Logger log) throws Exception {
+    protected InvocationResponse doProcessing(IMessageProcessingContext procCtx, Logger log) throws Exception {
         // Check if the message includes a receipt. Although there can be just one Signal in AS2, for alignment
         // with other protocols the context contains collection of Receipts objects 
         Collection<IReceiptEntity> receipts = procCtx.getSendingReceipts();
