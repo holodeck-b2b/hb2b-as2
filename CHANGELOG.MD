@@ -12,6 +12,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 * Adapted to Holodeck B2B 5.0.0: 
 	- Added a customised AS2 message builder
 	- Using the installed _Certificate Manager_ to validate trust of signing certificate
+	- Use `IMessageProcessingContext` instead of implementation class
 	- Changed logging class of handlers to Log4j
 
 ### Fixed
