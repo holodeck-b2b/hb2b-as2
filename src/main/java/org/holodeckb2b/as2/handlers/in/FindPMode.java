@@ -22,7 +22,7 @@ import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.as2.util.PModeFinder;
 import org.holodeckb2b.common.errors.ProcessingModeMismatch;
 import org.holodeckb2b.common.handlers.AbstractBaseHandler;
-import org.holodeckb2b.common.messagemodel.util.MessageUnitUtils;
+import org.holodeckb2b.common.util.MessageUnitUtils;
 import org.holodeckb2b.core.HolodeckB2BCore;
 import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
 import org.holodeckb2b.interfaces.persistency.entities.IMessageUnitEntity;

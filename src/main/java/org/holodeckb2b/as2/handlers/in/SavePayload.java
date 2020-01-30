@@ -21,6 +21,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 
 import javax.mail.MessagingException;
@@ -89,12 +91,14 @@ public class SavePayload extends AbstractUserMessageHandler {
      * @throws IOException   When the specified directory does not exist and can not be created.
      */
     private File getTempDir() throws IOException {
-        final String tmpPayloadDirPath = HolodeckB2BCoreInterface.getConfiguration().getTempDirectory() + PAYLOAD_DIR;
-        final File tmpPayloadDir = new File(tmpPayloadDirPath);
-        if (!tmpPayloadDir.exists() && !tmpPayloadDir.mkdirs())
-            throw new IOException("Temp directory for payloads (" + tmpPayloadDirPath + ") could not be created!");
+        Path tmpPayloadDir = HolodeckB2BCoreInterface.getConfiguration().getTempDirectory().resolve(PAYLOAD_DIR);
         
-        return tmpPayloadDir;
+        if (!Files.exists(tmpPayloadDir))
+        	tmpPayloadDir = Files.createDirectories(tmpPayloadDir);
+        else if (!Files.isDirectory(tmpPayloadDir) || !Files.isWritable(tmpPayloadDir))
+            throw new IOException("Temp directory for payloads (" + tmpPayloadDir.toString() + ") is not available!");
+        
+        return tmpPayloadDir.toFile();
     }
 
     /**

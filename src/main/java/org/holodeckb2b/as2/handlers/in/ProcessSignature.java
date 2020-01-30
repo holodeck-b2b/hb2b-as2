@@ -51,6 +51,7 @@ import org.holodeckb2b.common.events.impl.SignatureVerificationFailure;
 import org.holodeckb2b.common.events.impl.SignatureVerified;
 import org.holodeckb2b.common.events.impl.SignatureVerifiedWithWarning;
 import org.holodeckb2b.common.handlers.AbstractBaseHandler;
+import org.holodeckb2b.common.security.results.SignatureProcessingResult;
 import org.holodeckb2b.common.util.Utils;
 import org.holodeckb2b.core.HolodeckB2BCore;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
@@ -69,7 +70,6 @@ import org.holodeckb2b.interfaces.security.X509ReferenceType;
 import org.holodeckb2b.interfaces.security.trust.ICertificateManager;
 import org.holodeckb2b.interfaces.security.trust.IValidationResult;
 import org.holodeckb2b.interfaces.security.trust.IValidationResult.Trust;
-import org.holodeckb2b.security.results.SignatureProcessingResult;
 
 /**
  * Is the <i>in_flow</i> handler responsible for processing the signature of a received AS2 User Message. As the

@@ -40,25 +40,27 @@
     </developers>
         
     <dependencies>
-    	<!-- Adding the ebms3as4 module of the main project because we're re-using the P-Mode validator and 
-    		 decompression error from that module. This also automatically includes the core -->
+    	<!-- Adding the Holodeck B2B Core module of the main project because we're re-using the Security Results 
+    		 classes -->
+        <dependency>
+            <groupId>org.holodeckb2b</groupId>
+            <artifactId>holodeckb2b-core</artifactId>
+            <version>${hb2b-version}</version>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>org.holodeckb2b</groupId>
             <artifactId>holodeckb2b-ebms3as4</artifactId>
             <version>${hb2b-version}</version>
             <scope>provided</scope>
         </dependency>
-        <dependency>
-            <groupId>org.holodeckb2b</groupId>
-            <artifactId>holodeckb2b-security</artifactId>
-            <version>${hb2b-version}</version>
-            <!-- Scope is set to provided as we assume deployed in default environment, but when a different
-             	Security Provider is used this may not be true and the corresponding jar should be added 
-             	manually 
-            -->
-            <scope>provided</scope>
-        </dependency>   
-        <!-- Including BC S/MIME processing. Automatically includes other BC libs -->
+
+ 		<dependency>
+ 			<groupId>javax.mail</groupId>
+  			<artifactId>javax.mail-api</artifactId>
+  			<version>1.6.2</version>
+ 		</dependency>        
+ 		<!-- Including BC S/MIME processing. Automatically includes other BC libs -->
         <dependency>
 	        <groupId>org.bouncycastle</groupId>
 	        <artifactId>bcmail-jdk15on</artifactId>
