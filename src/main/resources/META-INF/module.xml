@@ -18,286 +18,216 @@
 <module name="holodeckb2b-as2" class="org.holodeckb2b.as2.AS2Module">
 	<Description>This module contains the configuration of the Axis2 handlers for processing AS2 messages</Description>
 	<parameter name="HandledMessagingProtocol" locked="true">AS2</parameter>
-
+   
     <InFlow>
-        <!-- Catch a raised Fault and translate it into an "Other" Error so a error response will be send -->
-        <handler name="CatchFaults" class="org.holodeckb2b.ebms3.util.CatchAxisFault">
-            <order phase="protocolInPhase" phaseFirst="true"/>
-        </handler>
-
         <!--
             Read the general and MDN specific meta-data from the message
         -->
         <handler name="ReadGeneralMetadata" class="org.holodeckb2b.as2.handlers.in.ReadGenericMessageInfo">
-            <order phase="protocolInPhase" after="CatchFaults"/>
+            <order phase="ProtocolParsing" phaseFirst="true"/>
         </handler>
         <handler name="ReadMDNMetadata" class="org.holodeckb2b.as2.handlers.in.ReadMDNInfo">
-            <order phase="protocolInPhase" after="ReadGeneralMetadata"/>
+            <order phase="ProtocolParsing" after="ReadGeneralMetadata"/>
         </handler>
         <!--
             Read the message units from the message
         -->
         <handler name="ReadUserMessage" class="org.holodeckb2b.as2.handlers.in.ReadUserMessage">
-            <order phase="protocolInPhase" after="ReadMDNMetadata" />
+            <order phase="ProtocolParsing" after="ReadMDNMetadata" />
         </handler>
         <!-- Handler to get the parameters related to the User Message for responding --> 
         <handler name="GetMDNRequest" class="org.holodeckb2b.as2.handlers.in.CheckMDNRequest">
-            <order phase="protocolInPhase" after="ReadUserMessage"/>
+            <order phase="ProtocolParsing" after="ReadUserMessage"/>
         </handler>        
         <handler name="ReadReceipt" class="org.holodeckb2b.as2.handlers.in.ReadReceipt">
-            <order phase="protocolInPhase" after="GetMDNRequest"/>
+            <order phase="ProtocolParsing" after="GetMDNRequest"/>
         </handler>
         <handler name="ReadError" class="org.holodeckb2b.as2.handlers.in.ReadErrorMessage">
-            <order phase="protocolInPhase" after="ReadReceipt"/>
+            <order phase="ProtocolParsing" after="ReadReceipt"/>
         </handler>
         <!--
             Find the P-Modes for the read message
         -->
         <handler name="FindPMode" class="org.holodeckb2b.as2.handlers.in.FindPMode">
-            <order phase="protocolInPhase" after="ReadError"/>
+            <order phase="ProtocolParsing"/>
         </handler>
         <!--
             Perform S/MIME processing. This includes decryption, signature validation and decompression
         -->
         <handler name="DecryptMessage" class="org.holodeckb2b.as2.handlers.in.DecryptMessage">
-            <order phase="protocolInPhase" after="FindPMode"/>
+            <order phase="Security" />
         </handler>
         <!-- As AS2 compression can be done both before and after signing, we must try decompressing the 
         	message both before and after signature validation
         -->
         <handler name="DecompressEnvelope" class="org.holodeckb2b.as2.handlers.in.DecompressMessage">
-            <order phase="protocolInPhase" after="DecryptMessage"/>
+            <order phase="Security" after="DecryptMessage"/>
         </handler>
         <handler name="ValidateSignature" class="org.holodeckb2b.as2.handlers.in.ProcessSignature">
-            <order phase="protocolInPhase" after="DecompressEnvelope"/>
+            <order phase="Security" after="DecompressEnvelope"/>
         </handler>
         <handler name="DecompressContent" class="org.holodeckb2b.as2.handlers.in.DecompressMessage">
-            <order phase="protocolInPhase" after="ValidateSignature"/>
+            <order phase="Security" after="ValidateSignature"/>
         </handler>
-        <!--
-            Process the user message
-        -->
-        <handler name="StartProcessingUsrMsg" class="org.holodeckb2b.ebms3.handlers.inflow.StartProcessingUsrMessage">
-            <order phase="protocolInPhase" after="DecompressContent"/>
-        </handler>
-        <handler name="SavePayloadData" class="org.holodeckb2b.as2.handlers.in.SavePayload">
-            <order phase="protocolInPhase" after="StartProcessingUsrMsg"/>
-        </handler>
-        <handler name="CustomValidation" class="org.holodeckb2b.ebms3.handlers.inflow.PerformCustomValidations">
-            <order phase="protocolInPhase" after="SavePayloadData"/>
-        </handler>
-        <handler name="DeliverUserMessage" class="org.holodeckb2b.ebms3.handlers.inflow.DeliverUserMessage">
-            <order phase="protocolInPhase" after="CustomValidation"/>
-        </handler>
+		<!-- Save the payload data -->
+		<handler name="SavePayload" class="org.holodeckb2b.as2.handlers.in.SavePayload">
+            <order phase="ProtocolProcessing" />
+        </handler>	
         <!-- Handler for creating the Receipt -->
         <handler name="CreateReceipt" class="org.holodeckb2b.as2.handlers.in.CreateReceipt">
-            <order phase="protocolInPhase" after="DeliverUserMessage"/>
-        </handler>
-        <!--
-            Process the receipts and errors, same as for ebMS3/AS4
-        -->
-        <handler name="ProcessReceipts" class="org.holodeckb2b.ebms3.handlers.inflow.ProcessReceipts">
-            <order phase="protocolInPhase" after="RetrievePulledMessage"/>
-        </handler>
-        <handler name="DeliverReceipts" class="org.holodeckb2b.ebms3.handlers.inflow.DeliverReceipts">
-            <order phase="protocolInPhase" after="ProcessReceipts"/>
-        </handler>
-        <handler name="ProcessErrors" class="org.holodeckb2b.ebms3.handlers.inflow.ProcessErrors">
-            <order phase="protocolInPhase" after="DeliverReceipts"/>
-        </handler>
-        <handler name="DeliverErrors" class="org.holodeckb2b.ebms3.handlers.inflow.DeliverErrors">
-            <order phase="protocolInPhase" after="ProcessErrors"/>
+            <order phase="ProtocolResponseHandling" />
         </handler>
 		<!--  Handler for errors generated during message processing -->
         <handler name="ProcessGeneratedErrors" class="org.holodeckb2b.as2.handlers.in.ProcessGeneratedErrors">
-            <order phase="protocolInPhase" after="DeliverErrors"/>
+            <order phase="ProtocolResponseHandling" after="DeliverErrors"/>
         </handler>
     </InFlow>
-
+    
     <InFaultFlow>
-        <!-- Catch a raised Fault and translate it into an "Other" Error so a error response will be send -->
-        <handler name="CatchFaults" class="org.holodeckb2b.ebms3.util.CatchAxisFault">
-            <order phase="protocolInPhase" phaseFirst="true"/>
-        </handler>
-
         <!--
             Read the general and MDN specific meta-data from the message
         -->
         <handler name="ReadGeneralMetadata" class="org.holodeckb2b.as2.handlers.in.ReadGenericMessageInfo">
-            <order phase="protocolInPhase" after="CatchFaults"/>
+            <order phase="ProtocolParsing" phaseFirst="true"/>
         </handler>
         <handler name="ReadMDNMetadata" class="org.holodeckb2b.as2.handlers.in.ReadMDNInfo">
-            <order phase="protocolInPhase" after="ReadGeneralMetadata"/>
+            <order phase="ProtocolParsing" after="ReadGeneralMetadata"/>
         </handler>
         <!--
             Read the message units from the message
         -->
         <handler name="ReadUserMessage" class="org.holodeckb2b.as2.handlers.in.ReadUserMessage">
-            <order phase="protocolInPhase" after="ReadMDNMetadata" />
+            <order phase="ProtocolParsing" after="ReadMDNMetadata" />
         </handler>
+        <!-- Handler to get the parameters related to the User Message for responding --> 
+        <handler name="GetMDNRequest" class="org.holodeckb2b.as2.handlers.in.CheckMDNRequest">
+            <order phase="ProtocolParsing" after="ReadUserMessage"/>
+        </handler>        
         <handler name="ReadReceipt" class="org.holodeckb2b.as2.handlers.in.ReadReceipt">
-            <order phase="protocolInPhase" after="ReadUserMessage"/>
+            <order phase="ProtocolParsing" after="GetMDNRequest"/>
         </handler>
         <handler name="ReadError" class="org.holodeckb2b.as2.handlers.in.ReadErrorMessage">
-            <order phase="protocolInPhase" after="ReadReceipt"/>
+            <order phase="ProtocolParsing" after="ReadReceipt"/>
         </handler>
         <!--
             Find the P-Modes for the read message
         -->
         <handler name="FindPMode" class="org.holodeckb2b.as2.handlers.in.FindPMode">
-            <order phase="protocolInPhase" after="ReadError"/>
+            <order phase="ProtocolParsing"/>
         </handler>
         <!--
             Perform S/MIME processing. This includes decryption, signature validation and decompression
         -->
         <handler name="DecryptMessage" class="org.holodeckb2b.as2.handlers.in.DecryptMessage">
-            <order phase="protocolInPhase" after="FindPMode"/>
+            <order phase="Security" phaseFirst="true"/>
         </handler>
         <!-- As AS2 compression can be done both before and after signing, we must try decompressing the 
         	message both before and after signature validation
         -->
         <handler name="DecompressEnvelope" class="org.holodeckb2b.as2.handlers.in.DecompressMessage">
-            <order phase="protocolInPhase" after="DecryptMessage"/>
+            <order phase="Security" after="DecryptMessage"/>
         </handler>
         <handler name="ValidateSignature" class="org.holodeckb2b.as2.handlers.in.ProcessSignature">
-            <order phase="protocolInPhase" after="DecompressEnvelope"/>
+            <order phase="Security" after="DecompressEnvelope"/>
         </handler>
         <handler name="DecompressContent" class="org.holodeckb2b.as2.handlers.in.DecompressMessage">
-            <order phase="protocolInPhase" after="ValidateSignature"/>
+            <order phase="Security" after="ValidateSignature"/>
         </handler>
-        <!--
-            Process the user message
-        -->
-        <handler name="StartProcessingUsrMsg" class="org.holodeckb2b.ebms3.handlers.inflow.StartProcessingUsrMessage">
-            <order phase="protocolInPhase" after="DecompressContent"/>
-        </handler>
-        <handler name="SavePayloadData" class="org.holodeckb2b.as2.handlers.in.SavePayload">
-            <order phase="protocolInPhase" after="StartProcessingUsrMsg"/>
-        </handler>
-        <handler name="CustomValidation" class="org.holodeckb2b.ebms3.handlers.inflow.PerformCustomValidations">
-            <order phase="protocolInPhase" after="SavePayloadData"/>
-        </handler>
-        <handler name="DeliverUserMessage" class="org.holodeckb2b.ebms3.handlers.inflow.DeliverUserMessage">
-            <order phase="protocolInPhase" after="CustomValidation"/>
-        </handler>
-        <!-- Handlers to get the parameters for and creating the Receipt -->
-        <handler name="GetMDNRequest" class="org.holodeckb2b.as2.handlers.in.CheckMDNRequest">
-            <order phase="protocolInPhase" after="DeliverUserMessage"/>
-        </handler>
+		<!-- Save the payload data -->
+		<handler name="SavePayload" class="org.holodeckb2b.as2.handlers.in.SavePayload">
+            <order phase="ProtocolProcessing" />
+        </handler>	
+        <!-- Handler for creating the Receipt -->
         <handler name="CreateReceipt" class="org.holodeckb2b.as2.handlers.in.CreateReceipt">
-            <order phase="protocolInPhase" after="GetMDNRequest"/>
-        </handler>
-        <!--
-            Process the receipts and errors, same as for ebMS3/AS4
-        -->
-        <handler name="ProcessReceipts" class="org.holodeckb2b.ebms3.handlers.inflow.ProcessReceipts">
-            <order phase="protocolInPhase" after="RetrievePulledMessage"/>
-        </handler>
-        <handler name="DeliverReceipts" class="org.holodeckb2b.ebms3.handlers.inflow.DeliverReceipts">
-            <order phase="protocolInPhase" after="ProcessReceipts"/>
-        </handler>
-        <handler name="ProcessErrors" class="org.holodeckb2b.ebms3.handlers.inflow.ProcessErrors">
-            <order phase="protocolInPhase" after="DeliverReceipts"/>
-        </handler>
-        <handler name="DeliverErrors" class="org.holodeckb2b.ebms3.handlers.inflow.DeliverErrors">
-            <order phase="protocolInPhase" after="ProcessErrors"/>
+            <order phase="ProtocolResponseHandling" />
         </handler>
 		<!--  Handler for errors generated during message processing -->
         <handler name="ProcessGeneratedErrors" class="org.holodeckb2b.as2.handlers.in.ProcessGeneratedErrors">
-            <order phase="protocolInPhase" after="DeliverErrors"/>
+            <order phase="ProtocolResponseHandling" after="DeliverErrors"/>
         </handler>
     </InFaultFlow>
-
+    
     <OutFlow>
-        <!-- Catch a raised Fault and translate it into an "Other" Error so a error response will be send -->
-        <handler name="CatchFaults" class="org.holodeckb2b.ebms3.util.CatchAxisFault">
-            <order phase="protocolOutPhase" phaseFirst="true"/>
-        </handler>
         <!-- 
         	Handlers to package User and Signal Messages 
        	-->
         <handler name="PackageUserMessage" class="org.holodeckb2b.as2.handlers.out.PackageUserMessage">
-            <order phase="protocolOutPhase" after="CatchFaults"/>
+            <order phase="ProtocolProcessing" after="CatchFaults"/>
         </handler>
         <handler name="PackageReceipt" class="org.holodeckb2b.as2.handlers.out.PackageReceiptSignal">
-            <order phase="protocolOutPhase" after="PackageUserMessage"/>
+            <order phase="ProtocolProcessing" after="PackageUserMessage"/>
         </handler>
         <handler name="PackageError" class="org.holodeckb2b.as2.handlers.out.PackageErrorSignal">
-            <order phase="protocolOutPhase" after="PackageReceipt"/>
+            <order phase="ProtocolProcessing" after="PackageReceipt"/>
         </handler>
         <handler name="AddAS2HttpHeaders" class="org.holodeckb2b.as2.handlers.out.AddHeaders">
-            <order phase="protocolOutPhase" after="PackageError"/>
+            <order phase="ProtocolProcessing" after="PackageError"/>
         </handler>
         <!-- 
         	Perform S/MIME processing. This includes encryption, signing and compression
         -->
         <handler name="SignMessage" class="org.holodeckb2b.as2.handlers.out.CreateSignature">
-            <order phase="protocolOutPhase" after="AddAS2HttpHeaders"/>
+            <order phase="Security"/>
         </handler>
         <handler name="CompressMessage" class="org.holodeckb2b.as2.handlers.out.CompressMessage">
-            <order phase="protocolOutPhase" after="SignMessage"/>
+            <order phase="Security" after="SignMessage"/>
         </handler>
         <handler name="EncryptMessage" class="org.holodeckb2b.as2.handlers.out.EncryptMessage">
-            <order phase="protocolOutPhase" after="CompressMessage"/>
+            <order phase="Security" after="CompressMessage"/>
         </handler>
         <!-- Handlers responsible for configuration of correct message formatter -->
         <handler name="SetFormatter" class="org.holodeckb2b.as2.handlers.out.SetMessageFormatter">
-            <order phase="protocolOutPhase" />
+            <order phase="Transport" />
         </handler>
 		<!-- Handler to configure HTTP parameters -->        
         <handler name="ConfigureHTTP" class="org.holodeckb2b.as2.handlers.out.ConfigureHTTPTransport">
-        	<order phase="protocolOutPhase" after="SetFormatter"/>
+        	<order phase="Transport" after="SetFormatter"/>
         </handler>       
         <!-- Handler responsible for checking result of the message transport -->
         <handler name="CheckSentResult" class="org.holodeckb2b.as2.handlers.out.CheckSentResult">
-            <order phase="protocolOutPhase" after="ConfigureHTTP" />
+            <order phase="Transport" after="ConfigureHTTP" />
         </handler>        
     </OutFlow>
-
-	<OutFaultFlow>
-        <!-- Catch a raised Fault and translate it into an "Other" Error so a error response will be send -->
-        <handler name="CatchFaults" class="org.holodeckb2b.ebms3.util.CatchAxisFault">
-            <order phase="protocolOutPhase" phaseFirst="true"/>
-        </handler>
+ 
+    <OutFaultFlow>
         <!-- 
         	Handlers to package User and Signal Messages 
        	-->
         <handler name="PackageUserMessage" class="org.holodeckb2b.as2.handlers.out.PackageUserMessage">
-            <order phase="protocolOutPhase" after="CatchFaults"/>
+            <order phase="ProtocolProcessing" after="CatchFaults"/>
         </handler>
         <handler name="PackageReceipt" class="org.holodeckb2b.as2.handlers.out.PackageReceiptSignal">
-            <order phase="protocolOutPhase" after="PackageUserMessage"/>
+            <order phase="ProtocolProcessing" after="PackageUserMessage"/>
         </handler>
         <handler name="PackageError" class="org.holodeckb2b.as2.handlers.out.PackageErrorSignal">
-            <order phase="protocolOutPhase" after="PackageReceipt"/>
+            <order phase="ProtocolProcessing" after="PackageReceipt"/>
         </handler>
         <handler name="AddAS2HttpHeaders" class="org.holodeckb2b.as2.handlers.out.AddHeaders">
-            <order phase="protocolOutPhase" after="PackageError"/>
+            <order phase="ProtocolProcessing" after="PackageError"/>
         </handler>
         <!-- 
         	Perform S/MIME processing. This includes encryption, signing and compression
         -->
         <handler name="SignMessage" class="org.holodeckb2b.as2.handlers.out.CreateSignature">
-            <order phase="protocolOutPhase" after="AddAS2HttpHeaders"/>
+            <order phase="Security"/>
         </handler>
         <handler name="CompressMessage" class="org.holodeckb2b.as2.handlers.out.CompressMessage">
-            <order phase="protocolOutPhase" after="SignMessage"/>
+            <order phase="Security" after="SignMessage"/>
         </handler>
         <handler name="EncryptMessage" class="org.holodeckb2b.as2.handlers.out.EncryptMessage">
-            <order phase="protocolOutPhase" after="CompressMessage"/>
+            <order phase="Security" after="CompressMessage"/>
         </handler>
         <!-- Handlers responsible for configuration of correct message formatter -->
         <handler name="SetFormatter" class="org.holodeckb2b.as2.handlers.out.SetMessageFormatter">
-            <order phase="protocolOutPhase" />
+            <order phase="Transport" />
         </handler>
 		<!-- Handler to configure HTTP parameters -->        
         <handler name="ConfigureHTTP" class="org.holodeckb2b.as2.handlers.out.ConfigureHTTPTransport">
-        	<order phase="protocolOutPhase" after="SetFormatter"/>
+        	<order phase="Transport" after="SetFormatter"/>
         </handler>       
         <!-- Handler responsible for checking result of the message transport -->
         <handler name="CheckSentResult" class="org.holodeckb2b.as2.handlers.out.CheckSentResult">
-            <order phase="protocolOutPhase" after="ConfigureHTTP" />
+            <order phase="Transport" after="ConfigureHTTP" />
         </handler>        
     </OutFaultFlow>
-
 </module>

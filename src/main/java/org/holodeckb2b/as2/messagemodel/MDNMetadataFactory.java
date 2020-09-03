@@ -27,8 +27,8 @@ import org.holodeckb2b.as2.packaging.GenericMessageInfo;
 import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.as2.util.CryptoAlgorithmHelper;
 import org.holodeckb2b.as2.util.DigestHelper;
-import org.holodeckb2b.common.handler.MessageProcessingContext;
 import org.holodeckb2b.common.util.Utils;
+import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
 import org.holodeckb2b.interfaces.pmode.IPMode;
 import org.holodeckb2b.interfaces.pmode.ISecurityConfiguration;
 import org.holodeckb2b.interfaces.pmode.ISigningConfiguration;
@@ -56,7 +56,7 @@ public class MDNMetadataFactory {
 	 * @return	The meta-data of the MDN for the received message  
 	 */
 	public static MDNMetadata createMDN(final IPMode pmode, final MDNRequestOptions mdnRequest,
-										final MessageProcessingContext procCtx) {
+										final IMessageProcessingContext procCtx) {
 		// First check if the MDN should be signed, based on P-Mode configuration or MDN request
 		boolean signedMDN = false;
 		final ITradingPartnerConfiguration responderCfg = pmode != null ? pmode.getResponder() : null;
@@ -107,9 +107,9 @@ public class MDNMetadataFactory {
 				// Headers must be included in MIC when original message was signed or encrypted
 				try {
 					base64Digest = DigestHelper.calculateDigestAsString(digestAlgorithm, 
-															(MimeBodyPart) procCtx.getProperty(Constants.MC_MAIN_MIME_PART),
+															(MimeBodyPart) procCtx.getProperty(Constants.CTX_MAIN_MIME_PART),
 															signatureResult != null 
-																|| procCtx.getProperty(Constants.MC_WAS_ENCRYPTED) != null);
+																|| procCtx.getProperty(Constants.CTX_WAS_ENCRYPTED) != null);
 				} catch (SecurityProcessingException digestError) {
 					log.error("Could not calculate the digest for the original message! Error details: {}", 
 								digestError.getMessage());
@@ -119,7 +119,7 @@ public class MDNMetadataFactory {
 			}
 		}
 
-		GenericMessageInfo generalMetaData = (GenericMessageInfo) procCtx.getProperty(Constants.MC_AS2_GENERAL_DATA);
+		GenericMessageInfo generalMetaData = (GenericMessageInfo) procCtx.getProperty(Constants.CTX_AS2_GENERAL_DATA);
 		return new MDNMetadata(mdnRequest, 
 							   generalMetaData.getToPartyId(), 
 							   generalMetaData.getFromPartyId(),

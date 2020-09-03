@@ -16,18 +16,18 @@
  */
 package org.holodeckb2b.as2.handlers.in;
 
-import org.apache.commons.logging.Log;
+import org.apache.logging.log4j.Logger;
 import org.holodeckb2b.as2.packaging.GenericMessageInfo;
 import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.as2.util.PModeFinder;
-import org.holodeckb2b.common.handler.AbstractBaseHandler;
-import org.holodeckb2b.common.handler.MessageProcessingContext;
-import org.holodeckb2b.common.messagemodel.util.MessageUnitUtils;
-import org.holodeckb2b.ebms3.errors.ProcessingModeMismatch;
+import org.holodeckb2b.common.errors.ProcessingModeMismatch;
+import org.holodeckb2b.common.handlers.AbstractBaseHandler;
+import org.holodeckb2b.common.util.MessageUnitUtils;
+import org.holodeckb2b.core.HolodeckB2BCore;
+import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
 import org.holodeckb2b.interfaces.persistency.entities.IMessageUnitEntity;
 import org.holodeckb2b.interfaces.pmode.IPMode;
 import org.holodeckb2b.interfaces.processingmodel.ProcessingState;
-import org.holodeckb2b.module.HolodeckB2BCore;
 
 /**
  * Is the <i>in_flow</i> handler that determines which P-Mode governs the processing of the received AS2 message. The
@@ -40,10 +40,10 @@ import org.holodeckb2b.module.HolodeckB2BCore;
 public class FindPMode extends AbstractBaseHandler {
 
     @Override
-    protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Log log) throws Exception {
+    protected InvocationResponse doProcessing(IMessageProcessingContext procCtx, Logger log) throws Exception {
 
         // First get the message unit and general message info from msg context
-        GenericMessageInfo msgInfo = (GenericMessageInfo) procCtx.getProperty(Constants.MC_AS2_GENERAL_DATA);
+        GenericMessageInfo msgInfo = (GenericMessageInfo) procCtx.getProperty(Constants.CTX_AS2_GENERAL_DATA);
         IMessageUnitEntity msgUnit = procCtx.getPrimaryMessageUnit();
         // If this info is misisng something has probably already gone wrong and we don't need to find a P-Mode
         if (msgInfo == null || msgUnit == null)
@@ -60,7 +60,7 @@ public class FindPMode extends AbstractBaseHandler {
             // No matching P-Mode could be found for this message, return error
             log.error("No P-Mode found for message [" + msgUnit.getMessageId() + "], unable to process it!");
             final ProcessingModeMismatch   noPmodeIdError = new ProcessingModeMismatch();
-            noPmodeIdError.setRefToMessageInError(msgInfo.getMessageId());
+            noPmodeIdError.setRefToMessageInError(msgUnit.getMessageId());
             noPmodeIdError.setErrorDetail("Can not process message [msgId=" + msgUnit.getMessageId()
                                         + "] because no processing configuration was found for the message!");
             procCtx.addGeneratedError(noPmodeIdError);

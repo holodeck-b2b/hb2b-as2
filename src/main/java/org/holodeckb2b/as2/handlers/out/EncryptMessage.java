@@ -27,7 +27,7 @@ import javax.mail.MessagingException;
 import javax.mail.internet.MimeBodyPart;
 
 import org.apache.axiom.mime.ContentType;
-import org.apache.commons.logging.Log;
+import org.apache.logging.log4j.Logger;
 import org.bouncycastle.cms.CMSException;
 import org.bouncycastle.cms.jcajce.JceCMSContentEncryptorBuilder;
 import org.bouncycastle.cms.jcajce.JceKeyTransRecipientInfoGenerator;
@@ -36,11 +36,12 @@ import org.bouncycastle.mail.smime.SMIMEEnvelopedGenerator;
 import org.bouncycastle.mail.smime.SMIMEException;
 import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.as2.util.CryptoAlgorithmHelper;
-import org.holodeckb2b.common.handler.AbstractUserMessageHandler;
-import org.holodeckb2b.common.handler.MessageProcessingContext;
+import org.holodeckb2b.common.events.impl.EncryptionFailure;
+import org.holodeckb2b.common.handlers.AbstractUserMessageHandler;
 import org.holodeckb2b.common.util.Utils;
-import org.holodeckb2b.events.security.EncryptionFailure;
+import org.holodeckb2b.core.HolodeckB2BCore;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
+import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
 import org.holodeckb2b.interfaces.messagemodel.IUserMessage;
 import org.holodeckb2b.interfaces.persistency.entities.IUserMessageEntity;
 import org.holodeckb2b.interfaces.pmode.IEncryptionConfiguration;
@@ -48,10 +49,8 @@ import org.holodeckb2b.interfaces.pmode.IPMode;
 import org.holodeckb2b.interfaces.pmode.ISecurityConfiguration;
 import org.holodeckb2b.interfaces.pmode.ITradingPartnerConfiguration;
 import org.holodeckb2b.interfaces.processingmodel.ProcessingState;
-import org.holodeckb2b.interfaces.security.ICertificateManager.CertificateUsage;
 import org.holodeckb2b.interfaces.security.SecurityProcessingException;
 import org.holodeckb2b.interfaces.security.X509ReferenceType;
-import org.holodeckb2b.module.HolodeckB2BCore;
 
 /**
  * Is the <i>out_flow</i> handler responsible for encryption of the AS2 message. It creates the S/MIME package with the
@@ -89,9 +88,9 @@ public class EncryptMessage extends AbstractUserMessageHandler {
     private static final String DEFAULT_ALGORITHM = "AES128_GCM";
 
     @Override
-    protected InvocationResponse doProcessing(IUserMessageEntity userMessage, MessageProcessingContext procCtx, Log log)
-    																								throws Exception {
-
+    protected InvocationResponse doProcessing(final IUserMessageEntity userMessage, 
+											  final IMessageProcessingContext procCtx, final Logger log) 
+													  												throws Exception {
         // Get encryption configuration from P-Mode of the User Message
         IEncryptionConfiguration encryptionCfg = getEncryptionConfiguration(userMessage);
 
@@ -102,14 +101,13 @@ public class EncryptMessage extends AbstractUserMessageHandler {
         
         try {
         	// First check that there is content that can be compressed
-        	final MimeBodyPart  msgToEncrypt = (MimeBodyPart) procCtx.getProperty(Constants.MC_MIME_ENVELOPE);
+        	final MimeBodyPart  msgToEncrypt = (MimeBodyPart) procCtx.getProperty(Constants.CTX_MIME_ENVELOPE);
             if (msgToEncrypt == null)
             	return InvocationResponse.CONTINUE;
             
         	// Get the certificate to be used for encryption
             final X509Certificate encryptionCert = HolodeckB2BCoreInterface.getCertificateManager()
-                                                                      .getCertificate(CertificateUsage.Encryption,
-                                                                                      encryptionCfg.getKeystoreAlias());
+                                                                      .getCertificate(encryptionCfg.getKeystoreAlias());
 
             if (encryptionCert == null) {
                 log.error("The configured certificate for encryption is not available!");
@@ -154,7 +152,7 @@ public class EncryptMessage extends AbstractUserMessageHandler {
                                                                          );
                 log.debug("Message MIME part successfully encrypted, set as new MIME Envelope");
                 // Create the MIME body part to include in message context
-                procCtx.setProperty(Constants.MC_MIME_ENVELOPE, encryptedMsg);
+                procCtx.setProperty(Constants.CTX_MIME_ENVELOPE, encryptedMsg);
                 final ContentType contentType = new ContentType(encryptedMsg.getContentType());
                 procCtx.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE, contentType);
 

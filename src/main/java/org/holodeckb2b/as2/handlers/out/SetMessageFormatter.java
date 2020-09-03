@@ -23,11 +23,11 @@ import javax.mail.internet.MimeBodyPart;
 
 import org.apache.axiom.mime.ContentType;
 import org.apache.axis2.context.MessageContext;
-import org.apache.commons.logging.Log;
+import org.apache.logging.log4j.Logger;
 import org.holodeckb2b.as2.packaging.AS2MessageFormatter;
 import org.holodeckb2b.as2.util.Constants;
-import org.holodeckb2b.common.handler.AbstractBaseHandler;
-import org.holodeckb2b.common.handler.MessageProcessingContext;
+import org.holodeckb2b.common.handlers.AbstractBaseHandler;
+import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
 
 /**
  * Is the <i>out_flow</i> handler that ensure that the AS2 message will be correctly formatted when send by Axis.
@@ -37,12 +37,12 @@ import org.holodeckb2b.common.handler.MessageProcessingContext;
 public class SetMessageFormatter extends AbstractBaseHandler {
 
     @Override
-    protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Log log) throws Exception {
+    protected InvocationResponse doProcessing(IMessageProcessingContext procCtx, Logger log) throws Exception {
     	final MessageContext mc = procCtx.getParentContext();
         mc.setProperty(MESSAGE_FORMATTER, new AS2MessageFormatter());
         
-        final MimeBodyPart mimeEnvelope = (MimeBodyPart) procCtx.getProperty(Constants.MC_MIME_ENVELOPE);
-        mc.setProperty(Constants.MC_MIME_ENVELOPE, mimeEnvelope);
+        final MimeBodyPart mimeEnvelope = (MimeBodyPart) procCtx.getProperty(Constants.CTX_MIME_ENVELOPE);
+        mc.setProperty(Constants.CTX_MIME_ENVELOPE, mimeEnvelope);
         mc.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE, 
         															new ContentType(mimeEnvelope.getContentType()));        
         mc.setDoingREST(true);

@@ -21,23 +21,25 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeBodyPart;
 
 import org.apache.axiom.mime.ContentType;
-import org.apache.commons.logging.Log;
+import org.apache.logging.log4j.Logger;
 import org.holodeckb2b.as2.util.Constants;
-import org.holodeckb2b.common.handler.AbstractUserMessageHandler;
-import org.holodeckb2b.common.handler.MessageProcessingContext;
+import org.holodeckb2b.common.errors.OtherContentError;
+import org.holodeckb2b.common.handlers.AbstractUserMessageHandler;
 import org.holodeckb2b.common.messagemodel.Payload;
-import org.holodeckb2b.ebms3.errors.OtherContentError;
+import org.holodeckb2b.core.HolodeckB2BCore;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
+import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
 import org.holodeckb2b.interfaces.messagemodel.IPayload;
 import org.holodeckb2b.interfaces.persistency.entities.IUserMessageEntity;
 import org.holodeckb2b.interfaces.processingmodel.ProcessingState;
-import org.holodeckb2b.module.HolodeckB2BCore;
 
 /**
  * Is the <i>in_flow</i> handler that reads the payload data from the AS2 message and stores it in a temporary file so
@@ -52,14 +54,14 @@ public class SavePayload extends AbstractUserMessageHandler {
     private static final String PAYLOAD_DIR = "plcin";
 
     @Override
-    protected InvocationResponse doProcessing(IUserMessageEntity userMessage, MessageProcessingContext procCtx, Log log) 
-    																								throws Exception {
-
+    protected InvocationResponse doProcessing(final IUserMessageEntity userMessage, 
+											  final IMessageProcessingContext procCtx, final Logger log) 
+													  												throws Exception {
         try {
             // Create a unique filename for temporarily storing the payload
             final File plFile = File.createTempFile("pl-", null, getTempDir());
             log.debug("Saving the payload data from the message to temp file: " + plFile.getAbsolutePath());
-            savePayload((MimeBodyPart) procCtx.getProperty(Constants.MC_MIME_ENVELOPE), plFile);
+            savePayload((MimeBodyPart) procCtx.getProperty(Constants.CTX_MIME_ENVELOPE), plFile);
             log.debug("Saved payload data to file, update message meta-data");
             Payload payloadInfo = new Payload();
             payloadInfo.setContainment(IPayload.Containment.BODY);
@@ -89,12 +91,14 @@ public class SavePayload extends AbstractUserMessageHandler {
      * @throws IOException   When the specified directory does not exist and can not be created.
      */
     private File getTempDir() throws IOException {
-        final String tmpPayloadDirPath = HolodeckB2BCoreInterface.getConfiguration().getTempDirectory() + PAYLOAD_DIR;
-        final File tmpPayloadDir = new File(tmpPayloadDirPath);
-        if (!tmpPayloadDir.exists() && !tmpPayloadDir.mkdirs())
-            throw new IOException("Temp directory for payloads (" + tmpPayloadDirPath + ") could not be created!");
+        Path tmpPayloadDir = HolodeckB2BCoreInterface.getConfiguration().getTempDirectory().resolve(PAYLOAD_DIR);
         
-        return tmpPayloadDir;
+        if (!Files.exists(tmpPayloadDir))
+        	tmpPayloadDir = Files.createDirectories(tmpPayloadDir);
+        else if (!Files.isDirectory(tmpPayloadDir) || !Files.isWritable(tmpPayloadDir))
+            throw new IOException("Temp directory for payloads (" + tmpPayloadDir.toString() + ") is not available!");
+        
+        return tmpPayloadDir.toFile();
     }
 
     /**

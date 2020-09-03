@@ -33,7 +33,6 @@ import org.apache.axis2.transport.http.HTTPConstants;
 import org.holodeckb2b.as2.messagemodel.MDNMetadata;
 import org.holodeckb2b.as2.messagemodel.MDNRequestOptions;
 import org.holodeckb2b.as2.util.Constants;
-import org.holodeckb2b.common.constants.ProductId;
 import org.holodeckb2b.common.util.Utils;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
 import org.holodeckb2b.interfaces.messagemodel.IEbmsError;
@@ -207,7 +206,7 @@ public class MDNInfo extends GenericMessageInfo {
         // Set default values for reporting UA and action and sending modes
         //
         this.reportingUA = HolodeckB2BCoreInterface.getConfiguration().getHostName() + ";"
-                            + ProductId.FULL_NAME + " " + ProductId.MAJOR_VERSION + "." + ProductId.MINOR_VERSION;
+                            + "HolodeckB2B " + HolodeckB2BCoreInterface.getVersion().getFullVersion();
         this.dispositionMode = "automatic-action/MDN-sent-automatically";
         // Set the other fields based on the XML contained as content of the Receipt
         final OMElement rcptContent = !Utils.isNullOrEmpty(receipt.getContent()) ? receipt.getContent().get(0) : null;
@@ -248,7 +247,7 @@ public class MDNInfo extends GenericMessageInfo {
         // Set default values for reporting UA and action and sending modes
         //
         this.reportingUA = HolodeckB2BCoreInterface.getConfiguration().getHostName() + ";"
-                            + ProductId.FULL_NAME + " " + ProductId.MAJOR_VERSION + "." + ProductId.MINOR_VERSION;
+        					+ "HolodeckB2B " + HolodeckB2BCoreInterface.getVersion().getFullVersion();
         this.dispositionMode = "automatic-action/MDN-sent-automatically";
         // Set the other fields based on the information in the first Error contained in the message
         Iterator<IEbmsError> errors = errorMessage.getErrors().iterator();
@@ -267,6 +266,10 @@ public class MDNInfo extends GenericMessageInfo {
         try {
         	// Use XML with MDN meta-data in ErrorDetail of error for other fields        
 	        final MDNMetadata mdnInfo = new MDNMetadata(err.getErrorDetail());
+	        // The Sender and Receiver identifiers can be get from the MDN meta-data
+	        setFromPartyId(mdnInfo.getSenderId());
+	        setToPartyId(mdnInfo.getReceiverId());
+	        
 	        this.originalRecipient = mdnInfo.getOrigRecipient();
 	        this.finalRecipient = mdnInfo.getFinalRecipient();
 	        this.origMessageId = mdnInfo.getOriginalMessageId();

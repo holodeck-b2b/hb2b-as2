@@ -21,12 +21,12 @@ import java.util.Collection;
 import javax.mail.internet.MimeBodyPart;
 
 import org.apache.axiom.mime.ContentType;
-import org.apache.commons.logging.Log;
+import org.apache.logging.log4j.Logger;
 import org.holodeckb2b.as2.packaging.MDNInfo;
 import org.holodeckb2b.as2.util.Constants;
-import org.holodeckb2b.common.handler.AbstractBaseHandler;
-import org.holodeckb2b.common.handler.MessageProcessingContext;
+import org.holodeckb2b.common.handlers.AbstractBaseHandler;
 import org.holodeckb2b.common.util.Utils;
+import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
 import org.holodeckb2b.interfaces.persistency.entities.IReceiptEntity;
 
 /**
@@ -43,7 +43,7 @@ import org.holodeckb2b.interfaces.persistency.entities.IReceiptEntity;
 public class PackageReceiptSignal extends AbstractBaseHandler {
 
     @Override
-    protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Log log) throws Exception {
+    protected InvocationResponse doProcessing(IMessageProcessingContext procCtx, Logger log) throws Exception {
         // Check if the message includes a receipt. Although there can be just one Signal in AS2, for alignment
         // with other protocols the context contains collection of Receipts objects 
         Collection<IReceiptEntity> receipts = procCtx.getSendingReceipts();
@@ -57,11 +57,11 @@ public class PackageReceiptSignal extends AbstractBaseHandler {
         final MDNInfo mdnObject = new MDNInfo(receipts.iterator().next());
         log.debug("Create the MDN MIME multi-part and add it to message context");
         MimeBodyPart mdnPart = mdnObject.toMimePart();
-        procCtx.setProperty(Constants.MC_MIME_ENVELOPE, mdnPart);
+        procCtx.setProperty(Constants.CTX_MIME_ENVELOPE, mdnPart);
         procCtx.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE,
                                               new ContentType(mdnPart.getContentType()).getMediaType().toString());
         // For easy access to MDN options the MDN object is also stored in the msgCtx
-        procCtx.setProperty(Constants.MC_AS2_MDN_DATA, mdnObject);
+        procCtx.setProperty(Constants.CTX_AS2_MDN_DATA, mdnObject);
 
         return InvocationResponse.CONTINUE;
     }

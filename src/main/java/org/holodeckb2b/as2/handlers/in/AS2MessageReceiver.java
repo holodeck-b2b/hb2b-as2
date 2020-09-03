@@ -20,7 +20,7 @@ import org.apache.axis2.AxisFault;
 import org.apache.axis2.context.MessageContext;
 import org.apache.axis2.engine.MessageReceiver;
 import org.apache.axis2.transport.TransportUtils;
-import org.holodeckb2b.common.handler.DefaultMessageReceiver;
+import org.holodeckb2b.common.handlers.DefaultMessageReceiver;
 
 /**
  * Implements the Axis2 {@link MessageReceiver} interface for use with the AS2 service. It checks whether a response

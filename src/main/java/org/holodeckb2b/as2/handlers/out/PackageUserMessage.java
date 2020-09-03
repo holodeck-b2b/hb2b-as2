@@ -27,13 +27,13 @@ import javax.mail.internet.MimeBodyPart;
 
 import org.apache.axiom.mime.ContentType;
 import org.apache.axis2.transport.http.HTTPConstants;
-import org.apache.commons.logging.Log;
+import org.apache.logging.log4j.Logger;
 import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.as2.util.CryptoAlgorithmHelper;
-import org.holodeckb2b.common.handler.AbstractUserMessageHandler;
-import org.holodeckb2b.common.handler.MessageProcessingContext;
+import org.holodeckb2b.common.handlers.AbstractUserMessageHandler;
 import org.holodeckb2b.common.util.Utils;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
+import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
 import org.holodeckb2b.interfaces.messagemodel.IPayload;
 import org.holodeckb2b.interfaces.persistency.entities.IUserMessageEntity;
 import org.holodeckb2b.interfaces.pmode.ILeg.Label;
@@ -61,8 +61,9 @@ import org.holodeckb2b.interfaces.security.SecurityProcessingException;
 public class PackageUserMessage extends AbstractUserMessageHandler {
 
     @Override
-    protected InvocationResponse doProcessing(IUserMessageEntity userMessage, MessageProcessingContext procCtx, Log log) throws Exception {
-
+    protected InvocationResponse doProcessing(final IUserMessageEntity userMessage, 
+											  final IMessageProcessingContext procCtx, final Logger log) 
+													  												throws Exception {
         // Check that the user message contains just one payload
         if (Utils.isNullOrEmpty(userMessage.getPayloads()) || userMessage.getPayloads().size() > 1) {
             log.error("The user message [msgId=" + userMessage.getMessageId()
@@ -87,7 +88,7 @@ public class PackageUserMessage extends AbstractUserMessageHandler {
         mimePart.setHeader(HTTPConstants.CONTENT_TYPE, mimeType);
 
         log.debug("Add MIME part to message");
-        procCtx.setProperty(Constants.MC_MIME_ENVELOPE, mimePart);
+        procCtx.setProperty(Constants.CTX_MIME_ENVELOPE, mimePart);
         procCtx.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE,
                                                   new ContentType(mimePart.getContentType()).getMediaType().toString());
 

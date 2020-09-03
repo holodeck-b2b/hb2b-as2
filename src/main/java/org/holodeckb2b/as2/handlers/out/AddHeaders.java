@@ -20,12 +20,12 @@ package org.holodeckb2b.as2.handlers.out;
 import java.util.Map;
 
 import org.apache.axis2.transport.http.HTTPConstants;
-import org.apache.commons.logging.Log;
+import org.apache.logging.log4j.Logger;
 import org.holodeckb2b.as2.packaging.GenericMessageInfo;
 import org.holodeckb2b.as2.util.Constants;
-import org.holodeckb2b.common.handler.AbstractBaseHandler;
-import org.holodeckb2b.common.handler.MessageProcessingContext;
+import org.holodeckb2b.common.handlers.AbstractBaseHandler;
 import org.holodeckb2b.common.util.Utils;
+import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
 import org.holodeckb2b.interfaces.messagemodel.IMessageUnit;
 import org.holodeckb2b.interfaces.messagemodel.IUserMessage;
 
@@ -41,7 +41,7 @@ import org.holodeckb2b.interfaces.messagemodel.IUserMessage;
 public class AddHeaders extends AbstractBaseHandler {
 
     @Override
-    protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Log log) throws Exception {
+    protected InvocationResponse doProcessing(IMessageProcessingContext procCtx, Logger log) throws Exception {
 
     	log.debug("Getting already set HTTP headers");
         @SuppressWarnings("unchecked")
@@ -54,7 +54,7 @@ public class AddHeaders extends AbstractBaseHandler {
         if (primaryMsg instanceof IUserMessage)
             msgInfo = new GenericMessageInfo((IUserMessage) primaryMsg);
         else
-            msgInfo = (GenericMessageInfo) procCtx.getProperty(Constants.MC_AS2_MDN_DATA);
+            msgInfo = (GenericMessageInfo) procCtx.getProperty(Constants.CTX_AS2_MDN_DATA);
 
         if (msgInfo != null) {
 	        log.debug("Adding the generic AS2 HTTP headers");

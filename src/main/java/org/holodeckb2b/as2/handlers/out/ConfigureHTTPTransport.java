@@ -19,13 +19,14 @@ package org.holodeckb2b.as2.handlers.out;
 import org.apache.axis2.Constants;
 import org.apache.axis2.client.Options;
 import org.apache.axis2.transport.http.HTTPConstants;
-import org.apache.commons.logging.Log;
+import org.apache.logging.log4j.Logger;
 import org.holodeckb2b.as2.messagemodel.MDNRequestOptions;
 import org.holodeckb2b.as2.packaging.MDNInfo;
-import org.holodeckb2b.common.handler.AbstractBaseHandler;
-import org.holodeckb2b.common.handler.MessageProcessingContext;
-import org.holodeckb2b.common.messagemodel.util.MessageUnitUtils;
+import org.holodeckb2b.common.handlers.AbstractBaseHandler;
+import org.holodeckb2b.common.util.MessageUnitUtils;
 import org.holodeckb2b.common.util.Utils;
+import org.holodeckb2b.core.HolodeckB2BCore;
+import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
 import org.holodeckb2b.interfaces.messagemodel.IReceipt;
 import org.holodeckb2b.interfaces.messagemodel.ISignalMessage;
 import org.holodeckb2b.interfaces.persistency.PersistenceException;
@@ -35,7 +36,6 @@ import org.holodeckb2b.interfaces.pmode.ILeg.Label;
 import org.holodeckb2b.interfaces.pmode.IPMode;
 import org.holodeckb2b.interfaces.pmode.IProtocol;
 import org.holodeckb2b.interfaces.processingmodel.ProcessingState;
-import org.holodeckb2b.module.HolodeckB2BCore;
 
 /**
  * Is the <i>out_flow</i> handler that configures the actual message transport over the HTTP protocol. When this 
@@ -65,7 +65,7 @@ import org.holodeckb2b.module.HolodeckB2BCore;
 public class ConfigureHTTPTransport extends AbstractBaseHandler {
 
     @Override
-    protected InvocationResponse doProcessing(final MessageProcessingContext procCtx, Log log) throws PersistenceException {
+    protected InvocationResponse doProcessing(final IMessageProcessingContext procCtx, Logger log) throws PersistenceException {
         final IMessageUnitEntity primaryMU = procCtx.getPrimaryMessageUnit();
         // Only when message contains a message unit there is something to do
         if (primaryMU != null) {
@@ -143,11 +143,11 @@ public class ConfigureHTTPTransport extends AbstractBaseHandler {
 	 * @param mc			The message processing context
 	 * @return				The destination URL, <code>null</code> if URL cannot be determined 
 	 */
-	private String getDestinationURL(IMessageUnitEntity msgToSend, ILeg leg, MessageProcessingContext procCtx) {
+	private String getDestinationURL(IMessageUnitEntity msgToSend, ILeg leg, IMessageProcessingContext procCtx) {
 		String destURL = null;
 		
 		if (msgToSend instanceof ISignalMessage) {
-			final MDNInfo mdn = (MDNInfo) procCtx.getProperty(org.holodeckb2b.as2.util.Constants.MC_AS2_MDN_DATA);
+			final MDNInfo mdn = (MDNInfo) procCtx.getProperty(org.holodeckb2b.as2.util.Constants.CTX_AS2_MDN_DATA);
 			MDNRequestOptions mdnRequest = mdn.getMDNRequestOptions();
 			destURL = mdnRequest != null ? mdnRequest.getReplyTo() : null;
 			if (Utils.isNullOrEmpty(destURL))

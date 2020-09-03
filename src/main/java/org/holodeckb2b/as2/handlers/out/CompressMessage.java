@@ -22,16 +22,16 @@ import javax.mail.MessagingException;
 import javax.mail.internet.MimeBodyPart;
 
 import org.apache.axiom.mime.ContentType;
-import org.apache.commons.logging.Log;
+import org.apache.logging.log4j.Logger;
 import org.bouncycastle.cms.jcajce.ZlibCompressor;
 import org.bouncycastle.mail.smime.SMIMECompressedGenerator;
 import org.bouncycastle.mail.smime.SMIMEException;
 import org.holodeckb2b.as2.util.Constants;
-import org.holodeckb2b.common.handler.AbstractUserMessageHandler;
-import org.holodeckb2b.common.handler.MessageProcessingContext;
+import org.holodeckb2b.common.handlers.AbstractUserMessageHandler;
 import org.holodeckb2b.common.util.Utils;
 import org.holodeckb2b.interfaces.as4.pmode.IAS4PayloadProfile;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
+import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
 import org.holodeckb2b.interfaces.messagemodel.IUserMessage;
 import org.holodeckb2b.interfaces.persistency.entities.IUserMessageEntity;
 import org.holodeckb2b.interfaces.pmode.ILeg;
@@ -52,9 +52,11 @@ import org.holodeckb2b.interfaces.pmode.IUserMessageFlow;
 public class CompressMessage extends AbstractUserMessageHandler {
 
     @Override
-    protected InvocationResponse doProcessing(IUserMessageEntity userMessage, MessageProcessingContext procCtx, Log log) throws Exception {
+    protected InvocationResponse doProcessing(final IUserMessageEntity userMessage, 
+											  final IMessageProcessingContext procCtx, final Logger log) 
+													  												throws Exception {
     	// First check that there is content that can be compressed
-    	final MimeBodyPart  msgToCompress = (MimeBodyPart) procCtx.getProperty(Constants.MC_MIME_ENVELOPE);
+    	final MimeBodyPart  msgToCompress = (MimeBodyPart) procCtx.getProperty(Constants.CTX_MIME_ENVELOPE);
         if (msgToCompress == null)
         	return InvocationResponse.CONTINUE;
 
@@ -70,7 +72,7 @@ public class CompressMessage extends AbstractUserMessageHandler {
             final MimeBodyPart compressedMsg = smimeGenerator.generate(msgToCompress, new ZlibCompressor());
             log.debug("Message MIME part successfully compressed, set as new MIME Envelope");
             // Create the MIME body part to include in message context
-            procCtx.setProperty(Constants.MC_MIME_ENVELOPE, compressedMsg);
+            procCtx.setProperty(Constants.CTX_MIME_ENVELOPE, compressedMsg);
             final ContentType contentType = new ContentType(compressedMsg.getContentType());
             procCtx.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE, contentType);
 

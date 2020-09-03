@@ -18,16 +18,17 @@ package org.holodeckb2b.as2.handlers.in;
 
 import java.util.Collections;
 
-import org.apache.commons.logging.Log;
+import org.apache.logging.log4j.Logger;
 import org.holodeckb2b.as2.messagemodel.MDNMetadataFactory;
 import org.holodeckb2b.as2.messagemodel.MDNRequestOptions;
 import org.holodeckb2b.as2.util.Constants;
-import org.holodeckb2b.as4.receptionawareness.ReceiptCreatedEvent;
-import org.holodeckb2b.common.handler.AbstractUserMessageHandler;
-import org.holodeckb2b.common.handler.MessageProcessingContext;
+import org.holodeckb2b.common.handlers.AbstractUserMessageHandler;
 import org.holodeckb2b.common.messagemodel.Receipt;
 import org.holodeckb2b.common.util.Utils;
+import org.holodeckb2b.core.HolodeckB2BCore;
+import org.holodeckb2b.core.receptionawareness.ReceiptCreatedEvent;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
+import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
 import org.holodeckb2b.interfaces.general.ReplyPattern;
 import org.holodeckb2b.interfaces.persistency.entities.IReceiptEntity;
 import org.holodeckb2b.interfaces.persistency.entities.IUserMessageEntity;
@@ -35,7 +36,6 @@ import org.holodeckb2b.interfaces.pmode.ILeg;
 import org.holodeckb2b.interfaces.pmode.IPMode;
 import org.holodeckb2b.interfaces.pmode.IReceiptConfiguration;
 import org.holodeckb2b.interfaces.processingmodel.ProcessingState;
-import org.holodeckb2b.module.HolodeckB2BCore;
 
 /**
  * Is the <i>in_flow</i> handler responsible for creation of a <i>Receipt</i> (=AS2 MDN) for the received <i>User
@@ -49,8 +49,9 @@ import org.holodeckb2b.module.HolodeckB2BCore;
 public class CreateReceipt extends AbstractUserMessageHandler {
 
     @Override
-    protected InvocationResponse doProcessing(IUserMessageEntity userMessage, MessageProcessingContext procCtx, Log log) 
-    																								throws Exception {
+    protected InvocationResponse doProcessing(final IUserMessageEntity userMessage, 
+    										  final IMessageProcessingContext procCtx, final Logger log) 
+    												  												throws Exception {
         IReceiptConfiguration rcptConfig = null;
         
         log.debug("Check P-Mode if Receipt should be created for message [msgId=" + userMessage.getMessageId() + "]");
@@ -63,7 +64,7 @@ public class CreateReceipt extends AbstractUserMessageHandler {
             rcptConfig = pmode.getLeg(ILeg.Label.REQUEST).getReceiptConfiguration();
 
         // A Receipt can be specified in the P-Mode but can also be requested by the sender
-        final MDNRequestOptions mdnRequest = (MDNRequestOptions) procCtx.getProperty(Constants.MC_AS2_MDN_REQUEST);
+        final MDNRequestOptions mdnRequest = (MDNRequestOptions) procCtx.getProperty(Constants.CTX_AS2_MDN_REQUEST);
 
         if (rcptConfig != null || mdnRequest != null) {
             log.debug("Receipt requested for this message exchange, create new Receipt signal");

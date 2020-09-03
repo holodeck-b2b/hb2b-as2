@@ -23,7 +23,7 @@ import javax.mail.MessagingException;
 import javax.mail.internet.MimeBodyPart;
 
 import org.apache.axiom.mime.ContentType;
-import org.apache.commons.logging.Log;
+import org.apache.logging.log4j.Logger;
 import org.bouncycastle.cms.CMSException;
 import org.bouncycastle.cms.RecipientInformation;
 import org.bouncycastle.cms.jcajce.JceKeyTransEnvelopedRecipient;
@@ -33,20 +33,20 @@ import org.bouncycastle.mail.smime.SMIMEEnveloped;
 import org.bouncycastle.mail.smime.SMIMEException;
 import org.bouncycastle.mail.smime.SMIMEUtil;
 import org.holodeckb2b.as2.util.Constants;
-import org.holodeckb2b.common.handler.AbstractUserMessageHandler;
-import org.holodeckb2b.common.handler.MessageProcessingContext;
+import org.holodeckb2b.common.errors.FailedDecryption;
+import org.holodeckb2b.common.events.impl.DecryptionFailure;
+import org.holodeckb2b.common.handlers.AbstractUserMessageHandler;
 import org.holodeckb2b.common.util.Utils;
-import org.holodeckb2b.ebms3.errors.FailedDecryption;
-import org.holodeckb2b.events.security.DecryptionFailure;
+import org.holodeckb2b.core.HolodeckB2BCore;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
+import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
 import org.holodeckb2b.interfaces.persistency.entities.IUserMessageEntity;
 import org.holodeckb2b.interfaces.pmode.IEncryptionConfiguration;
 import org.holodeckb2b.interfaces.pmode.IPMode;
 import org.holodeckb2b.interfaces.pmode.ITradingPartnerConfiguration;
 import org.holodeckb2b.interfaces.processingmodel.ProcessingState;
-import org.holodeckb2b.interfaces.security.ICertificateManager;
 import org.holodeckb2b.interfaces.security.SecurityProcessingException;
-import org.holodeckb2b.module.HolodeckB2BCore;
+import org.holodeckb2b.interfaces.security.trust.ICertificateManager;
 
 /**
  * Is the <i>in_flow</i> handler responsible for the decryption of a received AS2 User Message. As the Holodeck B2B 
@@ -60,9 +60,9 @@ import org.holodeckb2b.module.HolodeckB2BCore;
 public class DecryptMessage extends AbstractUserMessageHandler {
 
     @Override
-    protected InvocationResponse doProcessing(IUserMessageEntity userMessage, MessageProcessingContext procCtx, Log log) 
-    																								throws Exception {
-
+    protected InvocationResponse doProcessing(final IUserMessageEntity userMessage, 
+											  final IMessageProcessingContext procCtx, final Logger log) 
+													  												throws Exception {
         // First check if received message does contain a signed message
         if (!isEncrypted(procCtx))
             return InvocationResponse.CONTINUE;
@@ -101,12 +101,12 @@ public class DecryptMessage extends AbstractUserMessageHandler {
             return InvocationResponse.CONTINUE;
         }
         try {
-            final MimeBodyPart mimeEnvelope = (MimeBodyPart) procCtx.getProperty(Constants.MC_MIME_ENVELOPE);
+            final MimeBodyPart mimeEnvelope = (MimeBodyPart) procCtx.getProperty(Constants.CTX_MIME_ENVELOPE);
             log.debug("Decrypting the message");
             final MimeBodyPart decryptedData = decrypt(mimeEnvelope, receiverKeyPair);
             log.debug("Successfully decrypted the message, replacing encrypted data with decrypted version");
-            procCtx.setProperty(Constants.MC_WAS_ENCRYPTED, Boolean.TRUE);
-            procCtx.setProperty(Constants.MC_MIME_ENVELOPE, decryptedData);            
+            procCtx.setProperty(Constants.CTX_WAS_ENCRYPTED, Boolean.TRUE);
+            procCtx.setProperty(Constants.CTX_MIME_ENVELOPE, decryptedData);            
             procCtx.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE,
                                                                      new ContentType(decryptedData.getContentType()));
         } catch (SecurityProcessingException decryptionFailure) {
@@ -159,7 +159,7 @@ public class DecryptMessage extends AbstractUserMessageHandler {
      * @return         <code>true</code> if the Content-Type indicate a encrypted SMIME, <br>
      *                 <code>false</code> otherwise
      */
-    private boolean isEncrypted(MessageProcessingContext procCtx) {
+    private boolean isEncrypted(IMessageProcessingContext procCtx) {
         final ContentType contentType = (ContentType)
                                             procCtx.getProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE);
         final String sBaseType = contentType.getMediaType().toString();

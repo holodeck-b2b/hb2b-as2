@@ -21,17 +21,17 @@ import java.util.Collection;
 import javax.mail.internet.MimeBodyPart;
 
 import org.apache.axiom.mime.ContentType;
-import org.apache.commons.logging.Log;
+import org.apache.logging.log4j.Logger;
 import org.holodeckb2b.as2.handlers.in.ProcessGeneratedErrors;
 import org.holodeckb2b.as2.packaging.MDNInfo;
 import org.holodeckb2b.as2.packaging.MDNTransformationException;
 import org.holodeckb2b.as2.util.Constants;
-import org.holodeckb2b.common.handler.AbstractBaseHandler;
-import org.holodeckb2b.common.handler.MessageProcessingContext;
+import org.holodeckb2b.common.handlers.AbstractBaseHandler;
 import org.holodeckb2b.common.util.Utils;
+import org.holodeckb2b.core.HolodeckB2BCore;
+import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
 import org.holodeckb2b.interfaces.persistency.entities.IErrorMessageEntity;
 import org.holodeckb2b.interfaces.processingmodel.ProcessingState;
-import org.holodeckb2b.module.HolodeckB2BCore;
 
 /**
  * Is the <i>out_flow</i> handler responsible for checking if the message contains a <i>Error</i> Signal message 
@@ -53,7 +53,7 @@ import org.holodeckb2b.module.HolodeckB2BCore;
 public class PackageErrorSignal extends AbstractBaseHandler {
 
     @Override
-    protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Log log) throws Exception {
+    protected InvocationResponse doProcessing(IMessageProcessingContext procCtx, Logger log) throws Exception {
         // Check if the message includes a error. Although there can be just one Signal in AS2, for alignment
         // with other protocols the context contains collection of Error objects 
         Collection<IErrorMessageEntity> errors = procCtx.getSendingErrors();
@@ -76,11 +76,11 @@ public class PackageErrorSignal extends AbstractBaseHandler {
         if (mdnObject != null) {
         	log.debug("Error must be packaged as MDN, create the MIME multi-part and add it to message context");
             MimeBodyPart mdnPart = mdnObject.toMimePart();
-            procCtx.setProperty(Constants.MC_MIME_ENVELOPE, mdnPart);
+            procCtx.setProperty(Constants.CTX_MIME_ENVELOPE, mdnPart);
             procCtx.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE,
                                                  new ContentType(mdnPart.getContentType()).getMediaType().toString());
             // For easy access to MDN options the MDN object is also stored in the msgCtx
-            procCtx.setProperty(Constants.MC_AS2_MDN_DATA, mdnObject);
+            procCtx.setProperty(Constants.CTX_AS2_MDN_DATA, mdnObject);
         } else if (!procCtx.isHB2BInitiated()) {
         	log.debug("Error must be reported using HTTP Error Code");
         	// If the Error has a reference to another message unit, use 403 (Bad Request). If there is no reference,

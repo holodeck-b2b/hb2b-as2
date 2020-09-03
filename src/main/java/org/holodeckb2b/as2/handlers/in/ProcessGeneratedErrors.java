@@ -20,19 +20,24 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
 
-import org.apache.commons.logging.Log;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.holodeckb2b.as2.messagemodel.MDNMetadataFactory;
 import org.holodeckb2b.as2.messagemodel.MDNRequestOptions;
 import org.holodeckb2b.as2.util.Constants;
-import org.holodeckb2b.common.handler.AbstractBaseHandler;
-import org.holodeckb2b.common.handler.MessageProcessingContext;
+import org.holodeckb2b.as4.compression.DeCompressionFailure;
+import org.holodeckb2b.common.errors.FailedAuthentication;
+import org.holodeckb2b.common.errors.FailedDecryption;
+import org.holodeckb2b.common.errors.PolicyNoncompliance;
+import org.holodeckb2b.common.handlers.AbstractBaseHandler;
 import org.holodeckb2b.common.messagemodel.EbmsError;
 import org.holodeckb2b.common.messagemodel.ErrorMessage;
-import org.holodeckb2b.common.messagemodel.util.MessageUnitUtils;
+import org.holodeckb2b.common.util.MessageUnitUtils;
 import org.holodeckb2b.common.util.Utils;
+import org.holodeckb2b.core.HolodeckB2BCore;
+import org.holodeckb2b.core.StorageManager;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
+import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
 import org.holodeckb2b.interfaces.general.ReplyPattern;
 import org.holodeckb2b.interfaces.messagemodel.IEbmsError;
 import org.holodeckb2b.interfaces.messagemodel.IErrorMessage;
@@ -44,8 +49,6 @@ import org.holodeckb2b.interfaces.pmode.IErrorHandling;
 import org.holodeckb2b.interfaces.pmode.ILeg.Label;
 import org.holodeckb2b.interfaces.pmode.IPMode;
 import org.holodeckb2b.interfaces.processingmodel.ProcessingState;
-import org.holodeckb2b.module.HolodeckB2BCore;
-import org.holodeckb2b.persistency.dao.StorageManager;
 
 /**
  * Is the in flow handler that collects all Errors generated during the processing of the received message. 
@@ -66,7 +69,7 @@ public class ProcessGeneratedErrors extends AbstractBaseHandler {
     private final Logger     errorLog = LogManager.getLogger("org.holodeckb2b.msgproc.errors.generated.AS2");
 
 	@Override
-	protected InvocationResponse doProcessing(MessageProcessingContext procCtx, Log log) throws Exception {
+	protected InvocationResponse doProcessing(IMessageProcessingContext procCtx, Logger log) throws Exception {
         log.debug("Check if errors were generated");
         final Map<String, Collection<IEbmsError>> errorsByMsgId = procCtx.getGeneratedErrors();
 
@@ -80,14 +83,14 @@ public class ProcessGeneratedErrors extends AbstractBaseHandler {
         										msgInError.getMessageId() : null; 
         	ArrayList<IEbmsError> errors = new ArrayList<IEbmsError>(errorsByMsgId.get(refToMsgInError != null 
         																	 ? refToMsgInError : 
-        																	   MessageProcessingContext.UNREFD_ERRORS)); 
+        																	   IMessageProcessingContext.UNREFD_ERRORS)); 
         	log.debug(errors.size() + " error(s) were generated during this in flow");
         	        	
         	// Check if the Error must be reported back to the sender of the message and if it is for a User Message. 
         	// If so it must be communicated as a MDN and we need to prepare the Error Signal as such 
         	// P-Mode is leading, but in case of a User Message the sender's MDN request options are used as fall back         	
         	IPMode pmode = null;
-        	MDNRequestOptions mdnRequest = (MDNRequestOptions) procCtx.getProperty(Constants.MC_AS2_MDN_REQUEST);
+        	MDNRequestOptions mdnRequest = (MDNRequestOptions) procCtx.getProperty(Constants.CTX_AS2_MDN_REQUEST);
         	final String pmodeId = msgInError != null ? msgInError.getPModeId() : null;
         	if (!Utils.isNullOrEmpty(pmodeId)) 
         		pmode = HolodeckB2BCoreInterface.getPModeSet().get(pmodeId);        	
@@ -168,9 +171,24 @@ public class ProcessGeneratedErrors extends AbstractBaseHandler {
 	 * @return			The disposition modifier text to use 
 	 */
 	private String determineDispositionModifierText(ArrayList<IEbmsError> errors) {
-		String dispositionText = "Error: unexpected-processing-error";
+		String dispositionText = null;
 		
-		
+		if (errors.size() == 1) {
+			switch (errors.iterator().next().getErrorCode()) {
+			case FailedAuthentication.ERROR_CODE :
+				dispositionText = "error: authentication-failed"; break;
+			case DeCompressionFailure.ERROR_CODE :
+				dispositionText = "error: decompression-failed"; break;
+			case FailedDecryption.ERROR_CODE :
+				dispositionText = "error: decryption-failed"; break;
+			case PolicyNoncompliance.ERROR_CODE :
+				dispositionText = "error: insufficient-message-security"; break;
+			default:
+				dispositionText = "error: unexpected-processing-error";
+			}			
+ 		} else 
+ 			// Multiple errors, so use generic main error description and list individual errors later
+ 			dispositionText = "error: unexpected-processing-error";
 		
 		return dispositionText;
 	}
