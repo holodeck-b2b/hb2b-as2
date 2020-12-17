@@ -52,7 +52,7 @@ import org.holodeckb2b.common.events.impl.SignatureVerified;
 import org.holodeckb2b.common.events.impl.SignatureVerifiedWithWarning;
 import org.holodeckb2b.common.handlers.AbstractBaseHandler;
 import org.holodeckb2b.common.security.results.SignatureProcessingResult;
-import org.holodeckb2b.common.util.Utils;
+import org.holodeckb2b.commons.util.Utils;
 import org.holodeckb2b.core.HolodeckB2BCore;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
 import org.holodeckb2b.interfaces.core.IMessageProcessingContext;

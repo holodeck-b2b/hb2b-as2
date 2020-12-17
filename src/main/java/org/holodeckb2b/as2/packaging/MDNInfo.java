@@ -33,7 +33,7 @@ import org.apache.axis2.transport.http.HTTPConstants;
 import org.holodeckb2b.as2.messagemodel.MDNMetadata;
 import org.holodeckb2b.as2.messagemodel.MDNRequestOptions;
 import org.holodeckb2b.as2.util.Constants;
-import org.holodeckb2b.common.util.Utils;
+import org.holodeckb2b.commons.util.Utils;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
 import org.holodeckb2b.interfaces.messagemodel.IEbmsError;
 import org.holodeckb2b.interfaces.messagemodel.IErrorMessage;

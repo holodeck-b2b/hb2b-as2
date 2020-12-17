@@ -32,7 +32,7 @@ import org.apache.axis2.context.MessageContext;
 import org.apache.axis2.transport.TransportUtils;
 import org.apache.axis2.transport.http.HTTPConstants;
 import org.holodeckb2b.as2.util.Constants;
-import org.holodeckb2b.common.util.Utils;
+import org.holodeckb2b.commons.util.Utils;
 import org.holodeckb2b.core.MessageProcessingContext;
 
 /**

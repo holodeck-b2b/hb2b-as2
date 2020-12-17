@@ -27,7 +27,7 @@ import org.holodeckb2b.as2.packaging.GenericMessageInfo;
 import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.as2.util.CryptoAlgorithmHelper;
 import org.holodeckb2b.as2.util.DigestHelper;
-import org.holodeckb2b.common.util.Utils;
+import org.holodeckb2b.commons.util.Utils;
 import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
 import org.holodeckb2b.interfaces.pmode.IPMode;
 import org.holodeckb2b.interfaces.pmode.ISecurityConfiguration;

@@ -47,7 +47,7 @@ import org.holodeckb2b.as2.util.SignedContentMetadata;
 import org.holodeckb2b.common.events.impl.SignatureCreated;
 import org.holodeckb2b.common.events.impl.SigningFailure;
 import org.holodeckb2b.common.handlers.AbstractBaseHandler;
-import org.holodeckb2b.common.util.Utils;
+import org.holodeckb2b.commons.util.Utils;
 import org.holodeckb2b.core.HolodeckB2BCore;
 import org.holodeckb2b.core.pmode.PModeUtils;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;

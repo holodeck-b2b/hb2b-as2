@@ -31,7 +31,8 @@ import org.apache.logging.log4j.Logger;
 import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.as2.util.CryptoAlgorithmHelper;
 import org.holodeckb2b.common.handlers.AbstractUserMessageHandler;
-import org.holodeckb2b.common.util.Utils;
+import org.holodeckb2b.commons.util.FileUtils;
+import org.holodeckb2b.commons.util.Utils;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
 import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
 import org.holodeckb2b.interfaces.messagemodel.IPayload;
@@ -82,7 +83,7 @@ public class PackageUserMessage extends AbstractUserMessageHandler {
         String mimeType = payload.getMimeType();
         if (Utils.isNullOrEmpty(mimeType)) {
             log.debug("Detecting MIME type of payload");
-            mimeType = Utils.detectMimeType(payloadFile);
+            mimeType = FileUtils.detectMimeType(payloadFile);
         }
         log.debug("Setting Content-Type to " + mimeType);
         mimePart.setHeader(HTTPConstants.CONTENT_TYPE, mimeType);

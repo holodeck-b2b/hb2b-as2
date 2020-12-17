@@ -19,7 +19,7 @@ package org.holodeckb2b.as2.util;
 import java.util.Collection;
 
 import org.holodeckb2b.common.util.MessageUnitUtils;
-import org.holodeckb2b.common.util.Utils;
+import org.holodeckb2b.commons.util.Utils;
 import org.holodeckb2b.core.HolodeckB2BCore;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
 import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
