@@ -9,7 +9,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <hb2b-version>5.1.0</hb2b-version>
+        <hb2b-version>5.3.0</hb2b-version>
         <axis2-version>1.7.7</axis2-version>
         <bc-version>1.61</bc-version>
     </properties>
