@@ -4,7 +4,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 
 ## 2.1.0
-##### Unreleased
+##### 2021-10-19
+
 ### Changed
 * Refactored code to use the generic utility classes from https://github.com/holodeck-b2b/generic-utils
 * Based on Holodeck B2B 5.3.0
