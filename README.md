@@ -21,7 +21,7 @@ You will also need the Bouncy Castle security libraries for processing S/MIME. D
 
 ### Set up  
 Adding AS2 support to a Holodeck B2B instance is very simple, just follow the two steps below. Please note that you cannot install the extension in a running Holodeck B2B instance.
-1. Build the extension or download the latest release package. You should now have the `holodeck-as2-«version».jar` and `holodeck-as2-msh.aar` files available.
+1. Build the extension or download the latest release package. You should now have the `holodeckb2b-as2-«version».jar` and `hb2b-as2-msh.aar` files available.
 2. Copy the jar file to the `lib` directory of the Holodeck B2B instance and copy the aar file to the `repository/services` directory.
 3. Only if you are installing the extension on Holodeck B2B version 5.0.x: Build the jar file with generic utility classes from the
 	[generic-utils project](https://github.com/holodeck-b2b/generic-utils) and also copy it to the `lib` directory of the Holodeck B2B
