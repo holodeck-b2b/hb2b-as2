@@ -214,7 +214,7 @@ public class CreateSignature extends AbstractBaseHandler {
                 log.error("An error occurred while siging the message. Error details: "
                          + Utils.getExceptionTrace(signingFailure));
             	// Change the processing state of the message to failure and raise event to inform others                
-            	HolodeckB2BCore.getStorageManager().setProcessingState(primaryMsgUnit, ProcessingState.FAILURE);                
+            	HolodeckB2BCore.getStorageManager().setProcessingState(primaryMsgUnit, ProcessingState.SUSPENDED);                
                 HolodeckB2BCoreInterface.getEventProcessor().raiseEvent(new SigningFailure(primaryMsgUnit,
 										new SecurityProcessingException("Signing of message failed", signingFailure)));                
                 return InvocationResponse.ABORT;

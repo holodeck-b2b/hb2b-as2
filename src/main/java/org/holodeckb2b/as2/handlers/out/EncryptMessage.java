@@ -166,7 +166,7 @@ public class EncryptMessage extends AbstractUserMessageHandler {
 
         } catch (SecurityProcessingException encryptionFailed) {
         	// Change the processing state of the message to failure and raise event to inform others
-        	HolodeckB2BCore.getStorageManager().setProcessingState(userMessage, ProcessingState.FAILURE);
+        	HolodeckB2BCore.getStorageManager().setProcessingState(userMessage, ProcessingState.SUSPENDED);
         	HolodeckB2BCore.getEventProcessor().raiseEvent(new EncryptionFailure(userMessage, encryptionFailed));
         	// It makes no sense to continue processing, so abort here
         	return InvocationResponse.ABORT;
