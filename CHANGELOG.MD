@@ -4,11 +4,11 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 
 ## 2.1.0
-##### 2021-10-19
+##### 2021-12-14
 
 ### Changed
 * Refactored code to use the generic utility classes from https://github.com/holodeck-b2b/generic-utils
-* Based on Holodeck B2B 5.3.0
+* Based on Holodeck B2B 5.3.1, uses new SUSPENDED processing state when an error occurs during send process
 
 ## 2.0.0
 ##### 2020-09-03 
