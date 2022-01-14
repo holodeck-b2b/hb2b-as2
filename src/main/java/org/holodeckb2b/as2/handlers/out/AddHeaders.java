@@ -58,7 +58,7 @@ public class AddHeaders extends AbstractBaseHandler {
 	        @SuppressWarnings("unchecked")
 			Map<String, String> httpHeaders = (Map<String, String>) procCtx.getParentContext()
 																		   .getProperty(HTTPConstants.HTTP_HEADERS);
-	        if (!Utils.isNullOrEmpty(httpHeaders)) { 
+	        if (Utils.isNullOrEmpty(httpHeaders)) { 
 	        	httpHeaders = new HashMap<>();
 		        procCtx.getParentContext().setProperty(HTTPConstants.HTTP_HEADERS, httpHeaders);
         	}	        
