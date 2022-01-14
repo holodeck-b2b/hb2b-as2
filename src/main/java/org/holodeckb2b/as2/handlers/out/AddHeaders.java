@@ -17,6 +17,7 @@
 package org.holodeckb2b.as2.handlers.out;
 
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.axis2.transport.http.HTTPConstants;
@@ -43,11 +44,6 @@ public class AddHeaders extends AbstractBaseHandler {
     @Override
     protected InvocationResponse doProcessing(IMessageProcessingContext procCtx, Logger log) throws Exception {
 
-    	log.debug("Getting already set HTTP headers");
-        @SuppressWarnings("unchecked")
-		Map<String, String> httpHeaders = (Map<String, String>) procCtx.getParentContext()
-																	   .getProperty(HTTPConstants.HTTP_HEADERS);
-
         // Check whether this message contains a User or Signal Message
         final IMessageUnit primaryMsg = procCtx.getPrimaryMessageUnit();
         GenericMessageInfo msgInfo = null;
@@ -58,10 +54,16 @@ public class AddHeaders extends AbstractBaseHandler {
 
         if (msgInfo != null) {
 	        log.debug("Adding the generic AS2 HTTP headers");
-	        if (!Utils.isNullOrEmpty(httpHeaders))
-	        	httpHeaders.putAll(msgInfo.getAsHTTPHeaders());
-	        else
-	        	procCtx.getParentContext().setProperty(HTTPConstants.HTTP_HEADERS, msgInfo.getAsHTTPHeaders());
+	    	log.trace("Getting already set HTTP headers");
+	        @SuppressWarnings("unchecked")
+			Map<String, String> httpHeaders = (Map<String, String>) procCtx.getParentContext()
+																		   .getProperty(HTTPConstants.HTTP_HEADERS);
+	        if (!Utils.isNullOrEmpty(httpHeaders)) { 
+	        	httpHeaders = new HashMap<>();
+		        procCtx.getParentContext().setProperty(HTTPConstants.HTTP_HEADERS, httpHeaders);
+        	}	        
+	        httpHeaders.put("as2-version", Constants.AS2_VERSION);
+	        httpHeaders.putAll(msgInfo.getAsHTTPHeaders());	        
         } else 
         	log.debug("No AS2 headers to be set");
         
