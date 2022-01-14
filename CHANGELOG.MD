@@ -8,6 +8,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 * Preliminary termination of MDN message on Java 11 [#10](https://github.com/holodeck-b2b/hb2b-as2/issues/10)
 * Missing AS2-Version HTTP header [#7](https://github.com/holodeck-b2b/hb2b-as2/issues/7)
+* HTTP headers are not checked case insensitively [#8](https://github.com/holodeck-b2b/hb2b-as2/issues/8) and 
+  [#9](https://github.com/holodeck-b2b/hb2b-as2/issues/9)
 
 ## 2.1.0
 ##### 2021-12-14

@@ -17,6 +17,9 @@
 package org.holodeckb2b.as2.axis2;
 
 import java.io.InputStream;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import javax.activation.DataHandler;
 import javax.mail.BodyPart;
@@ -73,6 +76,13 @@ public class AS2MessageBuilder implements Builder {
 			procCtx.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE, new ContentType(contentType));
 			procCtx.setProperty(Constants.CTX_MIME_ENVELOPE, mimeEnvelope);
 			procCtx.setProperty(Constants.CTX_MAIN_MIME_PART, mainPart);
+			
+	        @SuppressWarnings("unchecked")
+			Map<String, String> httpHeaders = (Map<String, String>) messageContext
+																		   .getProperty(MessageContext.TRANSPORT_HEADERS);
+	        if (httpHeaders != null) 
+	        	messageContext.setProperty(MessageContext.TRANSPORT_HEADERS, httpHeaders.entrySet().parallelStream()
+											.collect(Collectors.toMap(h -> h.getKey().toLowerCase(), Entry::getValue)));
 	
 			return TransportUtils.createSOAPEnvelope(null);
 		} catch (Exception msgBuildError) {
