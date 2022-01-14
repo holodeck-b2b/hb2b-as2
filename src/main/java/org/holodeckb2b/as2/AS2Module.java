@@ -34,6 +34,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.neethi.Assertion;
 import org.apache.neethi.Policy;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.holodeckb2b.as2.util.Constants;
 
 /**
  * Is the implementation of the Axis2 {@link Module} interface and is responsible for the correct initialization of 
@@ -83,6 +84,8 @@ public class AS2Module implements Module {
 				+ org.bouncycastle.mail.smime.handlers.x_pkcs7_mime.class.getName());
 		dhMapping.addMailcap("multipart/signed;; x-java-content-handler="
 				+ org.bouncycastle.mail.smime.handlers.multipart_signed.class.getName());
+		dhMapping.addMailcap(Constants.MDN_DISPOSITION_MIME_TYPE + ";; x-java-content-handler="
+				+ dhMapping.getCommand("text/plain", "content-handler").getCommandClass());
 		try {
 			AccessController.doPrivileged((PrivilegedAction) () -> { CommandMap.setDefaultCommandMap(dhMapping);
 																	 return null;

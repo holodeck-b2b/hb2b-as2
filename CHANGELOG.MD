@@ -2,6 +2,11 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## 2.1.1
+##### Not yet released 
+
+### Fixed
+* Preliminary termination of MDN message on Java 11 [#10](https://github.com/holodeck-b2b/hb2b-as2/issues/10)
 
 ## 2.1.0
 ##### 2021-12-14
