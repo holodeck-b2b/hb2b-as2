@@ -25,7 +25,7 @@ Adding AS2 support to a Holodeck B2B instance is very simple, just follow the tw
 2. Copy the jar file to the `lib` directory of the Holodeck B2B instance and copy the aar file to the `repository/services` directory.
 3. Only if you are installing the extension on Holodeck B2B version 5.0.x: Build the jar file with generic utility classes from the
 	[generic-utils project](https://github.com/holodeck-b2b/generic-utils) and also copy it to the `lib` directory of the Holodeck B2B
-	instance.
+4. Restart the instance. Holodeck B2B will now accept AS2 messages on _«HB2B server URL»/holodeckb2b/as2_
 
 ### Messaging Configuration
 To configure AS2 message exchanges the Holodeck B2B Core P-Modes are used. As the messaging model of AS2 is very similar to AS4 most settings in the P-Mode can be directly mapped to an AS2 message exchange, although some parameters might use different values for AS2.   
