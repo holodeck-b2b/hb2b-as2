@@ -9,9 +9,9 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <hb2b-version>5.3.0</hb2b-version>
+        <hb2b-version>6.0.0</hb2b-version>
         <axis2-version>1.7.7</axis2-version>
-        <bc-version>1.61</bc-version>
+        <bc-version>1.72</bc-version>
     </properties>
     <name>Holodeck B2B AS2 Extension</name>
     <url>http://www.holodeck-b2b.org</url>
@@ -63,7 +63,7 @@
  		<!-- Including BC S/MIME processing. Automatically includes other BC libs -->
         <dependency>
 	        <groupId>org.bouncycastle</groupId>
-	        <artifactId>bcmail-jdk15on</artifactId>
+	        <artifactId>bcmail-jdk18on</artifactId>
 	        <version>${bc-version}</version>
         </dependency>      
         <dependency>
