@@ -107,7 +107,7 @@ public class EncryptMessage extends AbstractUserMessageHandler {
             
         	// Get the certificate to be used for encryption
             final X509Certificate encryptionCert = HolodeckB2BCoreInterface.getCertificateManager()
-                                                                      .getCertificate(encryptionCfg.getKeystoreAlias());
+                                                               .getPartnerCertificate(encryptionCfg.getKeystoreAlias());
 
             if (encryptionCert == null) {
                 log.error("The configured certificate for encryption is not available!");
