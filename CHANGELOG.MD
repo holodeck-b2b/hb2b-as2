@@ -2,8 +2,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
-## 2.1.1
+## 3.0.0
 ##### Not yet released 
+### Changed
+* Based on Holodeck B2B 6.0.0
 
 ### Fixed
 * Preliminary termination of MDN message on Java 11 [#10](https://github.com/holodeck-b2b/hb2b-as2/issues/10)
