@@ -17,7 +17,7 @@ Issue tracker https://github.com/holodeck-b2b/hb2b-as2/issues
 ## Installation
 ### Prerequisites  
 This extension requires that you have already deployed Holodeck B2B version 5.0.0 or later. 
-You will also need the Bouncy Castle security libraries for processing S/MIME. Download these libraries and copy them to the `lib` directory of the Holodeck B2B instance. The libraries you download *must* have the same version number as the one already installed in the Holodeck B2B instance (check the `bcprov-jdk15on` file). You need to install both the [bcmail](https://search.maven.org/remotecontent?filepath=org/bouncycastle/bcmail-jdk15on/1.61/bcmail-jdk15on-1.61.jar) and [bcpkix](https://search.maven.org/remotecontent?filepath=org/bouncycastle/bcpkix-jdk15on/1.61/bcpkix-jdk15on-1.61.jar) library.
+You will also need the Bouncy Castle security libraries for processing S/MIME. Download these libraries and copy them to the `lib` directory of the Holodeck B2B instance. The libraries you download *must* have the same version number as the one already installed in the Holodeck B2B instance (check the `bcprov-jdk18on` file). You need to install the [bcutil-jdk18on](https://repo1.maven.org/maven2/org/bouncycastle/bcutil-jdk18on/), [bcmail-jdk18on](https://repo1.maven.org/maven2/org/bouncycastle/bcmail-jdk18on/) and [bcpkix-jdk180on](https://repo1.maven.org/maven2/org/bouncycastle/bcpkix-jdk18on/) library.
 
 ### Set up  
 Adding AS2 support to a Holodeck B2B instance is very simple, just follow the two steps below. Please note that you cannot install the extension in a running Holodeck B2B instance.
