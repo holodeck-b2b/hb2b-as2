@@ -52,7 +52,15 @@ public class CreateReceipt extends AbstractUserMessageHandler {
     protected InvocationResponse doProcessing(final IUserMessageEntity userMessage, 
     										  final IMessageProcessingContext procCtx, final Logger log) 
     												  												throws Exception {
-        IReceiptConfiguration rcptConfig = null;
+        // Only when user message was successfully or is being delivered to business application the Receipt should be 
+		// created, this can also be the case when the message is a duplicate and delivered earlier
+    	final ProcessingState currentState = userMessage.getCurrentProcessingState().getState();
+        if (currentState != ProcessingState.DELIVERED && currentState != ProcessingState.OUT_FOR_DELIVERY 
+        		&& currentState != ProcessingState.DUPLICATE) 
+        	// The User Message was not delivered to back-end, so don't create Receipt
+        	return InvocationResponse.CONTINUE;
+
+    	IReceiptConfiguration rcptConfig = null;
         
         log.debug("Check P-Mode if Receipt should be created for message [msgId=" + userMessage.getMessageId() + "]");
         final IPMode pmode = HolodeckB2BCoreInterface.getPModeSet().get(userMessage.getPModeId());
