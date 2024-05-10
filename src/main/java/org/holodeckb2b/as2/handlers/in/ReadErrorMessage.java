@@ -1,16 +1,16 @@
 /*
  * Copyright (C) 2018 The Holodeck B2B Team, Sander Fieten
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -30,9 +30,9 @@ import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
 import org.holodeckb2b.interfaces.messagemodel.IEbmsError;
 
 /**
- * Is the <i>in_flow</i> handler that converts the (already parsed) MDN into a Error message unit when the MDN is a 
+ * Is the <i>in_flow</i> handler that converts the (already parsed) MDN into a Error message unit when the MDN is a
  * negative acknowledgement, i.e contains a disposition modifier or other failures, errors or warnings.
- * 
+ *
  * @author Sander Fieten (sander at chasquis-consulting.com)
  */
 public class ReadErrorMessage extends AbstractBaseHandler {
@@ -56,7 +56,7 @@ public class ReadErrorMessage extends AbstractBaseHandler {
             errorMsg.setTimestamp(mdn.getTimestamp());
             // Because HB2B sends the messageId with brackets they should be part of the reference in the MDN, but
             // need to stripped for further processing
-            errorMsg.setRefToMessageId(MessageIdUtils.stripBrackets(mdn.getOrigMessageId()));            
+            errorMsg.setRefToMessageId(MessageIdUtils.stripBrackets(mdn.getOrigMessageId()));
             log.debug("Convert disposition modifier into Error");
             // Now create the first error of the message which will contain the MDN specific fields which cannot be
             // stored in the ErrorMessage itself.
@@ -99,12 +99,12 @@ public class ReadErrorMessage extends AbstractBaseHandler {
                 errorMsg.addError(err);
             }
             log.debug("Converted AS2 MDN into Error, storing Error in database");
-            procCtx.addReceivedError(HolodeckB2BCore.getStorageManager().storeIncomingMessageUnit(errorMsg));
+            procCtx.addReceivedError(HolodeckB2BCore.getStorageManager().storeReceivedMessageUnit(errorMsg));
             log.info("Negative MDN/Error [msgId=" + errorMsg.getMessageId() + "] received for message with id:"
                      + errorMsg.getRefToMessageId());
         }
 
         return InvocationResponse.CONTINUE;
     }
-    
+
 }

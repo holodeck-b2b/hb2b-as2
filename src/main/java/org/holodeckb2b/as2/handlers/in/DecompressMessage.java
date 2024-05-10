@@ -33,8 +33,8 @@ import org.holodeckb2b.as4.compression.DeCompressionFailure;
 import org.holodeckb2b.common.handlers.AbstractUserMessageHandler;
 import org.holodeckb2b.core.HolodeckB2BCore;
 import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
-import org.holodeckb2b.interfaces.persistency.entities.IUserMessageEntity;
 import org.holodeckb2b.interfaces.processingmodel.ProcessingState;
+import org.holodeckb2b.interfaces.storage.IUserMessageEntity;
 
 /**
  * Is the <i>in_flow</i> handler responsible for the decompression of a received AS2 User Message. Because compression

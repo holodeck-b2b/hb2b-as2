@@ -3,15 +3,16 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.holodeckb2b</groupId>
     <artifactId>holodeckb2b-as2</artifactId>
-    <version>3.0.1</version>
+    <version>4.0.0</version>
     <packaging>jar</packaging>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <hb2b-version>6.0.0</hb2b-version>
-        <axis2-version>1.7.7</axis2-version>
-        <bc-version>1.72</bc-version>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <hb2b-version>7.0.0</hb2b-version>
+        <axis2-version>1.8.2</axis2-version>
+        <!-- NOTE: The Bouncy Castle version should match the one used in HB2B -->
+        <bc-version>1.78.1</bc-version>
     </properties>
     <name>Holodeck B2B AS2 Extension</name>
     <url>http://www.holodeck-b2b.org</url>

@@ -1,16 +1,16 @@
 /*
  * Copyright (C) 2018 The Holodeck B2B Team, Sander Fieten
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -41,7 +41,7 @@ import org.holodeckb2b.interfaces.messagemodel.IPayload;
  * document.
  * <p>The only required information to accept the message as a User Message is the existence of the <i>AS2-From</i>
  * and <i>AS2-To</i> headers. Note that although the <i>Message-id</i> header should be provided, it is not required
- * by this handler. If not supplied a message-id will be generated.       
+ * by this handler. If not supplied a message-id will be generated.
  * <p>Because the message may be encrypted and/or compressed the actual payload may not be accessible yet. Therefore
  * only the general meta-data is saved in the new message unit. Information on the payload is read and added to message
  * unit later by the {@link SavePayload} handler.
@@ -49,13 +49,13 @@ import org.holodeckb2b.interfaces.messagemodel.IPayload;
  * @author Sander Fieten (sander at chasquis-consulting.com)
  */
 public class ReadUserMessage extends AbstractBaseHandler {
-    
+
     @Override
     protected InvocationResponse doProcessing(IMessageProcessingContext procCtx, Logger log) throws Exception {
 
     	final BodyPart mainPart = (BodyPart) procCtx.getProperty(Constants.CTX_MAIN_MIME_PART);
-    	try {			
-			if (mainPart.isMimeType(Constants.REPORT_MIME_TYPE) 
+    	try {
+			if (mainPart.isMimeType(Constants.REPORT_MIME_TYPE)
 				|| mainPart.isMimeType(Constants.MDN_DISPOSITION_MIME_TYPE))
 				// This is an MDN and can be ignored
 				return InvocationResponse.CONTINUE;
@@ -65,10 +65,10 @@ public class ReadUserMessage extends AbstractBaseHandler {
 
         log.debug("Get the general message info of the User Message from msgCtx");
         GenericMessageInfo generalInfo = (GenericMessageInfo) procCtx.getProperty(Constants.CTX_AS2_GENERAL_DATA);
-        
+
         // Check that at least the party ids of the sender and receiver are included in the message
         final String fromId = generalInfo.getFromPartyId();
-        final String toId = generalInfo.getToPartyId();        
+        final String toId = generalInfo.getToPartyId();
         if (Utils.isNullOrEmpty(fromId) || Utils.isNullOrEmpty(toId)) {
         	log.error("Received message does not contain AS2-To and/or AS2-From header(s)!");
 			// We use the InvalidHeader error to signal this
@@ -77,7 +77,7 @@ public class ReadUserMessage extends AbstractBaseHandler {
         }
         // Create a UserMessage to save in message database
         final UserMessage as2UserMessage = new UserMessage();
-        // Brackets should be stripped from the messageId       
+        // Brackets should be stripped from the messageId
         as2UserMessage.setMessageId(MessageIdUtils.stripBrackets(generalInfo.getMessageId()));
         as2UserMessage.setTimestamp(generalInfo.getTimestamp());
         final TradingPartner sender = new TradingPartner();
@@ -96,11 +96,11 @@ public class ReadUserMessage extends AbstractBaseHandler {
         if (!Utils.isNullOrEmpty(subject))
             as2UserMessage.addMessageProperty(new Property("Subject", subject));
 
-        log.info("Received User Message with msgId [" + as2UserMessage.getMessageId() + "] from [" + fromId 
+        log.info("Received User Message with msgId [" + as2UserMessage.getMessageId() + "] from [" + fromId
         		+ "] addressed to [" + toId + "]");
         log.debug("Saving user message meta data to database and message context");
-        procCtx.setUserMessage(HolodeckB2BCore.getStorageManager().storeIncomingMessageUnit(as2UserMessage));
+        procCtx.setUserMessage(HolodeckB2BCore.getStorageManager().storeReceivedMessageUnit(as2UserMessage));
         log.debug("Saved user message meta data to database");
         return InvocationResponse.CONTINUE;
-    }    
+    }
 }

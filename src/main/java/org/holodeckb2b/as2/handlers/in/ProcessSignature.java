@@ -1,16 +1,16 @@
 /*
  * Copyright (C) 2018 The Holodeck B2B Team, Sander Fieten
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -57,10 +57,8 @@ import org.holodeckb2b.core.HolodeckB2BCore;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
 import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
 import org.holodeckb2b.interfaces.events.security.ISignatureVerified;
-import org.holodeckb2b.interfaces.messagemodel.IPayload;
 import org.holodeckb2b.interfaces.messagemodel.ISignalMessage;
 import org.holodeckb2b.interfaces.messagemodel.IUserMessage;
-import org.holodeckb2b.interfaces.persistency.entities.IMessageUnitEntity;
 import org.holodeckb2b.interfaces.processingmodel.ProcessingState;
 import org.holodeckb2b.interfaces.security.ISignatureProcessingResult;
 import org.holodeckb2b.interfaces.security.ISignedPartMetadata;
@@ -70,12 +68,15 @@ import org.holodeckb2b.interfaces.security.X509ReferenceType;
 import org.holodeckb2b.interfaces.security.trust.ICertificateManager;
 import org.holodeckb2b.interfaces.security.trust.IValidationResult;
 import org.holodeckb2b.interfaces.security.trust.IValidationResult.Trust;
+import org.holodeckb2b.interfaces.storage.IMessageUnitEntity;
+import org.holodeckb2b.interfaces.storage.IPayloadEntity;
+import org.holodeckb2b.interfaces.storage.IUserMessageEntity;
 
 /**
  * Is the <i>in_flow</i> handler responsible for processing the signature of a received AS2 User Message. As the
  * Holodeck B2B <i>security provider</i> can only handle SOAP messages secured using WS-Security it cannot be used for
- * processing the signed  AS2 message. Therefore this handler uses classes from the <b>BouncyCastle</b> crypto 
- * framework directly to verify the signature. However the {@link ICertificateManager} from the installed Holodeck B2B 
+ * processing the signed  AS2 message. Therefore this handler uses classes from the <b>BouncyCastle</b> crypto
+ * framework directly to verify the signature. However the {@link ICertificateManager} from the installed Holodeck B2B
  * <i>security provider</i> is used for trust verification.
  *
  * @author Sander Fieten (sander at chasquis-consulting.com)
@@ -90,59 +91,59 @@ public class ProcessSignature extends AbstractBaseHandler {
         final ContentType contentType = (ContentType)
                                             procCtx.getProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE);
         if (msgUnit == null || !"multipart/signed".equalsIgnoreCase(contentType.getMediaType().toString())) {
-        	// If the message is not signed, the main part is the current MIME envelope 
+        	// If the message is not signed, the main part is the current MIME envelope
         	procCtx.setProperty(Constants.CTX_MAIN_MIME_PART, procCtx.getProperty(Constants.CTX_MIME_ENVELOPE));
             return InvocationResponse.CONTINUE;
         }
 
         ISignatureProcessingResult result = null;
         log.debug("Received message is signed, verify signature");
-        final MimeMultipart mimeEnvelope = (MimeMultipart) 
+        final MimeMultipart mimeEnvelope = (MimeMultipart)
         											  ((MimeBodyPart) procCtx.getProperty(Constants.CTX_MIME_ENVELOPE))
                                                                              .getContent();
         result = verify(mimeEnvelope, contentType.getParameter("micalg"), log);
         if (result.isSuccessful()) {
             log.debug("Message signature successfully verified");
             // If the processed message is a User Message, the signature result applies to the (single) payload,
-            if (msgUnit instanceof IUserMessage) {
-            	final HashMap<IPayload, ISignedPartMetadata> signedInfo = new HashMap<>(1);
-            	signedInfo.put(((IUserMessage) msgUnit).getPayloads().iterator().next(), result.getHeaderDigest());
-            	result = new SignatureProcessingResult(result.getSigningCertificate(), 
+            if (msgUnit instanceof IUserMessageEntity) {
+            	final HashMap<IPayloadEntity, ISignedPartMetadata> signedInfo = new HashMap<>(1);
+            	signedInfo.put(((IUserMessageEntity) msgUnit).getPayloads().iterator().next(), result.getHeaderDigest());
+            	result = new SignatureProcessingResult(result.getSigningCertificate(),
             										   result.getTrustValidation(),
             										   result.getCertificateReferenceType(),
             										   result.getSignatureAlgorithm(),
             										   null, signedInfo
-            										   );		
+            										   );
             }
             // Store result in message context for creating the Receipt
             procCtx.addSecurityProcessingResult(result);
             // We don't need the signature info anymore, so we can replace the Mime Envelope in the message context
             // with only the signed data.
             final MimeBodyPart signedPart = (MimeBodyPart) mimeEnvelope.getBodyPart(0);
-            procCtx.setProperty(Constants.CTX_MIME_ENVELOPE, signedPart);      
-            procCtx.setProperty(Constants.CTX_MAIN_MIME_PART, signedPart);                  
+            procCtx.setProperty(Constants.CTX_MIME_ENVELOPE, signedPart);
+            procCtx.setProperty(Constants.CTX_MAIN_MIME_PART, signedPart);
             procCtx.setProperty(org.apache.axis2.Constants.Configuration.CONTENT_TYPE,
                                                                     new ContentType(signedPart.getContentType()));
             // Raise event to inform external components about the successful verification
             ISignatureVerified event;
-            boolean trustWarnings = result.getTrustValidation().getTrust() == Trust.WITH_WARNINGS;                
-            if (msgUnit instanceof IUserMessage)                    
-            	event = trustWarnings ? new SignatureVerifiedWithWarning((IUserMessage) msgUnit, 
+            boolean trustWarnings = result.getTrustValidation().getTrust() == Trust.WITH_WARNINGS;
+            if (msgUnit instanceof IUserMessage)
+            	event = trustWarnings ? new SignatureVerifiedWithWarning((IUserMessage) msgUnit,
 												            			  result.getHeaderDigest(),
 												            			  result.getPayloadDigests(),
 												            			  result.getTrustValidation())
-            						  :  new SignatureVerified((IUserMessage) msgUnit, 
+            						  :  new SignatureVerified((IUserMessage) msgUnit,
 					            								  result.getHeaderDigest(),
 					            								  result.getPayloadDigests(),
 					            								  result.getTrustValidation());
             else
-            	event = trustWarnings ? new SignatureVerifiedWithWarning((ISignalMessage) msgUnit, 
+            	event = trustWarnings ? new SignatureVerifiedWithWarning((ISignalMessage) msgUnit,
 												            			result.getHeaderDigest(),
 												            			result.getTrustValidation())
-								      :  new SignatureVerified((ISignalMessage) msgUnit, 
+								      :  new SignatureVerified((ISignalMessage) msgUnit,
 													    		  result.getHeaderDigest(),
-													    		  result.getTrustValidation());                        
-            HolodeckB2BCoreInterface.getEventProcessor().raiseEvent(event);               
+													    		  result.getTrustValidation());
+            HolodeckB2BCoreInterface.getEventProcessor().raiseEvent(event);
         } else {
             log.warn("Signature verification failed!");
             procCtx.addGeneratedError(new FailedAuthentication("Signature validation failed", msgUnit.getMessageId()));
@@ -150,8 +151,8 @@ public class ProcessSignature extends AbstractBaseHandler {
             HolodeckB2BCore.getStorageManager().setProcessingState(msgUnit, ProcessingState.FAILURE);
             // Raise event to inform external components about failure
             HolodeckB2BCoreInterface.getEventProcessor().raiseEvent(
-            												new SignatureVerificationFailure(msgUnit, 
-            																			 	result.getFailureReason()));               
+            												new SignatureVerificationFailure(msgUnit,
+            																			 	result.getFailureReason()));
         }
 
         return InvocationResponse.CONTINUE;
@@ -164,9 +165,9 @@ public class ProcessSignature extends AbstractBaseHandler {
      * <li>Getting the certificate of the signer</li>
      * <li>Validating the trust in the certificate</li>
      * <li>Verifying the signature by comparing digests</li></ol>
-     * Although SMIME, which is used for signing the AS2 message, allows for multiple signatures on the message only 
-     * the first signature will be processed. In step 2 it is first checked if the certificate is embedded in the 
-     * message and only if it isn't the key store with trusted certificates as managed by the Holodeck B2B <i>security 
+     * Although SMIME, which is used for signing the AS2 message, allows for multiple signatures on the message only
+     * the first signature will be processed. In step 2 it is first checked if the certificate is embedded in the
+     * message and only if it isn't the key store with trusted certificates as managed by the Holodeck B2B <i>security
      * provider</i> is checked.
      *
      * @param signedData     		The signed MIME multipart
@@ -186,7 +187,7 @@ public class ProcessSignature extends AbstractBaseHandler {
                                                                       .build(),
                                                                    signedData, "binary");
             log.debug("Retrieving meta-data on the signer(s) of the message");
-            // Get information about the signers of the message. This can be multiple, but for AS2 there should be 
+            // Get information about the signers of the message. This can be multiple, but for AS2 there should be
             // just one and we use only the first signer
             final Collection <SignerInformation> signers = aSignedParser.getSignerInfos().getSigners();
             if (Utils.isNullOrEmpty(signers)) {
@@ -217,13 +218,13 @@ public class ProcessSignature extends AbstractBaseHandler {
                     log.warn("Message contains " + containedCerts.size () + " certificates - using the first one!");
                 try {
                 	signingCert = new JcaX509CertificateConverter().setProvider(BouncyCastleProvider.PROVIDER_NAME)
-                                                                   .getCertificate((X509CertificateHolder) 
+                                                                   .getCertificate((X509CertificateHolder)
                                                                 		   			  containedCerts.iterator().next());
                 } catch (CertificateException conversionFailed) {
                     log.error("Certificate included in message is not a X509 Certificate! Details: {}",
                                 conversionFailed.getMessage());
                     throw new SecurityProcessingException ("Unsupported certificate used for signing");
-                }                
+                }
                 // As the BST reference type also indicates a certificate included in the message, we use it here to
                 // indicate an included certificate
                 keyReference = X509ReferenceType.BSTReference;
@@ -237,25 +238,25 @@ public class ProcessSignature extends AbstractBaseHandler {
                 					issuer.toString(), serial.toString());
                 		signingCert = HolodeckB2BCoreInterface.getCertificateManager().findCertificate(issuer, serial);
                 		keyReference = X509ReferenceType.IssuerAndSerial;
-                	} else if (signerID.getSubjectKeyIdentifier() != null) {                	
+                	} else if (signerID.getSubjectKeyIdentifier() != null) {
                 		byte[] ski = signerID.getSubjectKeyIdentifier();
-                		log.trace("Retrieve signing certificate [SKI={}] from Certificate Manager", 
+                		log.trace("Retrieve signing certificate [SKI={}] from Certificate Manager",
                 					Hex.encodeHexString(ski));
                 		signingCert = HolodeckB2BCoreInterface.getCertificateManager().findCertificate(ski);
-                		keyReference = X509ReferenceType.KeyIdentifier;                		
-                	} else 
+                		keyReference = X509ReferenceType.KeyIdentifier;
+                	} else
                 		log.error("Cannot retrieve certificate a no Issuer & SerialNo or SKI available!");
                 } catch (IOException ex) {
                     log.error("Error while retrieving Certificate of signer from the Certificate Manager! Details: {}",
                               ex.getMessage());
                 }
             }
-            
+
             if (signingCert == null) {
                 log.error("Could not retrieve the certificate used for signed. Unable to verify signature!");
                 return new SignatureProcessingResult(new SecurityProcessingException("Certificate unavailable"));
             }
-            
+
             log.debug("Retrieved signing certificate [Issuer/Serial="
                        + signingCert.getIssuerX500Principal().getName() + "/"
                        + signingCert.getSerialNumber().toString() + "] from "
@@ -264,7 +265,7 @@ public class ProcessSignature extends AbstractBaseHandler {
             log.trace("Validate trust in certificate");
             IValidationResult trust = HolodeckB2BCoreInterface.getCertificateManager()
             													.validateTrust(Collections.singletonList(signingCert));
-            
+
             if (trust.getTrust() == Trust.NOK) {
 				log.error("Signing certificate is not trusted by Certificate Manager! Details: {}", trust.getMessage());
 				return new SignatureProcessingResult(new SignatureTrustException(trust));
@@ -272,7 +273,7 @@ public class ProcessSignature extends AbstractBaseHandler {
             	log.warn("Signing certificate is trusted, but with warnings! Details: {}", trust.getMessage());
             else
             	log.debug("Signing certificate is trusted");
-            
+
             log.debug("Verify message's signature by comparing digests");
             final SignerInformationVerifier signatureVerifier = new JcaSimpleSignerInfoVerifierBuilder()
                                                                       .setProvider(BouncyCastleProvider.PROVIDER_NAME)
@@ -286,7 +287,7 @@ public class ProcessSignature extends AbstractBaseHandler {
                                              CryptoAlgorithmHelper.getSigningAlgName(signatureInfo.getDigestAlgOID(),
                                                                                  signatureInfo.getEncryptionAlgOID()),
                                              new SignedContentMetadata(mimeMicAlgParameter,
-                                                     				   signatureInfo.getContentDigest()), 
+                                                     				   signatureInfo.getContentDigest()),
                                              null);
             } else {
                 return new SignatureProcessingResult(new SecurityProcessingException("Digest mismatch"));

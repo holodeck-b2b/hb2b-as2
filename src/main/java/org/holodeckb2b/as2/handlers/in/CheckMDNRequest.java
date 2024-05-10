@@ -28,7 +28,7 @@ import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.common.handlers.AbstractUserMessageHandler;
 import org.holodeckb2b.commons.util.Utils;
 import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
-import org.holodeckb2b.interfaces.persistency.entities.IUserMessageEntity;
+import org.holodeckb2b.interfaces.storage.IUserMessageEntity;
 
 /**
  * Is the <i>in_flow</i> handler responsible for checking if a MDN is requested for the received <i>User Messsage</i>

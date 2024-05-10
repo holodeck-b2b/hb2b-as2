@@ -16,16 +16,17 @@ Issue tracker https://github.com/holodeck-b2b/hb2b-as2/issues
 
 ## Installation
 ### Prerequisites  
-This extension requires that you have already deployed Holodeck B2B version 5.0.0 or later. 
-You will also need the Bouncy Castle security libraries for processing S/MIME. Download these libraries and copy them to the `lib` directory of the Holodeck B2B instance. The libraries you download *must* have the same version number as the one already installed in the Holodeck B2B instance (check the `bcprov-jdk18on` file). You need to install the [bcutil-jdk18on](https://repo1.maven.org/maven2/org/bouncycastle/bcutil-jdk18on/), [bcmail-jdk18on](https://repo1.maven.org/maven2/org/bouncycastle/bcmail-jdk18on/) and [bcpkix-jdk180on](https://repo1.maven.org/maven2/org/bouncycastle/bcpkix-jdk18on/) library.
+This extension requires that you have already deployed Holodeck B2B version 7.0.0 or later. 
+On this instance also the Bouncy Castle libraries for processing S/MIME ([bcmail](https://repo1.maven.org/maven2/org/bouncycastle/bcmail-jdk18on/) and [bcpkix](https://repo1.maven.org/maven2/org/bouncycastle/bcpkix-jdk18on/)) and the [JavaMail](https://repo1.maven.org/maven2/com/sun/mail/jakarta.mail/1.6.7/jakarta.mail-1.6.7.jar) implementation need to be installed.
+If not installed, download the libraries and copy them to the `lib` directory of the Holodeck B2B instance. 
+For the Bouncy Castle library you *must* download the same version as the one of the already installed Bouncy Castle security provider in the Holodeck B2B instance (check the `bcprov-jdk18on` file). 
 
 ### Set up  
 Adding AS2 support to a Holodeck B2B instance is very simple, just follow the two steps below. Please note that you cannot install the extension in a running Holodeck B2B instance.
 1. Build the extension or download the latest release package. You should now have the `holodeckb2b-as2-«version».jar` and `hb2b-as2-msh.aar` files available.
 2. Copy the jar file to the `lib` directory of the Holodeck B2B instance and copy the aar file to the `repository/services` directory.
-3. Only if you are installing the extension on Holodeck B2B version 5.0.x: Build the jar file with generic utility classes from the
-	[generic-utils project](https://github.com/holodeck-b2b/generic-utils) and also copy it to the `lib` directory of the Holodeck B2B
-4. Restart the instance. Holodeck B2B will now accept AS2 messages on _«HB2B server URL»/holodeckb2b/as2_
+3. 
+3. Restart the instance. Holodeck B2B will now accept AS2 messages on _«HB2B server URL»/holodeckb2b/as2_
 
 ### Messaging Configuration
 To configure AS2 message exchanges the Holodeck B2B Core P-Modes are used. As the messaging model of AS2 is very similar to AS4 most settings in the P-Mode can be directly mapped to an AS2 message exchange, although some parameters might use different values for AS2.   

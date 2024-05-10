@@ -1,16 +1,16 @@
 /*
  * Copyright (C) 2018 The Holodeck B2B Team, Sander Fieten
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -28,12 +28,12 @@ import org.holodeckb2b.interfaces.messagemodel.Direction;
 import org.holodeckb2b.interfaces.messagemodel.IMessageUnit;
 import org.holodeckb2b.interfaces.messagemodel.ISignalMessage;
 import org.holodeckb2b.interfaces.messagemodel.IUserMessage;
-import org.holodeckb2b.interfaces.persistency.PersistenceException;
-import org.holodeckb2b.interfaces.persistency.entities.IMessageUnitEntity;
 import org.holodeckb2b.interfaces.pmode.ILeg;
 import org.holodeckb2b.interfaces.pmode.IPMode;
 import org.holodeckb2b.interfaces.pmode.IPModeSet;
 import org.holodeckb2b.interfaces.pmode.ITradingPartnerConfiguration;
+import org.holodeckb2b.interfaces.storage.IMessageUnitEntity;
+import org.holodeckb2b.interfaces.storage.providers.StorageException;
 
 /**
  * Is a helper class for finding the correct P-Mode for a received AS2 message. Since the meta-data for AS2 messages is
@@ -60,7 +60,7 @@ public class PModeFinder {
      * for either the initiator or responder identifiers the P-Mode is considered as a mismatch.
      * <p>If the received message is a Signal Message which does not contain the sender and receiver identifiers the
      * referenced message will be used to find the P-Mode. The referenced message is either the sent message if the
-     * Signal is a response or the message referenced in the Signal.  
+     * Signal is a response or the message referenced in the Signal.
      * <p>This method will only find one matching P-Mode. This means that when multiple P-Modes with the highest match
      * score are found none is returned.
      *
@@ -94,18 +94,18 @@ public class PModeFinder {
         if (pmodes == null)
             return null;
 
-        for (final IPMode p : pmodes.getAll()) {            
+        for (final IPMode p : pmodes.getAll()) {
             if (!Constants.AS2_MEP_BINDING.equalsIgnoreCase(p.getMepBinding()))
             	// This P-Mode is not for handling AS2
-            	continue;            
+            	continue;
             else if (as2Message instanceof IUserMessage && p.getLeg(ILeg.Label.REQUEST).getProtocol() != null
                     && !Utils.isNullOrEmpty(p.getLeg(ILeg.Label.REQUEST).getProtocol().getAddress()))
             	// Received message is a user message, so P-Mode shouldn't be configured for sending
                 continue;
             else if (as2Message instanceof ISignalMessage && (p.getLeg(ILeg.Label.REQUEST).getProtocol() == null
             		|| Utils.isNullOrEmpty(p.getLeg(ILeg.Label.REQUEST).getProtocol().getAddress())))
-            	// Received message is a signal, so P-Mode shouldn't be configured for receiving  
-            	continue;            	
+            	// Received message is a signal, so P-Mode shouldn't be configured for receiving
+            	continue;
 
             int cValue = 0;
             // Check match for Initiator id
@@ -136,9 +136,9 @@ public class PModeFinder {
                 multiple = true;
         }
 
-        if ((hPMode == null || multiple) && as2Message instanceof ISignalMessage) 
+        if ((hPMode == null || multiple) && as2Message instanceof ISignalMessage)
         	return findUsingReference((ISignalMessage) as2Message, procCtx);
-        else 
+        else
         	// Only return a single P-Mode
         	return !multiple ? hPMode : null;
     }
@@ -146,11 +146,11 @@ public class PModeFinder {
     /**
      * Finds the P-Mode for the Signal Message using its reference to the original User Message. This reference should
      * be included in the message (in the <o>Original-MesssgeId</i> MDN field) but in case of a synchronous response
-     * may also be derived from the outgoing message unit.  
-     * 
+     * may also be derived from the outgoing message unit.
+     *
      * @param signal	The signal to find the P-Mode for
      * @param procCtx	The message processing context of the signal message
-     * @return			
+     * @return
      */
     protected static IPMode findUsingReference(final ISignalMessage signal, final IMessageProcessingContext procCtx) {
         IPMode pmode = null;
@@ -164,7 +164,7 @@ public class PModeFinder {
         } else
             // Use the message id included in the Signal to get the P-Mode
             pmode = getPModeFromRefdMessage(MessageUnitUtils.getRefToMessageId(signal));
-        
+
         return pmode;
     }
 
@@ -185,11 +185,11 @@ public class PModeFinder {
 	            if (!Utils.isNullOrEmpty(refdMsgUnits) && refdMsgUnits.size() == 1)
 	                pmode = HolodeckB2BCoreInterface.getPModeSet().get(refdMsgUnits.iterator().next().getPModeId());
 	        }
-        } catch (PersistenceException databaseFailure) {}
-        
+        } catch (StorageException databaseFailure) {}
+
         return pmode;
-    }    	
-    
+    }
+
     /**
      * Helper method to check that the given party identifier matches to the party identifier provider in the trading
      * partner configuration.
@@ -209,5 +209,5 @@ public class PModeFinder {
                 return pmodeIds.size() == 1 && pmodeIds.iterator().next().getId().equals(expectedId);
         }
         return null;
-    }	
+    }
 }

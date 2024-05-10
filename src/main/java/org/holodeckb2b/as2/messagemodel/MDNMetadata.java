@@ -1,16 +1,16 @@
 /*
  * Copyright (C) 2018 The Holodeck B2B Team, Sander Fieten
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -38,7 +38,7 @@ import org.holodeckb2b.interfaces.messagemodel.ISignalMessage;
  * Represents the AS2 MDN specific meta-data that needs to be included in the regular {@link IReceipt} and {@link
  * IErrorMessage} objects but which can not be represented in these objects directly. Instances of this class can be
  * serialized to an XML document which can be included in the Signal object. In the receipts the XML can simply
- * be contained as the content, for error messages this information is contained in the first {@link IEbmsError} of 
+ * be contained as the content, for error messages this information is contained in the first {@link IEbmsError} of
  * the message. Note that this XML can also used when notifying the Receipt to the business application.
  *
  * @author Sander Fieten (sander at chasquis-consulting.com)
@@ -197,7 +197,6 @@ public class MDNMetadata {
             if (signature == null)
                 this.replyParameters.setSignatureRequest(MDNRequestOptions.SignatureRequest.unsigned);
             else {
-                @SuppressWarnings("unchecked")
 				Iterator<OMElement> algorithms = mdnParameters.getChildrenWithName(Q_HASHING_ALGORITHM);
                 if (!Utils.isNullOrEmpty(algorithms)) {
                     List<String> hashingAlgorithms = new ArrayList<>();
@@ -365,9 +364,9 @@ public class MDNMetadata {
     }
 
     /**
-     * Gets the messageId value that was included in the HTTP header of the received AS2 message that this Receipt is 
+     * Gets the messageId value that was included in the HTTP header of the received AS2 message that this Receipt is
      * a response to.
-     * 
+     *
      * @return The Original MessageId
      */
     public String getOriginalMessageId() {

@@ -19,7 +19,7 @@ package org.holodeckb2b.as2.handlers.in;
 import org.apache.axis2.AxisFault;
 import org.apache.axis2.context.MessageContext;
 import org.apache.axis2.engine.MessageReceiver;
-import org.apache.axis2.transport.TransportUtils;
+import org.apache.axis2.kernel.TransportUtils;
 import org.holodeckb2b.common.handlers.DefaultMessageReceiver;
 
 /**

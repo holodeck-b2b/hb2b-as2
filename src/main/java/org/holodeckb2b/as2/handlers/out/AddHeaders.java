@@ -1,16 +1,16 @@
 /*
  * Copyright (C) 2018 The Holodeck B2B Team, Sander Fieten
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -20,7 +20,7 @@ package org.holodeckb2b.as2.handlers.out;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.axis2.transport.http.HTTPConstants;
+import org.apache.axis2.kernel.http.HTTPConstants;
 import org.apache.logging.log4j.Logger;
 import org.holodeckb2b.as2.packaging.GenericMessageInfo;
 import org.holodeckb2b.as2.util.Constants;
@@ -58,15 +58,15 @@ public class AddHeaders extends AbstractBaseHandler {
 	        @SuppressWarnings("unchecked")
 			Map<String, String> httpHeaders = (Map<String, String>) procCtx.getParentContext()
 																		   .getProperty(HTTPConstants.HTTP_HEADERS);
-	        if (Utils.isNullOrEmpty(httpHeaders)) { 
+	        if (Utils.isNullOrEmpty(httpHeaders)) {
 	        	httpHeaders = new HashMap<>();
 		        procCtx.getParentContext().setProperty(HTTPConstants.HTTP_HEADERS, httpHeaders);
-        	}	        
+        	}
 	        httpHeaders.put("as2-version", Constants.AS2_VERSION);
-	        httpHeaders.putAll(msgInfo.getAsHTTPHeaders());	        
-        } else 
+	        httpHeaders.putAll(msgInfo.getAsHTTPHeaders());
+        } else
         	log.debug("No AS2 headers to be set");
-        
+
         return InvocationResponse.CONTINUE;
     }
 

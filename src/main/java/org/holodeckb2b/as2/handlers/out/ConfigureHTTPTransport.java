@@ -23,8 +23,8 @@ import org.holodeckb2b.commons.util.Utils;
 import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
 import org.holodeckb2b.interfaces.messagemodel.IReceipt;
 import org.holodeckb2b.interfaces.messagemodel.ISignalMessage;
-import org.holodeckb2b.interfaces.persistency.entities.IMessageUnitEntity;
 import org.holodeckb2b.interfaces.pmode.ILeg;
+import org.holodeckb2b.interfaces.storage.IMessageUnitEntity;
 
 /**
  * Is the <i>out flow</i> handler that configures the actual message transport over the HTTP protocol and sets the

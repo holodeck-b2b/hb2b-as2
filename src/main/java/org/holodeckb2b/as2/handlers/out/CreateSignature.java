@@ -1,16 +1,16 @@
 /*
  * Copyright (C) 2018 The Holodeck B2B Team, Sander Fieten
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -30,7 +30,7 @@ import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMultipart;
 
 import org.apache.axiom.mime.ContentType;
-import org.apache.axis2.transport.http.HTTPConstants;
+import org.apache.axis2.kernel.http.HTTPConstants;
 import org.apache.logging.log4j.Logger;
 import org.bouncycastle.cert.jcajce.JcaCertStore;
 import org.bouncycastle.cms.jcajce.JcaSimpleSignerInfoGeneratorBuilder;
@@ -53,10 +53,8 @@ import org.holodeckb2b.core.pmode.PModeUtils;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
 import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
 import org.holodeckb2b.interfaces.messagemodel.IMessageUnit;
-import org.holodeckb2b.interfaces.messagemodel.IPayload;
 import org.holodeckb2b.interfaces.messagemodel.ISignalMessage;
 import org.holodeckb2b.interfaces.messagemodel.IUserMessage;
-import org.holodeckb2b.interfaces.persistency.entities.IMessageUnitEntity;
 import org.holodeckb2b.interfaces.pmode.IPMode;
 import org.holodeckb2b.interfaces.pmode.ISecurityConfiguration;
 import org.holodeckb2b.interfaces.pmode.ISigningConfiguration;
@@ -65,6 +63,9 @@ import org.holodeckb2b.interfaces.processingmodel.ProcessingState;
 import org.holodeckb2b.interfaces.security.ISignedPartMetadata;
 import org.holodeckb2b.interfaces.security.SecurityProcessingException;
 import org.holodeckb2b.interfaces.security.X509ReferenceType;
+import org.holodeckb2b.interfaces.storage.IMessageUnitEntity;
+import org.holodeckb2b.interfaces.storage.IPayloadEntity;
+import org.holodeckb2b.interfaces.storage.IUserMessageEntity;
 
 /**
  * Is the <i>out_flow</i> handler responsible for signing the AS2 message. It creates the S/MIME package with the
@@ -94,7 +95,7 @@ import org.holodeckb2b.interfaces.security.X509ReferenceType;
  * will be used and if that is not specified/supported the algorithm from the certificate will be used. Note that
  * the specified algorithm must be compatible with the public key included in the certificate.
  * <li><code>HashFunction</code> : is now used to indicate how the used hash function should be identified in the S/MIME
- * package and MDN request. Should be set to "RFC5751" to use the RFC5751 algorithm names, otherwise the RFC3851 names 
+ * package and MDN request. Should be set to "RFC5751" to use the RFC5751 algorithm names, otherwise the RFC3851 names
  * are used as this RFC is ref'd in AS2 spec</li>
  * </ul>
  *
@@ -108,7 +109,7 @@ public class CreateSignature extends AbstractBaseHandler {
     	final MimeBodyPart  msgToSign = (MimeBodyPart) procCtx.getProperty(Constants.CTX_MIME_ENVELOPE);
         if (msgToSign == null)
         	return InvocationResponse.CONTINUE;
-        
+
     	// Get signature configuration from P-Mode of the primary message unit
         final IMessageUnitEntity primaryMsgUnit = procCtx.getPrimaryMessageUnit();
         final ISigningConfiguration signingCfg = getSignatureConfiguration(primaryMsgUnit);
@@ -121,10 +122,10 @@ public class CreateSignature extends AbstractBaseHandler {
                                                                                    signingCfg.getCertificatePassword());
             if (signKeyPair == null) {
                 log.error("The configured key pair for signing is not available!");
-            	// Change the processing state of the message to failure and raise event to inform others                
-            	HolodeckB2BCore.getStorageManager().setProcessingState(primaryMsgUnit, ProcessingState.FAILURE);                
+            	// Change the processing state of the message to failure and raise event to inform others
+            	HolodeckB2BCore.getStorageManager().setProcessingState(primaryMsgUnit, ProcessingState.FAILURE);
                 HolodeckB2BCoreInterface.getEventProcessor().raiseEvent(new SigningFailure(primaryMsgUnit,
-										new SecurityProcessingException("Private key for signing not available")));                
+										new SecurityProcessingException("Private key for signing not available")));
                 return InvocationResponse.ABORT;
             }
             final X509Certificate signingCert = (X509Certificate) signKeyPair.getCertificate();
@@ -147,8 +148,8 @@ public class CreateSignature extends AbstractBaseHandler {
                                                                     .findFirst();
                     // If a supported digest algorithm is specified, combine with encryption algorithm of the public key
                     if (supportedAlg.isPresent()) {
-                    	requestedAlg = supportedAlg.get();                  
-                    	signatureAlg =  CryptoAlgorithmHelper.getRFC3851Name(requestedAlg)                    															   
+                    	requestedAlg = supportedAlg.get();
+                    	signatureAlg =  CryptoAlgorithmHelper.getRFC3851Name(requestedAlg)
                                                               + "WITH" + signingCert.getPublicKey().getAlgorithm();
                     }
                 }
@@ -161,10 +162,10 @@ public class CreateSignature extends AbstractBaseHandler {
             log.debug("Signing algorithm to be used " + signatureAlg);
 
             try {
-            	/* Create the S/MIME generator using the RFC3851 or RFC5751 algorithm names. If this is a MDN and the 
+            	/* Create the S/MIME generator using the RFC3851 or RFC5751 algorithm names. If this is a MDN and the
             	   MDN request contained a specific digest algorithm, we will use that one.
-            	   Otherwise use the setting from the P-Mode or if nothing specified the RFC3851 names 
-            	*/            	
+            	   Otherwise use the setting from the P-Mode or if nothing specified the RFC3851 names
+            	*/
                 final Map digestAlgoNames = (requestedAlg != null && CryptoAlgorithmHelper.isRFC5751Name(requestedAlg))
                 							|| "RFC5751".equalsIgnoreCase(signingCfg.getHashFunction()) ?
                                             SMIMESignedGenerator.RFC5751_MICALGS : SMIMESignedGenerator.RFC3851_MICALGS;
@@ -199,8 +200,8 @@ public class CreateSignature extends AbstractBaseHandler {
                 log.debug("Completed message signing succesfully");
                 // Raise event to inform external components about the successful signing of the user message
                 if (primaryMsgUnit instanceof IUserMessage) {
-                	final IUserMessage userMessage = (IUserMessage) primaryMsgUnit;
-                	final HashMap<IPayload, ISignedPartMetadata> signedInfo = new HashMap<>();
+                	final IUserMessageEntity userMessage = (IUserMessageEntity) primaryMsgUnit;
+                	final HashMap<IPayloadEntity, ISignedPartMetadata> signedInfo = new HashMap<>();
                 	final String digestAlg = CryptoAlgorithmHelper.getDefaultDigestAlgorithm(signatureAlg);
                 	signedInfo.put(userMessage.getPayloads().iterator().next(),
                 					new SignedContentMetadata(digestAlg, DigestHelper.calculateDigest(digestAlg,
@@ -213,10 +214,10 @@ public class CreateSignature extends AbstractBaseHandler {
                     | SMIMEException | IllegalArgumentException | OperatorCreationException signingFailure) {
                 log.error("An error occurred while siging the message. Error details: "
                          + Utils.getExceptionTrace(signingFailure));
-            	// Change the processing state of the message to failure and raise event to inform others                
-            	HolodeckB2BCore.getStorageManager().setProcessingState(primaryMsgUnit, ProcessingState.SUSPENDED);                
+            	// Change the processing state of the message to failure and raise event to inform others
+            	HolodeckB2BCore.getStorageManager().setProcessingState(primaryMsgUnit, ProcessingState.SUSPENDED);
                 HolodeckB2BCoreInterface.getEventProcessor().raiseEvent(new SigningFailure(primaryMsgUnit,
-										new SecurityProcessingException("Signing of message failed", signingFailure)));                
+										new SecurityProcessingException("Signing of message failed", signingFailure)));
                 return InvocationResponse.ABORT;
             }
         }

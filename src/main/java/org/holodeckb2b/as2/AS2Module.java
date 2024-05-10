@@ -1,25 +1,20 @@
 /*
  * Copyright (C) 2018 The Holodeck B2B Team, Sander Fieten
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package org.holodeckb2b.as2;
-
-import java.security.AccessControlException;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-import java.security.Security;
 
 import javax.activation.CommandMap;
 import javax.activation.MailcapCommandMap;
@@ -33,13 +28,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.neethi.Assertion;
 import org.apache.neethi.Policy;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.holodeckb2b.as2.util.Constants;
 
 /**
- * Is the implementation of the Axis2 {@link Module} interface and is responsible for the correct initialization of 
+ * Is the implementation of the Axis2 {@link Module} interface and is responsible for the correct initialization of
  * the Holodeck B2B AS2 Module. This is limited to loading the BouncyCastle security provider.
- *  
+ *
  * @author Sander Fieten (sander at chasquis-consulting.com)
  */
 public class AS2Module implements Module {
@@ -56,7 +50,6 @@ public class AS2Module implements Module {
 	/**
 	 * Initializes the AS2 Axis2 module by loading and registering the BouncyCastle security provider.
 	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Override
 	public void init(final ConfigurationContext cc, final AxisModule am) throws AxisFault {
 		log.info("Starting Holodeck B2B AS2 module...");
@@ -69,9 +62,6 @@ public class AS2Module implements Module {
 					+ ", expected was: " + AXIS_MODULE_NAME);
 			throw new AxisFault("Invalid configuration found for module: " + am.getName());
 		}
-
-		if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null)
-			Security.addProvider(new BouncyCastleProvider());
 
 		final MailcapCommandMap dhMapping = (MailcapCommandMap) CommandMap.getDefaultCommandMap();
 		dhMapping.addMailcap("application/pkcs7-signature;; x-java-content-handler="
@@ -86,20 +76,14 @@ public class AS2Module implements Module {
 				+ org.bouncycastle.mail.smime.handlers.multipart_signed.class.getName());
 		dhMapping.addMailcap(Constants.MDN_DISPOSITION_MIME_TYPE + ";; x-java-content-handler="
 				+ dhMapping.getCommand("text/plain", "content-handler").getCommandClass());
-		try {
-			AccessController.doPrivileged((PrivilegedAction) () -> { CommandMap.setDefaultCommandMap(dhMapping);
-																	 return null;
-															   	   });
-		} catch (AccessControlException notAllowed) {
-			log.error("Could not set the content to data handler mapping");
-		}
 
+		CommandMap.setDefaultCommandMap(dhMapping);
 		log.info("Started Holodeck B2B AS2 Module");
 	}
 
 	/*
 	 * Not used
-	 * 
+	 *
 	 * @see
 	 * org.apache.axis2.modules.Module#engageNotify(org.apache.axis2.description.
 	 * AxisDescription)
@@ -110,7 +94,7 @@ public class AS2Module implements Module {
 
 	/*
 	 * Not used
-	 * 
+	 *
 	 * @see org.apache.axis2.modules.Module#canSupportAssertion(org.apache.neethi.
 	 * Assertion)
 	 */
@@ -122,7 +106,7 @@ public class AS2Module implements Module {
 
 	/*
 	 * Not used
-	 * 
+	 *
 	 * @see org.apache.axis2.modules.Module#applyPolicy(org.apache.neethi.Policy,
 	 * org.apache.axis2.description.AxisDescription)
 	 */
@@ -132,7 +116,7 @@ public class AS2Module implements Module {
 
 	/*
 	 * Not used
-	 * 
+	 *
 	 * @see org.apache.axis2.modules.Module#shutdown(org.apache.axis2.context.
 	 * ConfigurationContext)
 	 */

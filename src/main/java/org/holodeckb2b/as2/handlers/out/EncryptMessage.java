@@ -1,16 +1,16 @@
 /*
  * Copyright (C) 2018 The Holodeck B2B Team, Sander Fieten
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -43,7 +43,6 @@ import org.holodeckb2b.core.HolodeckB2BCore;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
 import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
 import org.holodeckb2b.interfaces.messagemodel.IUserMessage;
-import org.holodeckb2b.interfaces.persistency.entities.IUserMessageEntity;
 import org.holodeckb2b.interfaces.pmode.IEncryptionConfiguration;
 import org.holodeckb2b.interfaces.pmode.IPMode;
 import org.holodeckb2b.interfaces.pmode.ISecurityConfiguration;
@@ -51,6 +50,7 @@ import org.holodeckb2b.interfaces.pmode.ITradingPartnerConfiguration;
 import org.holodeckb2b.interfaces.processingmodel.ProcessingState;
 import org.holodeckb2b.interfaces.security.SecurityProcessingException;
 import org.holodeckb2b.interfaces.security.X509ReferenceType;
+import org.holodeckb2b.interfaces.storage.IUserMessageEntity;
 
 /**
  * Is the <i>out_flow</i> handler responsible for encryption of the AS2 message. It creates the S/MIME package with the
@@ -78,7 +78,7 @@ import org.holodeckb2b.interfaces.security.X509ReferenceType;
  * If there is no algorithm specified in the P-Mode the AES128-GCM algorithm is used. Note however that support for
  * this algorithm is only defined as a SHOULD in RFC3851 (S/MIME 3.1 ref'd by the AS2 RFC).
  * </ul>
- * 
+ *
  * @author Sander Fieten (sander at chasquis-consulting.com)
  */
 public class EncryptMessage extends AbstractUserMessageHandler {
@@ -88,8 +88,8 @@ public class EncryptMessage extends AbstractUserMessageHandler {
     private static final String DEFAULT_ALGORITHM = "AES128_GCM";
 
     @Override
-    protected InvocationResponse doProcessing(final IUserMessageEntity userMessage, 
-											  final IMessageProcessingContext procCtx, final Logger log) 
+    protected InvocationResponse doProcessing(final IUserMessageEntity userMessage,
+											  final IMessageProcessingContext procCtx, final Logger log)
 													  												throws Exception {
         // Get encryption configuration from P-Mode of the User Message
         IEncryptionConfiguration encryptionCfg = getEncryptionConfiguration(userMessage);
@@ -98,13 +98,13 @@ public class EncryptMessage extends AbstractUserMessageHandler {
             log.debug("The message doesn't need to be encrypted");
             return InvocationResponse.CONTINUE;
         }
-        
+
         try {
         	// First check that there is content that can be compressed
         	final MimeBodyPart  msgToEncrypt = (MimeBodyPart) procCtx.getProperty(Constants.CTX_MIME_ENVELOPE);
             if (msgToEncrypt == null)
             	return InvocationResponse.CONTINUE;
-            
+
         	// Get the certificate to be used for encryption
             final X509Certificate encryptionCert = HolodeckB2BCoreInterface.getCertificateManager()
                                                                .getPartnerCertificate(encryptionCfg.getKeystoreAlias());
@@ -171,8 +171,8 @@ public class EncryptMessage extends AbstractUserMessageHandler {
         	// It makes no sense to continue processing, so abort here
         	return InvocationResponse.ABORT;
         }
-        
-        return InvocationResponse.CONTINUE;        	
+
+        return InvocationResponse.CONTINUE;
     }
 
     /**

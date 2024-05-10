@@ -1,16 +1,16 @@
 /*
  * Copyright (C) 2018 The Holodeck B2B Team, Sander Fieten
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
@@ -29,7 +29,7 @@ import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMultipart;
 
 import org.apache.axiom.om.OMElement;
-import org.apache.axis2.transport.http.HTTPConstants;
+import org.apache.axis2.kernel.http.HTTPConstants;
 import org.holodeckb2b.as2.messagemodel.MDNMetadata;
 import org.holodeckb2b.as2.messagemodel.MDNRequestOptions;
 import org.holodeckb2b.as2.util.Constants;
@@ -101,7 +101,7 @@ public class MDNInfo extends GenericMessageInfo {
     /**
      * End-of-line characters to use when constructing the Mime parts
      */
-    private static final String EOL = "\r\n";    
+    private static final String EOL = "\r\n";
     /**
      * Enumerates the disposition types that indicate whether the original message was processed successfully or not.
      */
@@ -176,7 +176,7 @@ public class MDNInfo extends GenericMessageInfo {
     private MDNRequestOptions   mdnRequestOptions;
 
     /**
-     * Creates a new instance using the provided general meta-data and parsing the given Mime part for the MDN 
+     * Creates a new instance using the provided general meta-data and parsing the given Mime part for the MDN
      * specific meta-data.
      *
      * @param generalInfo       The general meta-data
@@ -194,7 +194,7 @@ public class MDNInfo extends GenericMessageInfo {
     }
 
     /**
-     * Creates a new instance using the meta-data from the given Receipt Signal Message. A Receipt that represent an 
+     * Creates a new instance using the meta-data from the given Receipt Signal Message. A Receipt that represent an
      * AS2 MDN must contain a <code>AS2MDN</code> XML element with the MDN specific meta-data as its content.
      *
      * @param receipt       The Receipt to use as base for creating the MDN
@@ -210,15 +210,15 @@ public class MDNInfo extends GenericMessageInfo {
         this.dispositionMode = "automatic-action/MDN-sent-automatically";
         // Set the other fields based on the XML contained as content of the Receipt
         final OMElement rcptContent = !Utils.isNullOrEmpty(receipt.getContent()) ? receipt.getContent().get(0) : null;
-        if (rcptContent == null || !MDNMetadata.Q_ROOT_ELEMENT_NAME.equals(rcptContent.getQName()))  
+        if (rcptContent == null || !MDNMetadata.Q_ROOT_ELEMENT_NAME.equals(rcptContent.getQName()))
             throw new MDNTransformationException("Receipt does not contain MDN data, cannot transform into MDN");
-        
+
         try {
-        	final MDNMetadata mdnInfo = new MDNMetadata(rcptContent);        
+        	final MDNMetadata mdnInfo = new MDNMetadata(rcptContent);
 	        // The Sender and Receiver identifiers can be get from the MDN meta-data
 	        setFromPartyId(mdnInfo.getSenderId());
 	        setToPartyId(mdnInfo.getReceiverId());
-	
+
 	        this.dispositionType = DispositionType.processed;
 	        this.originalRecipient = mdnInfo.getOrigRecipient();
 	        this.finalRecipient = mdnInfo.getFinalRecipient();
@@ -234,8 +234,8 @@ public class MDNInfo extends GenericMessageInfo {
     }
 
     /**
-     * Creates a new instance using the meta-data from the given Error Signal Message. An Error Signal that represent 
-     * an AS2 MDN must contain one <code>Error</code> element that holds an <code>AS2MDN</code> XML element with the 
+     * Creates a new instance using the meta-data from the given Error Signal Message. An Error Signal that represent
+     * an AS2 MDN must contain one <code>Error</code> element that holds an <code>AS2MDN</code> XML element with the
      * MDN specific meta-data its <i>ErrorDetail</i> field.
      *
      * @param errorMessage   The Error to to use as base for creating the MDN
@@ -256,7 +256,7 @@ public class MDNInfo extends GenericMessageInfo {
 
         IEbmsError err = errors.next();
         // Only when the error related to a problem in satisfying the MDN request the dispositionType should be set to
-        // failed. 
+        // failed.
         this.dispositionType = "MDNRequest".equals(err.getCategory()) ? DispositionType.failed : DispositionType.processed;
         // HB2B / AS4 Errors only have warning and failure severity, but since error is used in disposition failure is
         // converted to error
@@ -264,12 +264,12 @@ public class MDNInfo extends GenericMessageInfo {
                                                                                     : ModifierSeverity.error;
         this.dispositionModifierText = err.getMessage();
         try {
-        	// Use XML with MDN meta-data in ErrorDetail of error for other fields        
+        	// Use XML with MDN meta-data in ErrorDetail of error for other fields
 	        final MDNMetadata mdnInfo = new MDNMetadata(err.getErrorDetail());
 	        // The Sender and Receiver identifiers can be get from the MDN meta-data
 	        setFromPartyId(mdnInfo.getSenderId());
 	        setToPartyId(mdnInfo.getReceiverId());
-	        
+
 	        this.originalRecipient = mdnInfo.getOrigRecipient();
 	        this.finalRecipient = mdnInfo.getFinalRecipient();
 	        this.origMessageId = mdnInfo.getOriginalMessageId();
@@ -546,7 +546,7 @@ public class MDNInfo extends GenericMessageInfo {
         BodyPart plainTxtPart = textPart;
         if (textPart.isMimeType(MIME_MULTIPART_ALTERNATIVE))
             plainTxtPart = ((Multipart) textPart.getContent()).getBodyPart(0);
-        
+
         this.readableText =  plainTxtPart.getContent().toString();
     }
 
@@ -571,9 +571,9 @@ public class MDNInfo extends GenericMessageInfo {
         final String disposition = dispositionHdrs.getHeader(HEADER_DISPOSITION, null);
         final int modeEnd = disposition.indexOf(';');
         if (modeEnd < 0)
-            throw new MessagingException("Invalid MDN - Invalid content of Disposition header [" + disposition 
+            throw new MessagingException("Invalid MDN - Invalid content of Disposition header [" + disposition
             							+ "], no mode included!");
-        
+
         dispositionMode = disposition.substring(0, modeEnd);
         int typeEnd = disposition.indexOf('/', modeEnd);
         if (typeEnd < 0)
@@ -593,7 +593,7 @@ public class MDNInfo extends GenericMessageInfo {
             else if (dispositionModifier.toLowerCase().startsWith("warning"))
                 dispositionSeverity = ModifierSeverity.warning;
             else {
-                throw new MessagingException("Invalid MDN - Unknown disposition modifier used: " 
+                throw new MessagingException("Invalid MDN - Unknown disposition modifier used: "
                 							+ dispositionModifier);
             }
             final int dispTxtStart = dispositionModifier.indexOf(':') + 1;

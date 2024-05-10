@@ -27,7 +27,7 @@ import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.common.handlers.AbstractBaseHandler;
 import org.holodeckb2b.commons.util.Utils;
 import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
-import org.holodeckb2b.interfaces.persistency.entities.IReceiptEntity;
+import org.holodeckb2b.interfaces.storage.IReceiptEntity;
 
 /**
  * Is the <i>out_flow</i> handler responsible for checking if the message contains a <i>Receipt</i> Signal message 

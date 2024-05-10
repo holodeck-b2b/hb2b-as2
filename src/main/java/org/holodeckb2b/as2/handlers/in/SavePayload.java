@@ -1,31 +1,25 @@
 /*
  * Copyright (C) 2018 The Holodeck B2B Team, Sander Fieten
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 package org.holodeckb2b.as2.handlers.in;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Collections;
 
-import javax.mail.MessagingException;
 import javax.mail.internet.MimeBodyPart;
 
 import org.apache.axiom.mime.ContentType;
@@ -33,45 +27,47 @@ import org.apache.logging.log4j.Logger;
 import org.holodeckb2b.as2.util.Constants;
 import org.holodeckb2b.common.errors.OtherContentError;
 import org.holodeckb2b.common.handlers.AbstractUserMessageHandler;
-import org.holodeckb2b.common.messagemodel.Payload;
+import org.holodeckb2b.commons.util.Utils;
 import org.holodeckb2b.core.HolodeckB2BCore;
 import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
 import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
-import org.holodeckb2b.interfaces.messagemodel.IPayload;
-import org.holodeckb2b.interfaces.persistency.entities.IUserMessageEntity;
+import org.holodeckb2b.interfaces.pmode.IPMode;
 import org.holodeckb2b.interfaces.processingmodel.ProcessingState;
+import org.holodeckb2b.interfaces.storage.IPayloadContent;
+import org.holodeckb2b.interfaces.storage.IPayloadEntity;
+import org.holodeckb2b.interfaces.storage.IUserMessageEntity;
 
 /**
- * Is the <i>in_flow</i> handler that reads the payload data from the AS2 message and stores it in a temporary file so
- * it can be delivered using the <i>delivery method</i> configured in the P-Mode.
+ * Is the <i>in_flow</i> handler that reads the payload data from the AS2 message and saves it to storage using the
+ * Holodeck B2B <i>Payload Storage Provider</i>.
  *
  * @author Sander Fieten (sander at chasquis-consulting.com)
  */
 public class SavePayload extends AbstractUserMessageHandler {
-    /**
-     * The name of the directory used for temporarily storing payloads
-     */
-    private static final String PAYLOAD_DIR = "plcin";
 
     @Override
-    protected InvocationResponse doProcessing(final IUserMessageEntity userMessage, 
-											  final IMessageProcessingContext procCtx, final Logger log) 
+    protected InvocationResponse doProcessing(final IUserMessageEntity userMessage,
+											  final IMessageProcessingContext procCtx, final Logger log)
 													  												throws Exception {
         try {
-            // Create a unique filename for temporarily storing the payload
-            final File plFile = File.createTempFile("pl-", null, getTempDir());
-            log.debug("Saving the payload data from the message to temp file: " + plFile.getAbsolutePath());
-            savePayload((MimeBodyPart) procCtx.getProperty(Constants.CTX_MIME_ENVELOPE), plFile);
-            log.debug("Saved payload data to file, update message meta-data");
-            Payload payloadInfo = new Payload();
-            payloadInfo.setContainment(IPayload.Containment.BODY);
-            payloadInfo.setContentLocation(plFile.getAbsolutePath());
+        	IPMode pmode = HolodeckB2BCoreInterface.getPModeSet().get(userMessage.getPModeId());
+        	IPayloadEntity payload = userMessage.getPayloads().iterator().next();
+        	log.trace("Get the storage for payload data");
+        	IPayloadContent storage = HolodeckB2BCore.getStorageManager().createStorageReceivedPayload(payload, pmode);
+        	if (storage.getContent() != null) {
+            	log.debug("Content of payload has already been saved");
+				return InvocationResponse.CONTINUE;
+        	}
+        	log.debug("Save payload data");
+        	MimeBodyPart payloadPart = (MimeBodyPart) procCtx.getProperty(Constants.CTX_MIME_ENVELOPE);
+        	try (InputStream is = payloadPart.getInputStream(); OutputStream os = storage.openStorage()) {
+	        	Utils.copyStream(is, os);
+        	}
             final ContentType contentType = (ContentType) procCtx.getProperty(
                                                             org.apache.axis2.Constants.Configuration.CONTENT_TYPE);
-            payloadInfo.setMimeType(contentType.getMediaType().toString());
+            payload.setMimeType(contentType.getMediaType().toString());
             log.debug("Update message meta-data in database");
-            HolodeckB2BCore.getStorageManager().setPayloadInformation(userMessage,
-                                                                      Collections.singletonList(payloadInfo));
+            HolodeckB2BCore.getStorageManager().updatePayloadInformation(payload);
         } catch (IOException saveFailed) {
             log.error("Could not save the payload data to temp file! Error details: " + saveFailed.getMessage());
             procCtx.addGeneratedError(new OtherContentError("Internal processing error", userMessage.getMessageId()));
@@ -80,44 +76,6 @@ public class SavePayload extends AbstractUserMessageHandler {
         }
 
         return InvocationResponse.CONTINUE;
-    }
-
-    /**
-     * Helper method to get the directory where the payload contents can be stored.
-     *
-     * @todo Consider moving this to util class, as it is a copy of the same method in SaveUserMsgAttachments!
-     *
-     * @return              {@link File} handler to the directory that must be used for storing payload content
-     * @throws IOException   When the specified directory does not exist and can not be created.
-     */
-    private File getTempDir() throws IOException {
-        Path tmpPayloadDir = HolodeckB2BCoreInterface.getConfiguration().getTempDirectory().resolve(PAYLOAD_DIR);
-        
-        if (!Files.exists(tmpPayloadDir))
-        	tmpPayloadDir = Files.createDirectories(tmpPayloadDir);
-        else if (!Files.isDirectory(tmpPayloadDir) || !Files.isWritable(tmpPayloadDir))
-            throw new IOException("Temp directory for payloads (" + tmpPayloadDir.toString() + ") is not available!");
-        
-        return tmpPayloadDir.toFile();
-    }
-
-    /**
-     * Helper method to save the payload data to a temporary file before delivery to the back-end system.
-     *
-     * @param payloadPart   The MIME body part containing the payload
-     * @param plFile        The temporary file to store the data
-     * @throws IOException  When there is an error saving the payload data to the file
-     */
-    private void savePayload(final MimeBodyPart payloadPart, final File plFile) throws IOException {
-        byte[] buffer = new byte[16384]; //16KB buffer
-        try (final InputStream is = payloadPart.getInputStream();
-             final OutputStream os = new FileOutputStream(plFile)) {
-            int bytesRead;
-            while ((bytesRead = is.read(buffer, 0, buffer.length)) > -1)
-                os.write(buffer, 0, bytesRead);
-        } catch (MessagingException ex) {
-            throw new IOException("Unable to get access to payload data!", ex);
-        }
     }
 }
 

@@ -1,7 +1,9 @@
 /**
- * 
+ *
  */
 package org.holodeckb2b.as2.util;
+
+import static org.apache.commons.io.output.NullOutputStream.NULL_OUTPUT_STREAM;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -16,7 +18,6 @@ import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeUtility;
 
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.io.output.NullOutputStream;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.holodeckb2b.interfaces.security.SecurityProcessingException;
 
@@ -27,9 +28,9 @@ import org.holodeckb2b.interfaces.security.SecurityProcessingException;
  */
 public class DigestHelper {
 
-	/**	
+	/**
 	 * Calculates the digest for the given MIME part and returns it as base64 encoded string.
-	 * 
+	 *
 	 * @param digestAlgorithm	The digest algorithm to use for the calculation
 	 * @param mimePart			The mime part
 	 * @param includeHeaders	Indicator whether to include the headers in the digest
@@ -40,10 +41,10 @@ public class DigestHelper {
 			final boolean includeHeaders) throws SecurityProcessingException {
 		return Base64.encodeBase64String(calculateDigest(digestAlgorithm, mimePart, includeHeaders));
 	}
-	
-	/**	
+
+	/**
 	 * Calculates the digest for the given MIME part.
-	 * 
+	 *
 	 * @param digestAlgorithm	The digest algorithm to use for the calculation
 	 * @param mimePart			The mime part
 	 * @param includeHeaders	Indicator whether to include the headers in the digest
@@ -66,12 +67,12 @@ public class DigestHelper {
 	            // The CRLF separator between header and content
 	            digester.update(CRLF);
 	        }
-	
-	        try (final DigestOutputStream digestOS = new DigestOutputStream (new NullOutputStream (), digester);
+
+	        try (final DigestOutputStream digestOS = new DigestOutputStream (NULL_OUTPUT_STREAM, digester);
 	             final OutputStream encodedOS = MimeUtility.encode(digestOS, mimePart.getEncoding())) {
 	            mimePart.getDataHandler().writeTo(encodedOS);
 	        }
-	
+
 	        return digester.digest();
 	    } catch (NoSuchAlgorithmException | MessagingException | IOException | NoSuchProviderException ex) {
 	        throw new SecurityProcessingException("Could not calculate the digest");
