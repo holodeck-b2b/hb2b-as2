@@ -29,9 +29,7 @@ import org.holodeckb2b.common.errors.OtherContentError;
 import org.holodeckb2b.common.handlers.AbstractUserMessageHandler;
 import org.holodeckb2b.commons.util.Utils;
 import org.holodeckb2b.core.HolodeckB2BCore;
-import org.holodeckb2b.interfaces.core.HolodeckB2BCoreInterface;
 import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
-import org.holodeckb2b.interfaces.pmode.IPMode;
 import org.holodeckb2b.interfaces.processingmodel.ProcessingState;
 import org.holodeckb2b.interfaces.storage.IPayloadContent;
 import org.holodeckb2b.interfaces.storage.IPayloadEntity;
@@ -50,10 +48,9 @@ public class SavePayload extends AbstractUserMessageHandler {
 											  final IMessageProcessingContext procCtx, final Logger log)
 													  												throws Exception {
         try {
-        	IPMode pmode = HolodeckB2BCoreInterface.getPModeSet().get(userMessage.getPModeId());
         	IPayloadEntity payload = userMessage.getPayloads().iterator().next();
         	log.trace("Get the storage for payload data");
-        	IPayloadContent storage = HolodeckB2BCore.getStorageManager().createStorageReceivedPayload(payload, pmode);
+        	IPayloadContent storage = HolodeckB2BCore.getStorageManager().createStorageReceivedPayload(payload);
         	if (storage.getContent() != null) {
             	log.debug("Content of payload has already been saved");
 				return InvocationResponse.CONTINUE;
