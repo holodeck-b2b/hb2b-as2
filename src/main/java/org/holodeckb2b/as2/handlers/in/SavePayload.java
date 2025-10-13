@@ -51,7 +51,7 @@ public class SavePayload extends AbstractUserMessageHandler {
         	IPayloadEntity payload = userMessage.getPayloads().iterator().next();
         	log.trace("Get the storage for payload data");
         	IPayloadContent storage = HolodeckB2BCore.getStorageManager().createStorageReceivedPayload(payload);
-        	if (storage.getContent() != null) {
+        	if (storage.isContentAvailable()) {
             	log.debug("Content of payload has already been saved");
 				return InvocationResponse.CONTINUE;
         	}

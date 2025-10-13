@@ -68,6 +68,7 @@ import org.holodeckb2b.interfaces.security.X509ReferenceType;
 import org.holodeckb2b.interfaces.security.trust.ICertificateManager;
 import org.holodeckb2b.interfaces.security.trust.IValidationResult;
 import org.holodeckb2b.interfaces.security.trust.IValidationResult.Trust;
+import org.holodeckb2b.interfaces.security.trust.SecurityLevel;
 import org.holodeckb2b.interfaces.storage.IMessageUnitEntity;
 import org.holodeckb2b.interfaces.storage.IPayloadEntity;
 import org.holodeckb2b.interfaces.storage.IUserMessageEntity;
@@ -264,7 +265,8 @@ public class ProcessSignature extends AbstractBaseHandler {
 
             log.trace("Validate trust in certificate");
             IValidationResult trust = HolodeckB2BCoreInterface.getCertificateManager()
-            													.validateTrust(Collections.singletonList(signingCert));
+            										.validateCertificate(Collections.singletonList(signingCert),
+            															 SecurityLevel.MLS);
 
             if (trust.getTrust() == Trust.NOK) {
 				log.error("Signing certificate is not trusted by Certificate Manager! Details: {}", trust.getMessage());

@@ -20,6 +20,7 @@ import org.holodeckb2b.as2.messagemodel.MDNRequestOptions;
 import org.holodeckb2b.as2.packaging.MDNInfo;
 import org.holodeckb2b.common.handlers.AbstractConfigureHTTPTransport;
 import org.holodeckb2b.commons.util.Utils;
+import org.holodeckb2b.core.pmode.PModeUtils;
 import org.holodeckb2b.interfaces.core.IMessageProcessingContext;
 import org.holodeckb2b.interfaces.messagemodel.IReceipt;
 import org.holodeckb2b.interfaces.messagemodel.ISignalMessage;
@@ -40,14 +41,14 @@ public class ConfigureHTTPTransport extends AbstractConfigureHTTPTransport {
 	 * Sender of the User Message the Signal applies to in the MDN request options.
 	 *
 	 * @param msgToSend		The message unit being send
-	 * @param leg			The P-Mode configuration parameters for this leg
-	 * @param mc			The message processing context
+	 * @param procCtx		The message processing context
 	 * @return				The destination URL, <code>null</code> if URL cannot be determined
 	 */
 	@Override
-	protected String getDestinationURL(IMessageUnitEntity msgToSend, ILeg leg, IMessageProcessingContext procCtx) {
-		String destURL = null;
+	protected String getDestinationURL(IMessageUnitEntity msgToSend, IMessageProcessingContext procCtx) {
+		ILeg leg = PModeUtils.getLeg(msgToSend);
 
+		String destURL = null;
 		if (msgToSend instanceof ISignalMessage) {
 			final MDNInfo mdn = (MDNInfo) procCtx.getProperty(org.holodeckb2b.as2.util.Constants.CTX_AS2_MDN_DATA);
 			MDNRequestOptions mdnRequest = mdn.getMDNRequestOptions();
@@ -60,9 +61,8 @@ public class ConfigureHTTPTransport extends AbstractConfigureHTTPTransport {
 	                     destURL = leg.getUserMessageFlow().getErrorHandlingConfiguration().getReceiverErrorsTo();
 	            } catch (NullPointerException npe) {}
 		} else
-			destURL = leg.getProtocol() != null ? leg.getProtocol().getAddress() : null;
+			destURL = leg != null && leg.getProtocol() != null ? leg.getProtocol().getAddress() : null;
 
         return destURL;
 	}
-
 }

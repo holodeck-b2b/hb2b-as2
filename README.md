@@ -16,8 +16,8 @@ Issue tracker https://github.com/holodeck-b2b/hb2b-as2/issues
 
 ## Installation
 ### Prerequisites  
-This extension requires that you have already deployed Holodeck B2B version 7.0.0 or later. 
-On this instance also the Bouncy Castle libraries for processing S/MIME ([bcmail](https://repo1.maven.org/maven2/org/bouncycastle/bcmail-jdk18on/) and [bcpkix](https://repo1.maven.org/maven2/org/bouncycastle/bcpkix-jdk18on/)) and the [JavaMail](https://repo1.maven.org/maven2/com/sun/mail/jakarta.mail/1.6.7/jakarta.mail-1.6.7.jar) implementation need to be installed.
+This extension requires that you have already deployed Holodeck B2B version 8.0.0 or later. 
+On this instance also the Bouncy Castle library for processing S/MIME ([bcmail](https://repo1.maven.org/maven2/org/bouncycastle/bcmail-jdk18on/) and the [JavaMail](https://repo1.maven.org/maven2/com/sun/mail/jakarta.mail/1.6.7/jakarta.mail-1.6.7.jar) implementation need to be installed.
 If not installed, download the libraries and copy them to the `lib` directory of the Holodeck B2B instance. 
 For the Bouncy Castle library you *must* download the same version as the one of the already installed Bouncy Castle security provider in the Holodeck B2B instance (check the `bcprov-jdk18on` file). 
 
